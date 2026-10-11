@@ -269,7 +269,8 @@ editor(){
   const t=themeById(ui.theme);
   if(!t){$('themeEditor').innerHTML='';return;}
   const i=D.themes.indexOf(t),P='themes.'+i,years=allYears();
-  $('themeEditor').innerHTML=`<div class="split"><section class="panel"><div class="toolbar" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Þemaritill</h2><span class="toolbar"><button class="small" data-act="themePdf">Sækja PDF</button><button class="small" data-act="themeJson">Sækja JSON</button><button class="small" data-act="dupTheme">Afrita</button><button class="small danger" data-act="delTheme">Eyða þema</button></span></div>
+  $('themeEditor').innerHTML=`<div class="split"><section class="panel"><div class="toolbar" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Þemaritill</h2><span class="toolbar"><button class="small" data-act="dupTheme">Afrita</button><button class="small danger" data-act="delTheme">Eyða þema</button></span></div>
+    <div class="themedl"><span>Sækja þetta þema:</span><button class="primary" data-act="themePdf">PDF</button><button data-act="themeJson">JSON</button></div>
     ${field('Heiti þema',P+'.title','maxlength="150" placeholder="T.d. Hreyfing: Frá Aristótelesi til Newtons"')}
     ${area('Stutt skýring á þemanu',P+'.summary','placeholder="Nemandi kynnist…"')}
     <div class="row"><div class="field"><label for="f-year">Skólaár</label><select id="f-year" data-path="${P}.year"><option value="">Óskilgreint</option>${years.map(y=>`<option ${t.year===y?'selected':''}>${esc(y)}</option>`).join('')}</select></div>

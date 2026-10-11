@@ -169,3 +169,4 @@ main:focus{outline:none}
 .markdown li>p{margin:2px 0}
 .markdown ul ul,.markdown ol ol,.markdown ul ol,.markdown ol ul{margin:2px 0}
 .markdown s{color:var(--muted)}
+.themedl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--soft);border-radius:12px;padding:10px 12px;margin-bottom:16px}.themedl span{font-size:13px;font-weight:650;margin-right:4px}
