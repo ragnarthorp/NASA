@@ -10,7 +10,7 @@ const CATS=[
    desc:'Gegnumgangandi vinnulag beggja greinasviða: hugtakanotkun, læsi á texta og gögn, athuganir og tilraunir, heimildarýni, skoðanamyndun, gagnrýnin umræða, miðlun og lýðræðislegt samstarf. Hér á agað bóklegt nám heima, svo sem glósutækni, fyrirlestrar og úthald í lestri.'},
   {id:'environment',name:'Umhverfi, sjálfbærni og samfélag',short:['Umhverfi, sjálfbærni','og samfélag'],group:'core',icon:'leaf',
    desc:'Vistfræði og samspil manns og náttúru: hringrásir efna og orku, vistkerfi, líffræðileg fjölbreytni, veðurfar og loftslagsbreytingar, auðlindir, neysla, sjálfbær þróun, kortalæsi og samfélög heimsins.'},
-  {id:'life',name:'Lífið, heilsa og sjálfsmynd',short:['Lífið, heilsa','og sjálfsmynd'],group:'core',icon:'cell',tag:'Lífvísindi',
+  {id:'life',name:'Lífið, heilsa og sjálfsmynd',short:['Lífið, heilsa','og sjálfsmynd'],group:'core',icon:'cell',
    desc:'Hér eiga lífvísindin heima: frumur, erfðir, þróun, flokkun lífvera, örverur, plöntur, sveppir, dýr og líffærakerfi mannsins. Flokkurinn tengir lífvísindin við heilsu, kynheilbrigði og sjálfsmynd: félagsmótun, tilfinningar, hugarfar, virðingu og staðalmyndir. Vistfræðin (vistkerfi og líffræðileg fjölbreytni) er í flokknum Umhverfi, sjálfbærni og samfélag.'},
   {id:'energy',name:'Orkan',short:['Orkan'],group:'natt',icon:'bolt',
    desc:'Orka og varðveisla hennar, nýting orku, varmi, rafmagn og segulmagn, bylgjur, kraftar, hreyfing og massi.'},
