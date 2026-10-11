@@ -68,7 +68,7 @@ function normalize(o){
   if(Array.isArray(o.info))d.info=o.info.slice(0,60).map(s=>({title:str(s?.title,200),body:str(s?.body)}));
   for(const c of CATS)d.catNotes[c.id]=str(o.catNotes?.[c.id]);
   const a=o.assessment||{},A=d.assessment;
-  A.bIntro=str(a.bIntro)||A.bIntro;A.aIntro=str(a.aIntro)||A.aIntro;A.notes=str(a.notes);
+  A.bIntro=str(a.bIntro)||A.bIntro;A.aIntro=str(a.aIntro)||A.aIntro;A.research=str(a.research)||A.research;A.notes=str(a.notes);
   if(Array.isArray(a.bBands))A.bBands.forEach(b=>{const m=a.bBands.find(x=>x?.grade===b.grade);if(m){b.min=b.grade==='D'?0:numIn(m.min,0,100,b.min);b.label=str(m.label,200)||b.label;}});
   for(const g of ['8','9','10'])A.handicap[g]=numIn(a.handicap?.[g],0,100,A.handicap[g]);
   A.pointValue=numIn(a.pointValue,0,100,A.pointValue);A.maxPoints=numIn(a.maxPoints,0,99,A.maxPoints);
@@ -329,7 +329,7 @@ update(p,el){
 
 /* 5. Verkefni */
 VIEWS.projects={render(){
-  return intro('Skref 5 · Verkefni','Hækkunar- og rannsóknarverkefni','Hækkunarverkefni eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um og byggja á hæfniflokkum NASA. Fyrir þau fást 1–3 stig sem nýta má til hækkunar á B-prófi. Rannsóknarverkefni eru stærri verkefni fyrir nemendur sem hafa ítrekað sýnt afbragðshæfni. Hér má byggja upp banka hugmynda.',
+  return intro('Skref 5 · Verkefni','Hækkunar- og rannsóknarverkefni','Hækkunarverkefni eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um og byggja á hæfniflokkum NASA. Fyrir þau fást 1–3 stig sem nýta má til hækkunar á B-prófi. Rannsóknarverkefni eru stærri verkefni fyrir nemendur sem hafa ítrekað sýnt afbragðshæfni og styðjast við sama matskvarða og A-próf (A, B+, B). Hér má byggja upp banka hugmynda.',
   '<button class="primary" data-act="addProj" data-kind="hækkun">+ Hækkunarverkefni</button><button data-act="addProj" data-kind="rannsókn">+ Rannsóknarverkefni</button>')+
   `<div class="split"><section class="panel"><h2>Dreifing á hæfniflokka</h2><div class="wheel" id="projWheel"></div><p class="hint">Fjöldi verkefna í hverjum hæfniflokki.</p></section><section class="panel" id="projList"></section></div>`;
 },after(){this.list();this.wheel();},
@@ -341,7 +341,7 @@ list(){
     ${kind==='hækkun'?`<div class="field" style="margin:0;min-width:90px;flex:0"><label for="pp${i}">Stig</label><select id="pp${i}" data-path="projects.${i}.points" data-type="number">${[1,2,3].map(n=>`<option ${p.points===n?'selected':''}>${n}</option>`).join('')}</select></div>`:''}</div>
     <div class="row"><div class="field" style="margin:0"><label for="pth${i}">Tengt þema (valfrjálst)</label><select id="pth${i}" data-path="projects.${i}.theme"><option value="">Ekkert sérstakt þema</option>${D.themes.map(t=>`<option value="${t.id}" ${p.theme===t.id?'selected':''}>${esc(t.title||'Ónefnt þema')}</option>`).join('')}</select></div></div>
     <div class="field" style="margin:0"><label for="pd${i}">Lýsing og viðmið</label><textarea id="pd${i}" data-path="projects.${i}.description" style="min-height:60px">${esc(p.description)}</textarea></div>
-    <div><button class="small danger" data-act="delProj" data-i="${i}">Eyða verkefni</button></div></div>`).join(''):'<div class="empty">Engin verkefni enn.</div>'}`;};
+    ${kind==='rannsókn'?'<p class="hint" style="margin:0">Metið á kvarða A-prófa: A, B+ eða B.</p>':''}<div><button class="small danger" data-act="delProj" data-i="${i}">Eyða verkefni</button></div></div>`).join(''):'<div class="empty">Engin verkefni enn.</div>'}`;};
   $('projList').innerHTML=block('hækkun','Hækkunarverkefni')+'<div style="height:18px"></div>'+block('rannsókn','Rannsóknarverkefni');
 },
 update(p){if(/\.category$/.test(p)){this.wheel();this.list();}}};
@@ -381,16 +381,18 @@ function finalRows(){
 VIEWS.assess={render(){
   const A=D.assessment,bands=A.bBands;
   return intro('Skref 6 · Námsmat','Námsmat í þemum','Notaðir eru hæfniflokkar með bein tengsl við lokaeinkunn. Hvert þema endar á B-prófi; nemandi sem nær B öðlast rétt til töku A-prófs. Hækkunarstig úr hækkunarverkefnum má nýta til að hækka einkunn á B-prófi.')+
-  `<section class="panel"><h2>Leiðin að einkunn</h2><div class="flow"><div class="step"><b>Þemalota</b>Fyrirlestrar, glósur, verkefni og hæfniflokkar þemans.</div><div class="arrow">→</div><div class="step"><b>Hækkunarverkefni</b>1–3 stig fyrir hvert verkefni. Stigin safnast saman.</div><div class="arrow">→</div><div class="step"><b>B-próf</b>Hæfni sambærileg við 1. hæfniþrep framhaldsskóla. D, C, C+ eða B.</div><div class="arrow">→</div><div class="step"><b>A-próf</b>Fyrir þá sem ná B. ${A.aMax} stig, án hjálpargagna. Getur aðeins hækkað.</div><div class="arrow">→</div><div class="step"><b>Lokaeinkunn</b>Vegið meðaltal þemaeinkunna í lok 10. bekkjar, varpað á kvarðann 4–10.</div></div></section>
+  `<section class="panel"><h2>Leiðin að einkunn</h2><div class="flow"><div class="step"><b>Þemalota</b>Fyrirlestrar, glósur, verkefni og hæfniflokkar þemans.</div><div class="arrow">→</div><div class="step"><b>Hækkunarverkefni</b>1–3 stig fyrir hvert verkefni. Stigin safnast saman.</div><div class="arrow">→</div><div class="step"><b>B-próf</b>Hæfni sambærileg við 1. hæfniþrep framhaldsskóla. D, C, C+ eða B.</div><div class="arrow">→</div><div class="step"><b>A-próf / rannsóknarverkefni</b>Fyrir þá sem ná B. Metið A, B+ eða B. ${A.aMax} stig, án hjálpargagna. Getur aðeins hækkað.</div><div class="arrow">→</div><div class="step"><b>Lokaeinkunn</b>Vegið meðaltal þemaeinkunna í lok 10. bekkjar, varpað á kvarðann 4–10.</div></div></section>
   <div class="grid2"><section class="panel"><h2>B-próf</h2>${area('Lýsing',"assessment.bIntro",'style="min-height:70px"')}
     <div class="scale">${bands.map((b,i)=>`<div class="grade"><b>${b.grade}</b><input aria-label="Lýsing ${b.grade}" data-path="assessment.bBands.${i}.label" value="${esc(b.label)}">${b.grade==='D'?'<small style="margin-top:8px">Undir mörkum C</small>':`<label style="margin-top:6px;font-size:11px" for="band${i}">Lágmark (%)</label><input id="band${i}" type="number" min="0" max="100" data-type="number" data-path="assessment.bBands.${i}.min" value="${b.min}">`}</div>`).join('')}</div>
     <p class="hint">B = hefur náð hæfninni (að jafnaði 80% árangur eða meira). Mörk C+ og C eru tillögur sem má aðlaga.</p>
     <h3>Forgjöf eftir árgangi</h3><p class="hint">Kennslan og námsmatið er aldursblandað. Nemendur í 8. og 9. bekk fá minnkandi forgjöf sem hverfur í 10. bekk. Forgjöfin bætist við árangur á B-prófi (prósentustig).</p>
     <div class="row">${['8','9','10'].map(g=>field(g+'. bekkur','assessment.handicap.'+g,'min="0" max="100" step="0.5"','number')).join('')}</div>
     <h3>Hækkunarstig</h3><div class="row">${field('Prósentustig fyrir hvert hækkunarstig','assessment.pointValue','min="0" max="100" step="0.5"','number')}${field('Hámark stiga á hvert B-próf (0 = ekkert)','assessment.maxPoints','min="0" max="99" step="1"','number')}</div></section>
-  <section class="panel"><h2>A-próf</h2>${area('Lýsing','assessment.aIntro','style="min-height:70px"')}
+  <section class="panel"><h2>A-próf og rannsóknarverkefni</h2>${area('Lýsing','assessment.aIntro','style="min-height:70px"')}
+    <div class="scale" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px"><div class="grade"><b>A</b><small>Framúrskarandi hæfni</small></div><div class="grade"><b>B+</b><small>Umfram hæfniviðmið</small></div><div class="grade"><b>B</b><small>Hefur náð hæfninni</small></div></div>
     <div class="row">${field('Heildarstig','assessment.aMax','min="1" step="1"','number')}${field('A frá (stig)','assessment.aA','min="0" step="1"','number')}${field('B+ frá (stig)','assessment.aBplus','min="0" step="1"','number')}</div>
     <p class="hint" id="aRule"></p>
+    ${area('Rannsóknarverkefni','assessment.research','style="min-height:60px"')}
     ${area('Annað um námsmat','assessment.notes','placeholder="T.d. endurtekning prófa, sérúrræði, skráning í Mentor."')}
     <h2 style="margin-top:20px">Reiknivél</h2><p class="hint">Prófaðu reglurnar á dæmi um nemanda.</p>
     <div class="row"><div class="field"><label for="cG">Árgangur</label><select id="cG" data-calc="grade">${['8','9','10'].map(g=>`<option value="${g}" ${ui.calc.grade===g?'selected':''}>${g}. bekkur</option>`).join('')}</select></div>

@@ -34,7 +34,7 @@ const DEFAULT_INFO=[
   {title:'Hæfniflokkar NASA',body:
 'Hæfniviðmið aðalnámskrár eru flokkuð í níu hæfniflokka. Flokkunin skiptist í **sameiginlegan kjarna** og flokka sem **dýpka sérstök svið**:\n\n- Sameiginlegur kjarni: Vinnulag og rannsóknir; Umhverfi, sjálfbærni og samfélag; Lífið, heilsa og sjálfsmynd.\n- Náttúrufræði: Orkan, Efnin, Alheimurinn.\n- Samfélagsfræði: Saga, Borgaravitund, Siðferði og trú.\n\nLífvísindin (frumur, erfðir, þróun, lífverur og líffærakerfi) tilheyra flokknum *Lífið, heilsa og sjálfsmynd* en vistfræðin flokknum *Umhverfi, sjálfbærni og samfélag*.\n\nSamtals skulu hlutföll hæfniflokka vera 100%. Þegar hæfnisvið eru vegin yfir hvert þriggja ára tímabil skulu þau vera sem næst því hlutfalli sem skólanámskrá kveður á um. Að hluta eru hæfnisvið greinanna sameiginleg, til dæmis þegar kemur að vinnulagi, sjálfbærni og öðrum nátengdum þáttum.'},
   {title:'Hækkunar- og rannsóknarverkefni',body:
-'Nemendur taka að auki þátt í vali á viðfangsefnum í gegnum hækkunar- og rannsóknarverkefni.\n\n- **Hækkunarverkefni** eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um. Þau byggja á hæfniflokkum NASA og eru unnin samhliða þemanu. Fyrir hækkunarverkefni má fá 1 til 3 stig. Stigin safnast saman og nota má þau til að hækka einkunn á B-prófi.\n- **Rannsóknarverkefni** eru stærri verkefni sem nemendur geta unnið þegar þeir hafa ítrekað sýnt fram á afbragðshæfni.'},
+'Nemendur taka að auki þátt í vali á viðfangsefnum í gegnum hækkunar- og rannsóknarverkefni.\n\n- **Hækkunarverkefni** eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um. Þau byggja á hæfniflokkum NASA og eru unnin samhliða þemanu. Fyrir hækkunarverkefni má fá 1 til 3 stig. Stigin safnast saman og nota má þau til að hækka einkunn á B-prófi.\n- **Rannsóknarverkefni** eru stærri verkefni sem nemendur geta unnið þegar þeir hafa ítrekað sýnt fram á afbragðshæfni. Þau styðjast við sama matskvarða og A-próf (A, B+, B).'},
   {title:'Vinnulag og agað bóklegt nám',body:
 'Í kennslunni er lögð áhersla á að nemendur öðlist **úthald til agaðs bóklegs náms**. Þeir læra glósutækni og sitja fyrirlestra auk þess að vinna margvísleg verkefni.\n\nNotaðir eru hæfniflokkar með bein tengsl við lokaeinkunn. Því er lýst nánar í kaflanum um námsmat.'}
 ];
@@ -53,6 +53,7 @@ const DEFAULT_ASSESSMENT={
   pointValue:2,
   maxPoints:0,
   aIntro:'A-próf eru þung próf án hjálpargagna. Nemandi sem nær B á B-prófi (með eða án hækkunarstiga) öðlast rétt til töku A-prófs.',
+  research:'Rannsóknarverkefni styðjast við sama matskvarða og A-próf: A, B+ og B.',
   aMax:25,aA:20,aBplus:15,
   finalIntro:'Lokaeinkunn úr 10. bekk er reiknuð út frá vegnu meðaltali einkunna fyrir hvert þema. Vægi hvers þema ræðst af tímalengd þess í vikum. Bókstafseinkunnum er breytt í gildi, meðaltalið reiknað og því varpað yfir á talnakvarða.',
   gradeValues:{'A':4,'B+':3.75,'B':3,'C+':2.75,'C':2,'D':1},

@@ -145,9 +145,10 @@ async function buildPDF(opt={themes:true,balance:true,crit:true}){
   plain(`Kennslan og námsmatið er aldursblandað. Nemendur í 8. og 9. bekk fá minnkandi forgjöf sem hverfur þegar þeir koma í 10. bekk: ${fmt(A.handicap['8'])} prósentustig í 8. bekk, ${fmt(A.handicap['9'])} í 9. bekk og ${fmt(A.handicap['10'])} í 10. bekk.`,M,CW,10);y+=2;
   h3('Hækkunarstig');
   plain(`Fyrir hækkunarverkefni má fá 1 til 3 stig. Stigin safnast saman og hvert stig hækkar árangur á B-prófi um ${fmt(A.pointValue)} prósentustig${A.maxPoints>0?`, að hámarki ${A.maxPoints} stig á hvert B-próf`:''}. Nemandi sem nær B með eða án hækkunarstiga öðlast rétt til töku A-prófs.`,M,CW,10);y+=2;
-  h2('A-próf');rich(A.aIntro,M,CW,10.5);
+  h2('A-próf og rannsóknarverkefni');rich(A.aIntro,M,CW,10.5);
   table([{h:'Stig á A-prófi',w:.3},{h:'Niðurstaða',w:.7}],[[`${A.aA}–${A.aMax}`,{t:'A',bold:true}],[`${A.aBplus}–${A.aA-1}`,{t:'B+',bold:true}],[`0–${A.aBplus-1}`,'Einkunn hækkar ekki (helst B)']]);
-  plain('Ekki er hægt að lækka í einkunn við töku A-prófs.',M,CW,10,'italic');
+  plain('Ekki er hægt að lækka í einkunn við töku A-prófs.',M,CW,10,'italic');y+=2;
+  if(A.research.trim())rich(A.research,M,CW,10.5);
   h2('Lokaeinkunn úr 10. bekk');rich(A.finalIntro,M,CW,10.5);
   h3('Gildi bókstafseinkunna');
   table(LETTERS.map(()=>({h:'',w:1/6})).map((c,i)=>({h:LETTERS[i],w:1/6})),[LETTERS.map(g=>fmt(A.gradeValues[g],3))]);
@@ -158,12 +159,12 @@ async function buildPDF(opt={themes:true,balance:true,crit:true}){
 
   /* 4. Verkefni */
   h1(chapters[ch],++ch);
-  rich('**Hækkunarverkefni** eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um og byggja á hæfniflokkum NASA. **Rannsóknarverkefni** eru stærri verkefni sem nemendur geta unnið þegar þeir hafa ítrekað sýnt fram á afbragðshæfni.',M,CW,10.5);
+  rich('**Hækkunarverkefni** eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um og byggja á hæfniflokkum NASA. **Rannsóknarverkefni** eru stærri verkefni sem nemendur geta unnið þegar þeir hafa ítrekað sýnt fram á afbragðshæfni. Þau styðjast við sama matskvarða og A-próf: A, B+ og B.',M,CW,10.5);
   for(const [kind,label] of [['hækkun','Hækkunarverkefni'],['rannsókn','Rannsóknarverkefni']]){
     const ps=D.projects.filter(p=>p.kind===kind);h2(label+' ('+ps.length+')');
     if(!ps.length){plain('Engin verkefni skráð.',M,CW,10,'italic',MUTED);continue;}
     for(const p of ps){need(14);const col=catColor(p.category);font('bold',10.5,INK);const tl=doc.splitTextToSize(PDF_SAFE(p.title||'Ónefnt verkefni'),CW-8);fill(col);doc.circle(M+1.5,y+2.6,1.3,'F');tl.forEach(l=>{doc.text(l,M+5,y+4);y+=5;});
-      font('normal',8.5,MUTED);const th=themeById(p.theme);text([CAT[p.category].name,kind==='hækkun'?p.points+(p.points===1?' stig':' stig'):'',th?'Þema: '+(th.title||'Ónefnt'):''].filter(Boolean).join(' · '),M+5,y+3);y+=5;
+      font('normal',8.5,MUTED);const th=themeById(p.theme);text([CAT[p.category].name,kind==='hækkun'?p.points+' stig':'metið A, B+ eða B',th?'Þema: '+(th.title||'Ónefnt'):''].filter(Boolean).join(' · '),M+5,y+3);y+=5;
       if(p.description.trim()){const x0=M+5;rich(p.description,x0,CW-5,9.5);}y+=2;}
   }
 
