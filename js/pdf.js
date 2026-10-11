@@ -77,21 +77,22 @@ async function buildPDF(opt={themes:true,balance:true,crit:true}){
   }
   function plain(s,x=M,width=CW,size=10,style='normal',color=INK){drawLines(wrap([{t:s,b:style.includes('bold'),i:style.includes('italic')}],width,size),x,size,color);}
   function h1(s,num){newPage();font('bold',9,MUTED);text((num?'KAFLI '+num:'VIÐAUKI').toUpperCase(),M,y);y+=6;font('bold',22,INK);const ls=doc.splitTextToSize(PDF_SAFE(s),CW);ls.forEach(l=>{doc.text(l,M,y+6);y+=9.5;});rect(M,y+1,24,1.2,'#177d88');y+=8;}
-  function h2(s,color=INK){need(16);y+=2;font('bold',14,color);doc.splitTextToSize(PDF_SAFE(s),CW).forEach(l=>{doc.text(l,M,y+5);y+=6.6;});y+=1.5;}
-  function h3(s,color=INK){need(12);font('bold',11,color);doc.splitTextToSize(PDF_SAFE(s),CW).forEach(l=>{doc.text(l,M,y+4);y+=5.4;});y+=1;}
+  function h2(s,color=INK){need(28);y+=2;font('bold',14,color);doc.splitTextToSize(PDF_SAFE(s),CW).forEach(l=>{doc.text(l,M,y+5);y+=6.6;});y+=1.5;}
+  function h3(s,color=INK){need(24);font('bold',11,color);doc.splitTextToSize(PDF_SAFE(s),CW).forEach(l=>{doc.text(l,M,y+4);y+=5.4;});y+=1;}
   function table(cols,rows,{size=9,head=true,zebra=true}={}){
     const pad=1.8,widths=cols.map(c=>c.w*CW);
     const rowH=cells=>Math.max(...cells.map((c,i)=>{font(c?.bold?'bold':'normal',size);return doc.splitTextToSize(PDF_SAFE(c?.t??c),widths[i]-2*pad).length;}))*lh(size)+2*pad;
-    const drawRow=(cells,bg,bold=false,color=INK)=>{
+    const drawRow=(cells,bg,bold=false,color=INK,isHead=false)=>{
       const h=rowH(cells.map(c=>bold?{t:c?.t??c,bold:true}:c));
-      if(need(h)&&head)drawRow(cols.map(c=>c.h),'#e4ece8',true,MUTED);
+      if(need(h)&&head&&!isHead)drawRow(cols.map(c=>c.h),'#e4ece8',true,MUTED,true);
       if(bg)rect(M,y,CW,h,bg);
       let x=M;cells.forEach((c,i)=>{const cell=typeof c==='object'&&c?c:{t:c};font(bold||cell.bold?'bold':'normal',size,cell.color||color);
         const ls=doc.splitTextToSize(PDF_SAFE(cell.t),widths[i]-2*pad);ls.forEach((l,k)=>doc.text(l,cols[i].right?x+widths[i]-pad:x+pad,y+pad+size*0.3528+k*lh(size),cols[i].right?{align:'right'}:undefined));
         if(cell.dot){fill(cell.dot);doc.circle(x+pad-0.2,y+pad+1.3,1.1,'F');}x+=widths[i];});
       doc.setDrawColor(...rgb(LINE));doc.setLineWidth(0.2);doc.line(M,y+h,M+CW,y+h);y+=h;
     };
-    if(head)drawRow(cols.map(c=>c.h),'#e4ece8',true,MUTED);
+    need(lh(size)*2+4*pad+8);
+    if(head)drawRow(cols.map(c=>c.h),'#e4ece8',true,MUTED,true);
     rows.forEach((r,i)=>drawRow(r,zebra&&i%2?'#f6f8f7':null));
     y+=4;
   }
@@ -147,6 +148,12 @@ async function buildPDF(opt={themes:true,balance:true,crit:true}){
   h2('A-próf');rich(A.aIntro,M,CW,10.5);
   table([{h:'Stig á A-prófi',w:.3},{h:'Niðurstaða',w:.7}],[[`${A.aA}–${A.aMax}`,{t:'A',bold:true}],[`${A.aBplus}–${A.aA-1}`,{t:'B+',bold:true}],[`0–${A.aBplus-1}`,'Einkunn hækkar ekki (helst B)']]);
   plain('Ekki er hægt að lækka í einkunn við töku A-prófs.',M,CW,10,'italic');
+  h2('Lokaeinkunn úr 10. bekk');rich(A.finalIntro,M,CW,10.5);
+  h3('Gildi bókstafseinkunna');
+  table(LETTERS.map(()=>({h:'',w:1/6})).map((c,i)=>({h:LETTERS[i],w:1/6})),[LETTERS.map(g=>fmt(A.gradeValues[g],3))]);
+  h3('Vörpun yfir á talnakvarða');
+  const sc=sortedScale();table([{h:'Vegið meðaltal',w:.7},{h:'Einkunn',w:.3,right:true}],sc.map((s,i)=>[scaleRange(i,sc),{t:String(s.grade),bold:true}]));
+  if(A.support.trim()){h3('Stuðningsúrræði');rich(A.support,M,CW,10.5);}
   if(A.notes.trim()){h3('Annað um námsmat');rich(A.notes,M,CW,10.5);}
 
   /* 4. Verkefni */

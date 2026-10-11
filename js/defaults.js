@@ -54,6 +54,10 @@ const DEFAULT_ASSESSMENT={
   maxPoints:0,
   aIntro:'A-próf eru þung próf án hjálpargagna. Nemandi sem nær B á B-prófi (með eða án hækkunarstiga) öðlast rétt til töku A-prófs.',
   aMax:25,aA:20,aBplus:15,
+  finalIntro:'Lokaeinkunn úr 10. bekk er reiknuð út frá vegnu meðaltali einkunna fyrir hvert þema. Vægi hvers þema ræðst af tímalengd þess í vikum. Bókstafseinkunnum er breytt í gildi, meðaltalið reiknað og því varpað yfir á talnakvarða.',
+  gradeValues:{'A':4,'B+':3.75,'B':3,'C+':2.75,'C':2,'D':1},
+  scale:[{min:4,grade:10},{min:3.75,grade:9},{min:3.375,grade:8},{min:3,grade:7},{min:2.75,grade:6},{min:2,grade:5},{min:0,grade:4}],
+  support:'Kennarar leggja mat á stuðningsúrræði, til dæmis upplestur efnis og aðlögun. Ef frávik eru veruleg og gera samræmi matskvarða og íslenska hæfnistigans ómarktækt er einkunn sérstaklega merkt í samræmi við kröfur námskrár.',
   notes:''
 };
 

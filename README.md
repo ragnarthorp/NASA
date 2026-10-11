@@ -11,7 +11,7 @@ Vefurinn er hreinn HTML/CSS/JavaScript og þarf hvorki netþjón né nettengingu
 3. **Hæfniflokkar:** flokkarnir níu (sameiginlegur kjarni og dýpkun), markmið um vægi (samtals 100%) og hlutfall greinasviða. Smelltu á flokk til að sjá yfirflokka og hæfniviðmið aðalnámskrár sem honum tilheyra og til að bæta viðfangsefni við þema.
 4. **Þemu:** áherslulínur í hæfniflokkum, tengdar hæfniviðmiðum. Smellt er á sneið í þemamyndinni til að bæta við línu.
 5. **Verkefni:** banki hækkunarverkefna (1–3 stig) og rannsóknarverkefna.
-6. **Námsmat:** B-próf (D, C, C+, B), forgjöf 8. og 9. bekkjar, hækkunarstig og A-próf, ásamt reiknivél.
+6. **Námsmat:** B-próf (D, C, C+, B), forgjöf 8. og 9. bekkjar, hækkunarstig og A-próf, lokaeinkunn úr 10. bekk (vegið meðaltal þemaeinkunna varpað á kvarðann 4–10) og stuðningsúrræði, ásamt reiknivélum.
 7. **Jafnvægi:** vægi hæfniflokka vegið með vikufjölda yfir þriggja ára tímabil, borið saman við markmið, og þekja hæfniviðmiða.
 8. **Útgáfa:** gátlisti, PDF-skjal og JSON-skrá.
 
