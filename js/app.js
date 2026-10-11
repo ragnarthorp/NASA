@@ -2,22 +2,6 @@
 /* NASA · Skólanámskrá. Öll gögn eru í einum hlut (D) sem vistast í vafranum og má sækja/opna sem JSON. */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-function inlineMD(s){
-  let x=esc(s);const held=[];const stash=h=>{held.push(h);return ''+(held.length-1)+'';};
-  x=x.replace(/`([^`]+)`/g,(_,v)=>stash('<code>'+v+'</code>'));
-  x=x.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,(_,l,u)=>stash('<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+l+'</a>'));
-  x=x.replace(/\*\*([^*]+)\*\*|__([^_]+)__/g,(_,a,b)=>'<strong>'+(a||b)+'</strong>').replace(/~~([^~]+)~~/g,'<s>$1</s>').replace(/\*([^*\n]+)\*|(?<![\p{L}\p{N}])_([^_\n]+)_(?![\p{L}\p{N}])/gu,(_,a,b)=>'<em>'+(a||b)+'</em>');
-  return x.replace(/(\d+)/g,(_,i)=>held[+i]);
-}
-function markdown(s){
-  let out='',list='';const close=()=>{if(list){out+='</'+list+'>';list='';}};
-  for(const line of String(s||'').split(/\r?\n/)){
-    const h=line.match(/^(#{1,3})\s+(.*)$/),ul=line.match(/^\s*[-*+]\s+(.*)$/),ol=line.match(/^\s*\d+[.)]\s+(.*)$/);
-    if(ul||ol){const k=ul?'ul':'ol';if(list!==k){close();list=k;out+='<'+k+'>';}out+='<li>'+inlineMD((ul||ol)[1])+'</li>';}
-    else{close();if(h)out+='<h'+h[1].length+'>'+inlineMD(h[2])+'</h'+h[1].length+'>';else if(line.trim())out+='<p>'+inlineMD(line)+'</p>';}
-  }
-  close();return out;
-}
 const CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));
 const AREA=Object.fromEntries(AREAS.map(a=>[a.id,a]));
 const CRIT=Object.fromEntries(CRITERIA.map(c=>[c.id,c]));
@@ -92,6 +76,7 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show')
 function setPath(obj,path,val){const ks=path.split('.');let o=obj;for(let i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks.at(-1)]=val;}
 function getPath(obj,path){return path.split('.').reduce((o,k)=>o?.[k],obj);}
 function download(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);}
+const themeFileBase=t=>'NASA-'+((mdPlain(t.title)||'thema').replace(/[^\p{L}\p{N}_-]+/gu,'-').replace(/^-|-$/g,'').slice(0,70)||'thema');
 const fileBase=()=>(D.meta.title||'NASA-skolanamskra').replace(/[^\p{L}\p{N}_-]+/gu,'-').replace(/^-|-$/g,'').slice(0,70)||'NASA';
 function cycleYears(){const s=+D.meta.cycleStart||2026;return [0,1,2].map(i=>(s+i)+'–'+(s+i+1));}
 function allYears(){const ys=new Set(cycleYears());D.themes.forEach(t=>t.year&&ys.add(t.year));return [...ys].sort();}
@@ -180,7 +165,7 @@ function render(){const v=VIEWS[ui.step];$('view').innerHTML=v.render();v.after?
 const intro=(eyebrow,title,text,tools='')=>`<section class="intro"><div><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(title)}</h1><p>${text}</p></div>${tools?`<div class="toolbar">${tools}</div>`:''}</section>`;
 const field=(label,path,attrs='',type='text')=>`<div class="field"><label for="f-${path}">${esc(label)}</label><input id="f-${path}" type="${type}" data-path="${path}" ${type==='number'?'data-type="number"':''} value="${esc(getPath(D,path)??'')}" ${attrs}></div>`;
 const area=(label,path,attrs='',preview=true)=>`<div class="field"><label for="f-${path}">${esc(label)}</label><textarea id="f-${path}" data-path="${path}" ${attrs}>${esc(getPath(D,path)??'')}</textarea>${preview?`<div class="markdown md-preview" data-preview="${path}">${markdown(getPath(D,path))}</div>`:''}</div>`;
-const mdHint='<p class="hint">Markdown: **feitletrað**, *skáletrað*, # fyrirsögn og - fyrir lista.</p>';
+const mdHint='<p class="hint">Markdown: **feitletrað**, *skáletrað*, ~~yfirstrikað~~, `kóði`, # fyrirsögn, - eða 1. fyrir lista (inndráttur fyrir undirlista), &gt; tilvitnun, --- lína og [texti](https://…) tengill.</p>';
 const catOptions=v=>Object.entries(GROUPS).map(([g,G])=>`<optgroup label="${esc(G.name)}">${CATS.filter(c=>c.group===g).map(c=>`<option value="${c.id}" ${v===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</optgroup>`).join('');
 const badge=c=>`<span class="badge ${c.group}">${esc(GROUPS[c.group].short)}</span>${c.tag?` <span class="badge life">${esc(c.tag)}</span>`:''}`;
 
@@ -284,7 +269,7 @@ editor(){
   const t=themeById(ui.theme);
   if(!t){$('themeEditor').innerHTML='';return;}
   const i=D.themes.indexOf(t),P='themes.'+i,years=allYears();
-  $('themeEditor').innerHTML=`<div class="split"><section class="panel"><div class="toolbar" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Þemaritill</h2><span class="toolbar"><button class="small" data-act="dupTheme">Afrita</button><button class="small danger" data-act="delTheme">Eyða þema</button></span></div>
+  $('themeEditor').innerHTML=`<div class="split"><section class="panel"><div class="toolbar" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Þemaritill</h2><span class="toolbar"><button class="small" data-act="themePdf">Sækja PDF</button><button class="small" data-act="themeJson">Sækja JSON</button><button class="small" data-act="dupTheme">Afrita</button><button class="small danger" data-act="delTheme">Eyða þema</button></span></div>
     ${field('Heiti þema',P+'.title','maxlength="150" placeholder="T.d. Hreyfing: Frá Aristótelesi til Newtons"')}
     ${area('Stutt skýring á þemanu',P+'.summary','placeholder="Nemandi kynnist…"')}
     <div class="row"><div class="field"><label for="f-year">Skólaár</label><select id="f-year" data-path="${P}.year"><option value="">Óskilgreint</option>${years.map(y=>`<option ${t.year===y?'selected':''}>${esc(y)}</option>`).join('')}</select></div>
@@ -532,6 +517,8 @@ function act(a,b){
     case 'secUp':case 'secDown':{const i=+b.dataset.i,j=a==='secUp'?i-1:i+1;[D.info[i],D.info[j]]=[D.info[j],D.info[i]];changed();$('sections').innerHTML=VIEWS.info.sections();break;}
     case 'secDel':if(confirm('Eyða kaflanum „'+(D.info[+b.dataset.i].title||'')+'“?')){D.info.splice(+b.dataset.i,1);changed();$('sections').innerHTML=VIEWS.info.sections();}break;
     case 'newTheme':newTheme();ui.year='';ui.search='';render();$('f-themes.'+(D.themes.length-1)+'.title')?.focus();break;
+    case 'themePdf':exportThemePDF(themeById(ui.theme),b);break;
+    case 'themeJson':{const t=themeById(ui.theme);download(new Blob([JSON.stringify({format:'nasa-thema',version:2,...t,projects:D.projects.filter(p=>p.theme===t.id).map(({id,theme,...p})=>p)},null,2)],{type:'application/json'}),themeFileBase(t)+'.json');toast('JSON fyrir þemað sótt.');break;}
     case 'dupTheme':{const t=themeById(ui.theme),c=normTheme({...clone(t),id:uid(),title:(t.title||'Þema')+' (afrit)'});D.themes.splice(D.themes.indexOf(t)+1,0,c);ui.theme=c.id;changed();render();toast('Þema afritað.');break;}
     case 'delTheme':{const t=themeById(ui.theme);if(confirm('Eyða þemanu „'+(t.title||'Ónefnt þema')+'“?')){D.themes.splice(D.themes.indexOf(t),1);D.projects.forEach(p=>{if(p.theme===t.id)p.theme='';});ui.theme=null;changed();render();}break;}
     case 'addEntry':T.addEntry();break;
@@ -560,7 +547,8 @@ async function openFiles(files){
       }else{
         const list=o?.format==='nasa-skolanamskra'?o.themes:o?.libraryVersion===1?o.themes:[o];
         if(!Array.isArray(list)||!list.length||!list.every(t=>t&&typeof t.title==='string'&&Array.isArray(t.entries)))throw Error('Skráin „'+f.name+'“ inniheldur hvorki námskrá né þemu.');
-        list.forEach(t=>{const n=normTheme({...t,id:uid()});D.themes.push(n);ui.theme=n.id;added++;});changed();
+        list.forEach(t=>{const n=normTheme({...t,id:uid()});D.themes.push(n);ui.theme=n.id;added++;
+          if(Array.isArray(t.projects))D.projects.push(...t.projects.slice(0,200).map(p=>({...normProject(p),theme:n.id})));});changed();
       }
     }
     if(added)toast(added+(added===1?' þema flutt':' þemu flutt')+' inn í námskrána.');

@@ -72,7 +72,7 @@ main:focus{outline:none}
 .md-preview{font-size:14px;border-top:1px dashed #cad5cf;margin-top:10px;padding-top:8px;overflow-wrap:anywhere}
 .md-preview:empty{display:none}
 .markdown p{margin:6px 0}.markdown ul,.markdown ol{margin:6px 0;padding-left:22px}
-.markdown h1,.markdown h2,.markdown h3{font:700 15px/1.4 system-ui;margin:10px 0 4px}
+.markdown h1,.markdown h2,.markdown h3{font:700 15px/1.4 system-ui;margin:10px 0 4px}.markdown h1{font-size:19px}.markdown h2{font-size:17px}
 .markdown a{color:var(--accent)}
 .markdown code{background:#e7eeea;border-radius:4px;padding:1px 4px}
 .preview-toggle{font-size:12px}
@@ -162,3 +162,10 @@ main:focus{outline:none}
 
 @media (max-width:1050px){.split{grid-template-columns:1fr}.sticky{position:static}.grid3{grid-template-columns:1fr 1fr}}
 @media (max-width:760px){main{padding:18px 16px 30px}.masthead,.stepper,.foot{padding-left:16px;padding-right:16px}.grid2,.grid3{grid-template-columns:1fr}.scale{grid-template-columns:1fr 1fr}.panel{padding:16px}h1{font-size:26px}}
+.markdown blockquote{margin:8px 0;padding:2px 0 2px 12px;border-left:3px solid #b9c9c0;color:var(--muted)}
+.markdown hr{border:0;border-top:1px solid var(--line);margin:10px 0}
+.markdown pre{background:#eef3f0;border-radius:8px;padding:8px 10px;overflow:auto;font-size:12.5px}
+.markdown pre code{background:none;padding:0}
+.markdown li>p{margin:2px 0}
+.markdown ul ul,.markdown ol ol,.markdown ul ol,.markdown ol ul{margin:2px 0}
+.markdown s{color:var(--muted)}
