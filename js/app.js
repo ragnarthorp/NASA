@@ -56,9 +56,9 @@ function normalize(o){
   if(Array.isArray(a.bBands))A.bBands.forEach(b=>{const m=a.bBands.find(x=>x?.grade===b.grade);if(m){b.min=b.grade==='D'?0:numIn(m.min,0,100,b.min);b.label=str(m.label,200)||b.label;}});
   for(const g of ['8','9','10'])A.handicap[g]=numIn(a.handicap?.[g],0,100,A.handicap[g]);
   A.pointValue=numIn(a.pointValue,0,100,A.pointValue);A.maxPoints=numIn(a.maxPoints,0,99,A.maxPoints);
-  A.finalIntro=str(a.finalIntro)||A.finalIntro;A.support=typeof a.support==='string'?a.support:A.support;
+  A.finalIntro=(a.scaleVersion!==2&&a.finalIntro==='Lokaeinkunn úr 10. bekk er reiknuð út frá vegnu meðaltali einkunna fyrir hvert þema. Vægi hvers þema ræðst af tímalengd þess í vikum. Bókstafseinkunnum er breytt í gildi, meðaltalið reiknað og því varpað yfir á talnakvarða.')?A.finalIntro:(str(a.finalIntro)||A.finalIntro);A.top=typeof a.top==='string'?a.top:A.top;A.iep=typeof a.iep==='string'?a.iep:A.iep;A.support=typeof a.support==='string'?a.support:A.support;
   for(const g of Object.keys(A.gradeValues))A.gradeValues[g]=numIn(a.gradeValues?.[g],0,10,A.gradeValues[g]);
-  if(Array.isArray(a.scale))A.scale.forEach((s,i)=>{const m=a.scale.find(x=>x?.grade===s.grade);if(m&&s.min>0)s.min=numIn(m.min,0,10,s.min);});
+  if(a.scaleVersion===2&&Array.isArray(a.scale))A.scale.forEach((s,i)=>{const m=a.scale.find(x=>x?.grade===s.grade);if(m&&s.min>0)s.min=numIn(m.min,0,10,s.min);});
   A.aMax=numIn(a.aMax,1,1000,A.aMax);A.aA=numIn(a.aA,0,1000,A.aA);A.aBplus=numIn(a.aBplus,0,1000,A.aBplus);
   d.themes=(Array.isArray(o.themes)?o.themes:[]).slice(0,400).map(normTheme);
   const ids=new Set();d.themes.forEach(t=>{if(ids.has(t.id))t.id=uid();ids.add(t.id);});
@@ -392,15 +392,19 @@ VIEWS.assess={render(){
   <section class="panel"><h2>Lokaeinkunn úr 10. bekk</h2><div class="grid2"><div>
     ${area('Lýsing','assessment.finalIntro','style="min-height:80px"')}
     <h3>Gildi bókstafseinkunna</h3><div class="row">${LETTERS.map(g=>field(g,'assessment.gradeValues.'+g,'min="0" max="10" step="0.05" style="text-align:right"','number')).join('')}</div>
-    <h3>Vörpun yfir á talnakvarða</h3><table class="maptable"><thead><tr><th>Vegið meðaltal</th><th class="num">Lágmark</th><th class="num">Einkunn</th></tr></thead><tbody id="scaleRows">${this.scaleRows()}</tbody></table>
+    <h3>Vörpun yfir á talnakvarða</h3><table class="maptable"><thead><tr><th>Vegið meðaltal</th><th>Samsvarar</th><th class="num">Lágmark</th><th class="num">Einkunn</th></tr></thead><tbody id="scaleRows">${this.scaleRows()}</tbody></table>
+    ${area('Einkunnin 10','assessment.top','style="min-height:70px"')}
+    ${area('Einstaklingsnámskrá','assessment.iep','style="min-height:50px"')}
     <h3 style="margin-top:16px">Stuðningsúrræði</h3>${area('Mat á stuðningsúrræðum og sérmerking einkunna','assessment.support','style="min-height:90px"')}
   </div><div>
     <h3>Reiknivél fyrir lokaeinkunn</h3><p class="hint">Veldu þemu og einkunn nemandans í hverju þeirra. Vægi er sjálfgefið vikufjöldi þemans en má breyta.</p>
     <div id="finalRows"></div><button class="small" data-act="finalAdd">+ Bæta við þema</button>
+    <label class="check" style="font-weight:400;margin-top:10px"><input type="checkbox" id="fTen" ${ui.fTen?'checked':''}> Framúrskarandi rannsóknarverkefni í samkomulagi við kennara</label>
+    <label class="check" style="font-weight:400"><input type="checkbox" id="fIep" ${ui.fIep?'checked':''}> Nemandi fylgir einstaklingsnámskrá</label>
     <div class="result" id="finalOut" style="margin-top:14px"></div>
   </div></div></section>`;
 },after(){this.out();this.finalRows();},
-scaleRows(){const sc=sortedScale();return sc.map((s,i)=>{const k=D.assessment.scale.indexOf(s);return `<tr><td>${esc(scaleRange(i,sc))}</td><td class="num">${s.min?`<input type="number" min="0" max="10" step="0.005" data-type="number" data-path="assessment.scale.${k}.min" value="${s.min}" aria-label="Lágmark fyrir ${s.grade}">`:'–'}</td><td class="num"><b>${s.grade}</b></td></tr>`;}).join('');},
+scaleRows(){const sc=sortedScale();return sc.map((s,i)=>{const k=D.assessment.scale.indexOf(s);return `<tr><td>${esc(scaleRange(i,sc))}</td><td>${esc(s.letter||'')}</td><td class="num">${s.min?`<input type="number" min="0" max="10" step="0.005" data-type="number" data-path="assessment.scale.${k}.min" value="${s.min}" aria-label="Lágmark fyrir ${s.grade}">`:'–'}</td><td class="num"><b>${s.grade}</b></td></tr>`;}).join('')+`<tr><td colspan="3">Framúrskarandi rannsóknarverkefni (sjá „Einkunnin 10“)</td><td class="num"><b>10</b></td></tr>`;},
 finalRows(){
   const rows=finalRows();
   $('finalRows').innerHTML=rows.map((r,i)=>`<div class="row" style="align-items:end;margin-bottom:8px"><div class="field" style="flex:3;margin:0"><label for="fr${i}">Þema</label><select id="fr${i}" data-final="${i}.theme"><option value="">Annað / óskráð þema</option>${D.themes.map(t=>`<option value="${t.id}" ${r.theme===t.id?'selected':''}>${esc(t.title||'Ónefnt þema')}</option>`).join('')}</select></div>
@@ -411,7 +415,10 @@ finalRows(){
 },
 finalOut(){
   const rows=finalRows(),r=finalGrade(rows),A=D.assessment;
-  $('finalOut').innerHTML=r?`<b>${r.grade}</b><p>Vegið meðaltal ${fmt(r.avg,3)} (${rows.filter(x=>+x.weight>0).map(x=>x.grade+' = '+fmt(A.gradeValues[x.grade],2)+' × '+fmt(+x.weight)).join(', ')}; samanlagt vægi ${fmt(r.weight)}).</p>`:'<b>–</b><p>Skráðu a.m.k. eitt þema með vægi.</p>';
+  let g=r?.grade,extra='';
+  if(r&&ui.fTen){if(r.grade>=9){g=10;extra=' Framúrskarandi rannsóknarverkefni hækkar 9 í 10.';}else extra=' Rannsóknarverkefni gefur 10 aðeins ef vegið meðaltal skilar 9 (A).';}
+  if(r&&ui.fIep){g=g+'*';extra+=' Einkunnin er sérmerkt (einstaklingsnámskrá).';}
+  $('finalOut').innerHTML=r?`<b>${g}</b><p>Vegið meðaltal ${fmt(r.avg,3)} (${rows.filter(x=>+x.weight>0).map(x=>x.grade+' = '+fmt(A.gradeValues[x.grade],2)+' × '+fmt(+x.weight)).join(', ')}; samanlagt vægi ${fmt(r.weight)}).${extra}</p>`:'<b>–</b><p>Skráðu a.m.k. eitt þema með vægi.</p>';
 },
 out(){const r=calc(),A=D.assessment;$('calcOut').innerHTML=`<b>${esc(r.final)}</b><p>${esc(r.why)}</p>`;$('aRule').textContent=`${A.aA}–${A.aMax} stig gefa A. ${A.aBplus}–${A.aA-1} stig gefa B+. ${A.aBplus-1} stig eða færri hækka ekki einkunn. Ekki er hægt að lækka í einkunn við töku A-prófs.`;},
 update(p){this.out();this.finalOut();if(/^assessment\.scale\./.test(p))$('scaleRows').querySelectorAll('tr').forEach((tr,i)=>tr.firstElementChild.textContent=scaleRange(i));}};
@@ -493,6 +500,7 @@ document.addEventListener('change',e=>{
   if(el.id==='yearFilter'){ui.year=el.value;VIEWS.themes.list();return;}
   if(el.id==='allCrit'){ui.allCrit=el.checked;VIEWS.themes.entries();return;}
   if(el.dataset.year!==undefined&&ui.step==='balance'){el.checked?ui.balYears.add(el.dataset.year):ui.balYears.delete(el.dataset.year);VIEWS.balance.after();return;}
+  if(el.id==='fTen'||el.id==='fIep'){ui[el.id]=el.checked;VIEWS.assess.finalOut();return;}
   if(el.id==='uncov'){ui.uncoveredOnly=el.checked;VIEWS.balance.after();return;}
   if(el.id==='fileInput')openFiles([...el.files]).finally(()=>el.value='');
 });

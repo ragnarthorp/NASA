@@ -240,7 +240,9 @@ async function buildPDF(opt={themes:true,balance:true,crit:true}){
   w.h3('Gildi bókstafseinkunna');
   w.table(LETTERS.map(g=>({h:g,w:1/6})),[LETTERS.map(g=>fmt(A.gradeValues[g],3))]);
   w.h3('Vörpun yfir á talnakvarða');
-  const sc=sortedScale();w.table([{h:'Vegið meðaltal',w:.7},{h:'Einkunn',w:.3,right:true}],sc.map((s,i)=>[scaleRange(i,sc),{t:String(s.grade),bold:true}]));
+  const sc=sortedScale();w.table([{h:'Vegið meðaltal',w:.5},{h:'Samsvarar',w:.25},{h:'Einkunn',w:.25,right:true}],[...sc.map((s,i)=>[scaleRange(i,sc),s.letter||'',{t:String(s.grade),bold:true}]),['Framúrskarandi rannsóknarverkefni','',{t:'10',bold:true}]]);
+  if(A.top.trim()){w.h3('Einkunnin 10');w.rich(A.top,M,CW,10.5);}
+  if(A.iep.trim()){w.h3('Einstaklingsnámskrá');w.rich(A.iep,M,CW,10.5);}
   if(A.support.trim()){w.h3('Stuðningsúrræði');w.rich(A.support,M,CW,10.5);}
   if(A.notes.trim()){w.h3('Annað um námsmat');w.rich(A.notes,M,CW,10.5);}
 
