@@ -171,11 +171,11 @@ async function themeSection(w,t){
   w.heading(t.title||'Ónefnt þema',18);w.y+=2;
   if(t.summary.trim())w.rich(t.summary,M,CW,10.5);
   const s=shares(t.entries);
-  if(s.total){await w.wheel(s.weights,{label:mdPlain(t.title)},92);const n=themeNatt(t);w.font('normal',8.5,MUTED);w.text(`${s.total} áherslulínur · ${CATS.filter(c=>s.counts[c.id]).length} virkir flokkar · um ${Math.round(n*100)}% náttúrugreinar og ${100-Math.round(n*100)}% samfélagsgreinar`,W/2,w.y,{align:'center'});w.y+=7;}
+  if(s.total){await w.wheel(s.weights,{label:mdPlain(t.title)},92);const n=themeNatt(t);w.font('normal',8.5,MUTED);w.text(`${s.total} áherslulínur${s.sum!==s.total?' (vægi '+fmt(s.sum)+')':''} · ${CATS.filter(c=>s.counts[c.id]).length} virkir flokkar · um ${Math.round(n*100)}% náttúrugreinar og ${100-Math.round(n*100)}% samfélagsgreinar`,W/2,w.y,{align:'center'});w.y+=7;}
   for(const c of CATS.filter(c=>s.counts[c.id])){
-    const col=catColor(c.id);w.band(c.name,`${s.counts[c.id]} af ${s.total} línum · ${pct(s.weights[c.id])}`,col);
+    const col=catColor(c.id);w.band(c.name,`${wLabel(s,c.id)} · ${pct(s.weights[c.id])}`,col);
     t.entries.filter(e=>e.category===c.id).forEach((e,i)=>{
-      w.need(10);w.font('bold',9,col);w.text(String(i+1)+'.',M+1,w.y+3.6);
+      w.need(10);w.font('bold',9,col);w.text(String(i+1)+'.',M+1,w.y+3.6);if(ew(e)!==1){w.font('bold',7,MUTED);w.text('×'+fmt(ew(e)),M+1,w.y+7.2);}
       w.rich(e.note||'Áhersla án skýringar.',M+7,CW-7,10);
       if(e.criteria.length){w.y-=0.5;w.plain('Hæfniviðmið: '+e.criteria.map(critLabel).join('; '),M+7,CW-7,8.5,'italic',MUTED);w.y+=1.5;}
     });w.y+=2;
@@ -263,7 +263,7 @@ async function buildPDF(opt={themes:true,balance:true,crit:true}){
   if(opt.themes&&D.themes.length){
     chapter();
     const ts=[...D.themes].sort((a,b)=>(a.year||'~').localeCompare(b.year||'~','is')||(a.period||'').localeCompare(b.period||'','is'));
-    w.plain(`Í námskránni eru ${ts.length} þemu, samtals ${fmt(ts.reduce((a,t)=>a+(t.weeks||0),0))} vikur. Ein áherslulína jafngildir einni áherslu og vægi hæfniflokks í þema er hlutfall lína í flokknum.`,M,CW,10.5);w.y+=2;
+    w.plain(`Í námskránni eru ${ts.length} þemu, samtals ${fmt(ts.reduce((a,t)=>a+(t.weeks||0),0))} vikur. Hver áherslulína hefur vægið 1 nema annað sé tilgreint (×0,5–×3). Vægi hæfniflokks í þema er hlutfall af samanlögðu vægi lína í flokknum.`,M,CW,10.5);w.y+=2;
     w.table([{h:'Þema',w:.42},{h:'Skólaár',w:.18},{h:'Lota',w:.2},{h:'Vikur',w:.1,right:true},{h:'Línur',w:.1,right:true}],ts.map(t=>[{t:t.title||'Ónefnt þema',bold:true},t.year||'-',[t.period,t.kind].filter(Boolean).join(' · '),t.weeks?fmt(t.weeks):'-',String(t.entries.length)]));
     for(const t of ts){w.newPage();await themeSection(w,t);}
   }

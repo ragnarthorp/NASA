@@ -37,7 +37,7 @@ function normTheme(t){
   if(!t||typeof t!=='object')throw Error('Ógilt þema.');
   return {id:typeof t.id==='string'&&t.id?t.id:uid(),title:str(t.title,150),summary:str(t.summary),year:str(t.year,20),period:str(t.period,80),
     weeks:numIn(t.weeks,0,52,null)||null,kind:KINDS.includes(t.kind)?t.kind:'Þemalota',
-    entries:(Array.isArray(t.entries)?t.entries:[]).slice(0,600).map(e=>({id:uid(),category:CAT[mapCat(e?.category)]?mapCat(e.category):'work',note:str(e?.note,5000),criteria:(Array.isArray(e?.criteria)?e.criteria:[]).filter(id=>CRIT[id])}))};
+    entries:(Array.isArray(t.entries)?t.entries:[]).slice(0,600).map(e=>({id:uid(),category:CAT[mapCat(e?.category)]?mapCat(e.category):'work',note:str(e?.note,5000),weight:numIn(e?.weight,0.25,5,1),criteria:(Array.isArray(e?.criteria)?e.criteria:[]).filter(id=>CRIT[id])}))};
 }
 function normProject(p){
   return {id:uid(),kind:p?.kind==='rannsókn'?'rannsókn':'hækkun',title:str(p?.title,200),category:CAT[mapCat(p?.category)]?mapCat(p.category):'work',
@@ -83,7 +83,10 @@ function allYears(){const ys=new Set(cycleYears());D.themes.forEach(t=>t.year&&y
 function themeById(id){return D.themes.find(t=>t.id===id);}
 
 /* ---------- útreikningar ---------- */
-function shares(entries){const counts=Object.fromEntries(CATS.map(c=>[c.id,0]));entries.forEach(e=>counts[e.category]++);const n=entries.length;return {counts,total:n,weights:Object.fromEntries(CATS.map(c=>[c.id,n?counts[c.id]/n:0]))};}
+const WEIGHTS=[0.5,1,1.5,2,2.5,3];
+const ew=e=>+e.weight>0?+e.weight:1;
+function shares(entries){const counts=Object.fromEntries(CATS.map(c=>[c.id,0])),w={...counts};let sum=0;entries.forEach(e=>{counts[e.category]++;w[e.category]+=ew(e);sum+=ew(e);});return {counts,w,total:entries.length,sum,weights:Object.fromEntries(CATS.map(c=>[c.id,sum?w[c.id]/sum:0]))};}
+const wLabel=(s,id)=>s.counts[id]+(s.counts[id]===1?' lína':' línur')+(s.w[id]!==s.counts[id]?' · vægi '+fmt(s.w[id]):'');
 function entryNatt(e){
   if(e.criteria.length)return e.criteria.filter(id=>AREA[CRIT[id].g].subject==='natt').length/e.criteria.length;
   const g=CAT[e.category].group;return g==='natt'?1:g==='sam'?0:D.ratio.coreNatt/100;
@@ -94,12 +97,12 @@ function aggregate(list){
     if(!t.weeks||!t.entries.length){excluded.push(t);continue;}
     const s=shares(t.entries);weeks+=t.weeks;included.push(t);
     CATS.forEach(c=>w[c.id]+=t.weeks*s.weights[c.id]);
-    natt+=t.weeks*t.entries.reduce((a,e)=>a+entryNatt(e),0)/t.entries.length;
+    natt+=t.weeks*t.entries.reduce((a,e)=>a+ew(e)*entryNatt(e),0)/s.sum;
   }
   if(weeks){CATS.forEach(c=>w[c.id]/=weeks);natt/=weeks;}
   return {weights:w,weeks,natt:weeks?natt:null,included,excluded};
 }
-function themeNatt(t){return t.entries.length?t.entries.reduce((a,e)=>a+entryNatt(e),0)/t.entries.length:null;}
+function themeNatt(t){const sum=t.entries.reduce((a,e)=>a+ew(e),0);return sum?t.entries.reduce((a,e)=>a+ew(e)*entryNatt(e),0)/sum:null;}
 const targetSum=()=>CATS.reduce((a,c)=>a+(+D.targets[c.id]||0),0);
 function targetNatt(){const s=targetSum()||1;return CATS.reduce((a,c)=>{const g=c.group,v=+D.targets[c.id]||0;return a+(g==='natt'?v:g==='core'?v*D.ratio.coreNatt/100:0);},0)/s;}
 const targetWeights=()=>{const s=targetSum()||1;return Object.fromEntries(CATS.map(c=>[c.id,(+D.targets[c.id]||0)/s]));};
@@ -260,7 +263,7 @@ function filteredThemes(){const q=ui.search.trim().toLowerCase();return D.themes
 VIEWS.themes={render(){
   if(ui.theme&&!themeById(ui.theme))ui.theme=null;
   if(!ui.theme&&D.themes.length)ui.theme=D.themes[0].id;
-  return intro('Skref 4 · Þemu','Þemu og áherslur','Hvert þema fær áherslulínur í hæfniflokkum. Ein lína jafngildir einni áherslu og vægi flokks í þemanu er hlutfall lína. Tengdu línur við hæfniviðmið aðalnámskrár til að fylgjast með þekju og hlutfalli greinasviða.','<button class="primary" data-act="newTheme">+ Nýtt þema</button>')+
+  return intro('Skref 4 · Þemu','Þemu og áherslur','Hvert þema fær áherslulínur í hæfniflokkum. Hver lína er ein áhersla með vægið 1 nema annað sé valið (0,5–3). Vægi flokks í þemanu er hlutfall af samanlögðu vægi lína. Tengdu línur við hæfniviðmið aðalnámskrár til að fylgjast með þekju og hlutfalli greinasviða.','<button class="primary" data-act="newTheme">+ Nýtt þema</button>')+
   `<section class="panel"><div class="filters"><div class="field"><label for="yearFilter">Skólaár</label><select id="yearFilter"><option value="">Öll skólaár</option>${allYears().map(y=>`<option ${ui.year===y?'selected':''}>${esc(y)}</option>`).join('')}<option value="__none" ${ui.year==='__none'?'selected':''}>Óskilgreint skólaár</option></select></div><div class="field" style="flex:1"><label for="themeSearch">Leita</label><input id="themeSearch" type="search" value="${esc(ui.search)}" placeholder="Leita í heitum og skýringum"></div></div><div id="themeList"></div></section>
   <div id="themeEditor"></div>`;
 },after(){this.list();this.editor();},
@@ -289,7 +292,7 @@ entries(){
   $('entries').innerHTML=t.entries.length?t.entries.map((e,j)=>{
     const P=`themes.${i}.entries.${j}`,list=ui.allCrit?AREAS:areasOf(e.category);
     return `<div class="entry" data-j="${j}" style="border-left-color:${catColor(e.category)}"><div class="entrynum">ÁHERSLA ${j+1}</div>
-    <div class="entryhead"><select data-path="${P}.category" data-rerender="1" aria-label="Hæfniflokkur línu ${j+1}">${catOptions(e.category)}</select><button data-act="dupEntry" title="Ný lína í sama flokki" aria-label="Bæta við línu í sama flokki">+</button><button data-act="delEntry" title="Eyða línu" aria-label="Eyða línu ${j+1}">×</button></div>
+    <div class="entryhead"><select data-path="${P}.category" data-rerender="1" aria-label="Hæfniflokkur línu ${j+1}">${catOptions(e.category)}</select><select class="wsel" data-path="${P}.weight" data-type="number" title="Vægi áherslunnar" aria-label="Vægi línu ${j+1}">${WEIGHTS.map(v=>`<option value="${v}" ${ew(e)===v?'selected':''}>×${fmt(v)}</option>`).join('')}</select><button data-act="dupEntry" title="Ný lína í sama flokki" aria-label="Bæta við línu í sama flokki">+</button><button data-act="delEntry" title="Eyða línu" aria-label="Eyða línu ${j+1}">×</button></div>
     <textarea aria-label="Skýring línu ${j+1}" data-path="${P}.note" placeholder="T.d. Heimildalæsi: nemandi metur ólíkar heimildir.">${esc(e.note)}</textarea><div class="markdown md-preview" data-preview="${P}.note">${markdown(e.note)}</div>
     <div class="linked">${e.criteria.map(id=>`<span class="chip ${AREA[CRIT[id].g].subject}" title="${esc(CRIT[id].t)}">${esc(critLabel(id))}</span>`).join('')}</div>
     <details><summary>Tengja hæfniviðmið (${e.criteria.length})</summary><div class="critlist">${list.map(a=>`<div class="ah">${esc(a.name)} · ${SUBJECT[a.subject]}</div>${CRITERIA.filter(x=>x.g===a.id).map(x=>`<label><input type="checkbox" data-crit="${x.id}" ${e.criteria.includes(x.id)?'checked':''}><span><b>${esc(x.s)}:</b> ${esc(x.t)}</span></label>`).join('')}`).join('')}</div></details></div>`;
@@ -297,9 +300,9 @@ entries(){
 },
 refresh(){
   const t=themeById(ui.theme);if(!t)return;const s=shares(t.entries),n=themeNatt(t);
-  $('stTotal').textContent=s.total;$('stUsed').textContent=CATS.filter(c=>s.counts[c.id]).length;$('stNatt').textContent=n==null?'–':Math.round(n*100)+' / '+(100-Math.round(n*100));
+  $('stTotal').textContent=s.total+(s.sum!==s.total?' ('+fmt(s.sum)+')':'');$('stUsed').textContent=CATS.filter(c=>s.counts[c.id]).length;$('stNatt').textContent=n==null?'–':Math.round(n*100)+' / '+(100-Math.round(n*100));
   $('themeWheel').innerHTML=wheelSVG(s.weights,{interactive:true,label:t.title||'Þemamynd'});
-  $('themeDetails').innerHTML=s.total?CATS.filter(c=>s.counts[c.id]).map(c=>`<div class="detail"><h3><span>${esc(c.name)}</span><span class="chip">${s.counts[c.id]} / ${s.total} · ${pct(s.weights[c.id])}</span></h3><ul>${t.entries.filter(e=>e.category===c.id).map(e=>`<li class="markdown">${markdown(e.note||'Áhersla án skýringar')}</li>`).join('')}</ul></div>`).join(''):'';
+  $('themeDetails').innerHTML=s.total?CATS.filter(c=>s.counts[c.id]).map(c=>`<div class="detail"><h3><span>${esc(c.name)}</span><span class="chip">${wLabel(s,c.id)} · ${pct(s.weights[c.id])}</span></h3><ul>${t.entries.filter(e=>e.category===c.id).map(e=>`<li class="markdown">${ew(e)!==1?`<span class="chip">vægi ×${fmt(ew(e))}</span>`:''}${markdown(e.note||'Áhersla án skýringar')}</li>`).join('')}</ul></div>`).join(''):'';
 },
 addEntry(category='work',after){
   const t=themeById(ui.theme);if(!t)return;const at=after==null?t.entries.length:after+1;
