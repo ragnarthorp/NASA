@@ -35,3 +35,10 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - `js/pdf.js`: PDF-útgáfa
 - `vendor/jspdf.umd.min.js`: [jsPDF](https://github.com/parallax/jsPDF) 2.5.1 (MIT-leyfi)
 - `vendor/pdf-fonts.js`: leturgerðir fyrir PDF, hlutmengi úr Liberation Sans/Mono (SIL Open Font License, sjá `vendor/pdf-fonts-LICENSE.txt`)
+
+## Andesbrúin (brúarleikur)
+
+`andesbru/index.html` er sjálfstæður leikur fyrir eðlisfræðikennslu: nemandinn stendur við gil í Andesfjöllum í Perú og hannar brú úr ichu-reipi, bambus, tré eða stáli. Grindin er reiknuð með stífnifylkjaaðferð (tog, þrýstingur, Euler-kiknun, reipi bera aðeins tog) og farmurinn ekur yfir. Stig = 100 × farmur ÷ massi brúar, svo léttari brú sem stenst fær fleiri stig. Fjögur gil, frá 10 m upp í 24 m.
+
+- `andesbru/game.html`: frumskrá leiksins
+- `andesbru/build.sh`: býr til `andesbru/index.html` úr frumskránni

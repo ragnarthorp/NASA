@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Andesbrúin</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: brúarsmiðja — stór gilmynd til vinstri, verkfæraspjald til hægri, staflast á síma. */
+:root {
+  --bg: #eceeea;
+  --surface: #f8f9f6;
+  --ink: #1b2320;
+  --muted: #5a645f;
+  --line: #d0d6d1;
+  --accent: #a3214a;        /* kókíníllitur úr andeskum vefnaði */
+  --accent-ink: #ffffff;
+  --ochre: #b37e12;
+  --good: #2c7a4c;
+  --bad: #b3261e;
+  --font-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --font-body: "Alegreya Sans", "Trebuchet MS", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141816; --surface: #1d2320; --ink: #e6ebe7; --muted: #9aa49f; --line: #333b37;
+    --accent: #e3618a; --accent-ink: #1d0b12; --ochre: #e2b24c; --good: #62c58f; --bad: #f2705f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141816; --surface: #1d2320; --ink: #e6ebe7; --muted: #9aa49f; --line: #333b37;
+  --accent: #e3618a; --accent-ink: #1d0b12; --ochre: #e2b24c; --good: #62c58f; --bad: #f2705f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 800; letter-spacing: .01em; text-wrap: balance; margin: 0; line-height: 1; }
+h1 { font-size: clamp(2.6rem, 6vw, 4.2rem); text-transform: uppercase; }
+h2 { font-size: 1.6rem; text-transform: uppercase; }
+h3 { font-size: 1.15rem; text-transform: uppercase; letter-spacing: .04em; }
+p { margin: 0; }
+.eyebrow { font-family: var(--font-mono); font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.top { display: grid; grid-template-columns: auto 1fr; gap: 8px 32px; align-items: end; }
+.top .brand { display: grid; gap: 6px; }
+.lede { max-width: 62ch; color: var(--muted); font-size: 1.05rem; }
+.lede b { color: var(--ink); }
+@media (max-width: 760px) { .top { grid-template-columns: 1fr; } }
+
+/* Stigabönd — vefnaðarmunstur sem eina skrautið */
+.band { height: 10px; border-radius: 2px;
+  background: repeating-linear-gradient(90deg, var(--accent) 0 14px, var(--ochre) 14px 20px, var(--ink) 20px 24px, var(--ochre) 24px 30px); opacity: .9; }
+
+.levels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 760px) { .levels { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lvl { all: unset; cursor: pointer; display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); min-width: 0; }
+.lvl:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.lvl[aria-selected="true"] { border-color: var(--accent); box-shadow: inset 0 -4px 0 var(--accent); }
+.lvl .n { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; text-transform: uppercase; }
+.lvl .m { font-family: var(--font-mono); font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lvl .best { font-family: var(--font-mono); font-size: .74rem; color: var(--ochre); min-height: 1.1em; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+@media (max-width: 960px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+.canvas-wrap { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: #9cc6e2; min-width: 0; }
+canvas { display: block; width: 100%; touch-action: none; cursor: crosshair; }
+.hint { font-size: .92rem; color: var(--muted); padding: 8px 2px 0; }
+.hint kbd { font-family: var(--font-mono); font-size: .8rem; border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; background: var(--surface); }
+
+.panel { display: grid; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; min-width: 0; }
+.mission { display: grid; gap: 4px; }
+.mission .cargo { font-size: 1.05rem; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-variant-numeric: tabular-nums; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-family: var(--font-mono); font-size: .92rem; text-align: right; }
+.kv dd.big { font-size: 1.05rem; font-weight: 500; color: var(--ink); }
+
+.mats { display: grid; gap: 6px; }
+.mat { display: grid; grid-template-columns: 18px 1fr auto; gap: 2px 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+.mat input { position: absolute; opacity: 0; pointer-events: none; }
+.mat:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.mat:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.mat .sw { width: 18px; height: 18px; border-radius: 3px; grid-row: span 2; }
+.mat .nm { font-weight: 700; }
+.mat .key { font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+.mat .sp { grid-column: 2 / 4; font-family: var(--font-mono); font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.tools { display: flex; flex-wrap: wrap; gap: 6px; }
+button.t { font: inherit; font-size: .95rem; padding: 6px 12px; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+button.t[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+button.t:focus-visible, button.go:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button.t:disabled { opacity: .45; cursor: default; }
+button.go { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; text-transform: uppercase; letter-spacing: .04em; padding: 12px; border: 0; border-radius: 6px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+button.go:disabled { opacity: .5; cursor: default; }
+
+.result { display: grid; gap: 8px; padding: 12px; border-radius: 6px; border: 1px solid var(--line); }
+.result[data-state="pass"] { border-color: var(--good); }
+.result[data-state="fail"] { border-color: var(--bad); }
+.result .verdict { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; text-transform: uppercase; }
+.result[data-state="pass"] .verdict { color: var(--good); }
+.result[data-state="fail"] .verdict { color: var(--bad); }
+.result .score { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.result .score b { font-family: var(--font-display); font-size: 2.6rem; line-height: 1; }
+.stars { font-size: 1.4rem; letter-spacing: 2px; color: var(--ochre); }
+.stars .off { color: var(--line); }
+.result p { font-size: .95rem; color: var(--muted); }
+
+.info { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding-top: 8px; border-top: 1px solid var(--line); }
+@media (max-width: 860px) { .info { grid-template-columns: minmax(0, 1fr); } }
+.info section { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.info p, .info li { font-size: .98rem; max-width: 62ch; }
+.info ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+.formula { font-family: var(--font-mono); font-size: .9rem; padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--surface); overflow-x: auto; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <p class="eyebrow">Perú · Andesfjöll · Brúarsmiðja</p>
+      <h1>Andesbrúin</h1>
+    </div>
+    <p class="lede">Þú stendur á gilbarmi hátt í Andesfjöllum og fljótið beljar langt fyrir neðan. Hannaðu brú sem ber farminn yfir gilið. <b>Stigin ráðast af því hve léttbyggð brúin er miðað við þungann sem hún ber.</b></p>
+  </header>
+  <div class="band" aria-hidden="true"></div>
+
+  <nav class="levels" id="levels" role="tablist" aria-label="Gil"></nav>
+
+  <div class="stage">
+    <div>
+      <div class="canvas-wrap" id="cwrap"><canvas id="cv" aria-label="Gilið og brúin sem þú hannar"></canvas></div>
+      <p class="hint" id="hint">Smelltu á punkt og síðan á annan til að leggja bita. Hægrismelltu eða ýttu á <kbd>Esc</kbd> til að hætta við. <kbd>1</kbd>–<kbd>4</kbd> velja efni, <kbd>Ctrl</kbd>+<kbd>Z</kbd> afturkallar.</p>
+    </div>
+
+    <aside class="panel" aria-label="Verkfæri">
+      <div class="mission">
+        <p class="eyebrow" id="mPlace"></p>
+        <h2 id="mName"></h2>
+        <p class="cargo" id="mCargo"></p>
+      </div>
+
+      <div class="mats" id="mats" role="radiogroup" aria-label="Byggingarefni"></div>
+
+      <div class="tools">
+        <button class="t" id="tBuild" aria-pressed="true">Byggja</button>
+        <button class="t" id="tErase" aria-pressed="false">Fjarlægja</button>
+        <button class="t" id="tUndo">Afturkalla</button>
+        <button class="t" id="tClear">Hreinsa</button>
+        <button class="t" id="tSample">Sýnidæmi</button>
+      </div>
+
+      <dl class="kv">
+        <dt>Massi brúar</dt><dd class="big" id="sMass">0 kg</dd>
+        <dt>Farmur</dt><dd id="sCargo">0 kg</dd>
+        <dt>Bitar</dt><dd id="sCount">0</dd>
+        <dt>Stig ef hún stenst</dt><dd id="sPot">–</dd>
+      </dl>
+
+      <button class="go" id="go">Prófa brúna</button>
+      <div class="result" id="result" data-state="idle">
+        <p>Leggðu bita yfir gilið. Gólfið þarf að vera samfellt frá barmi til barms, og farmurinn ekur eftir því.</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="info">
+    <section>
+      <h3>Stigagjöf</h3>
+      <p>Brúin þarf að bera farminn alla leið yfir, auk eigin þunga. Ef hún stenst færðu stig eftir hlutfallinu milli farms og massa brúarinnar:</p>
+      <p class="formula">stig = 100 × farmur (kg) ÷ massi brúar (kg)</p>
+      <p>Brú sem vegur 200 kg og ber 400 kg fær 200 stig. Ef þú léttir hana í 100 kg án þess að hún bresti færðu 400.</p>
+    </section>
+    <section>
+      <h3>Eðlisfræðin</h3>
+      <ul>
+        <li>Bitarnir tengjast í liðum. Hver liður þarf stífingu í tvær áttir, og þríhyrningar gera grindina stöðuga.</li>
+        <li>Hver biti er annaðhvort í <b>togi</b> (dreginn) eða <b>þrýstingi</b> (kraminn). Rauður litur í prófun merkir að biti sé nálægt mörkum.</li>
+        <li>Langir bitar í þrýstingi kikna. Burðarþol í þrýstingi fellur með lengd í öðru veldi (Euler-kiknun), svo stuttar stoðir nýta efnið betur.</li>
+        <li>Reipi ber aðeins tog. Ef það á að ýta slaknar það og hættir að bera.</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Q’eswachaka</h3>
+      <p>Í Cusco-héraði stendur enn hengibrú Inka yfir Apurímac-fljót. Hún er fléttuð úr ichu-grasi og þorpsbúar endurnýja hana á hverju ári. Inkarnir vissu að reipi er ótrúlega létt en ber aðeins tog, og byggðu brýrnar eftir því.</p>
+      <p>Í leiknum er reipið léttasta efnið. Stálið er sterkast en þyngst, og bambus og tré liggja þar á milli.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ===== ENGINE ===== */
+const G = 9.81, DECK = 2, EXAG = 25;
+const MATS = {
+  reipi:  { key: 1, name: 'Ichu-reipi',      kgm: 1.0, ten: 15000,  comp: 0,      EA: 3e6,   EI: 0,     maxL: 12, color: '#d1a943', w: .07 },
+  bambus: { key: 2, name: 'Guadua-bambus',   kgm: 2.2, ten: 45000,  comp: 35000,  EA: 5e7,   EI: 5.8e4, maxL: 6,  color: '#8ea24a', w: .13 },
+  tre:    { key: 3, name: 'Eucalyptus-tré',  kgm: 6.0, ten: 70000,  comp: 55000,  EA: 1.2e8, EI: 1.0e5, maxL: 6,  color: '#8a5a33', w: .17 },
+  stal:   { key: 4, name: 'Stálrör',         kgm: 8.4, ten: 300000, comp: 250000, EA: 2.1e8, EI: 1.9e5, maxL: 8,  color: '#5d6f80', w: .11 },
+};
+const LEVELS = [
+  { id: 'apurimac', name: 'Apurímac', place: 'Cusco · við Q’eswachaka', S: 10, kg: 400, vehicle: 'llamas',
+    cargo: 'Fjögur lamadýr með ullarklyfjar', anchors: [[0,0],[10,0],[0,-2],[10,-2]], stars: [200, 380, 550] },
+  { id: 'colca', name: 'Colca', place: 'Arequipa · Colca-gljúfur', S: 14, kg: 1200, vehicle: 'cart',
+    cargo: 'Uxakerra með kartöflupokum', anchors: [[0,0],[14,0],[0,-3],[14,-3],[0,-6],[14,-6]], stars: [400, 750, 1100] },
+  { id: 'urubamba', name: 'Urubamba', place: 'Helgi dalurinn', S: 18, kg: 2500, vehicle: 'pickup',
+    cargo: 'Pallbíll hlaðinn maís', anchors: [[0,0],[18,0],[0,-3],[18,-3],[-3,0],[21,0]], stars: [500, 850, 1150] },
+  { id: 'cotahuasi', name: 'Cotahuasi', place: 'Arequipa · eitt dýpsta gljúfur heims', S: 24, kg: 6000, vehicle: 'truck',
+    cargo: 'Vörubíll með koparmálmgrýti', anchors: [[0,0],[24,0],[0,-4],[24,-4],[12,-6]], pillar: [11, 13, -6], stars: [600, 850, 1000] },
+];
+const BOUNDS = { y0: -8, y1: 7, pad: 4 };
+
+function isAnchor(L, x, y) { return L.anchors.some(a => a[0] === x && a[1] === y); }
+function validPoint(L, x, y) {
+  if (isAnchor(L, x, y)) return true;
+  if (x < -BOUNDS.pad || x > L.S + BOUNDS.pad || y < BOUNDS.y0 || y > BOUNDS.y1) return false;
+  if ((x <= 0 || x >= L.S) && y <= 0) return false;            // inni í klettinum eða á jörðinni
+  if (L.pillar && x >= L.pillar[0] && x <= L.pillar[1] && y <= L.pillar[2]) return false;
+  return true;
+}
+function memLen(m) { return Math.hypot(m.b[0] - m.a[0], m.b[1] - m.a[1]); }
+function memMass(m) { return memLen(m) * MATS[m.mat].kgm; }
+function designMass(mem) { return mem.reduce((s, m) => s + memMass(m), 0); }
+
+function buildModel(L, mem) {
+  const nodes = [], idx = new Map();
+  const add = (x, y, fixed) => {
+    const k = x + ',' + y;
+    if (idx.has(k)) return idx.get(k);
+    idx.set(k, nodes.length); nodes.push({ x, y, fixed: !!fixed }); return nodes.length - 1;
+  };
+  L.anchors.forEach(a => add(a[0], a[1], true));
+  const deck = [];
+  for (let x = 0; x <= L.S; x += DECK) deck.push(add(x, 0, isAnchor(L, x, 0)));
+  const members = mem.map(m => {
+    const i = add(m.a[0], m.a[1], isAnchor(L, m.a[0], m.a[1]));
+    const j = add(m.b[0], m.b[1], isAnchor(L, m.b[0], m.b[1]));
+    const M = MATS[m.mat], dx = nodes[j].x - nodes[i].x, dy = nodes[j].y - nodes[i].y, len = Math.hypot(dx, dy);
+    const c = M.comp > 0 ? Math.min(M.comp, Math.PI * Math.PI * M.EI / (len * len)) : 0;
+    return { i, j, len, cx: dx / len, cy: dy / len, k: M.EA / len, t: M.ten, c, rope: M.comp === 0, mat: m.mat, mass: len * M.kgm, src: m };
+  });
+  let nd = 0;
+  const dof = nodes.map(n => n.fixed ? -1 : (nd += 2) - 2);
+  const self = new Float64Array(nd);
+  members.forEach(m => {
+    const w = m.mass * G / 2;
+    if (dof[m.i] >= 0) self[dof[m.i] + 1] -= w;
+    if (dof[m.j] >= 0) self[dof[m.j] + 1] -= w;
+  });
+  return { L, nodes, members, deck, dof, nd, self };
+}
+
+// Línulegt jafnvægi: K u = F, með Gauss-eyðingu. Skilar færslum fyrir hvern hægri hlið, eða null ef grindin er hreyfanleg.
+function solve(model, active, rhs) {
+  const n = model.nd, { dof, members } = model;
+  if (n === 0) return rhs.map(() => new Float64Array(0));
+  const K = new Float64Array(n * n);
+  members.forEach((m, e) => {
+    if (!active[e]) return;
+    const di = dof[m.i], dj = dof[m.j], c = m.cx, s = m.cy, k = m.k;
+    const kk = [c * c * k, c * s * k, s * s * k];
+    const blk = [[kk[0], kk[1]], [kk[1], kk[2]]];
+    const put = (a, b, sign) => {
+      if (a < 0 || b < 0) return;
+      for (let r = 0; r < 2; r++) for (let q = 0; q < 2; q++) K[(a + r) * n + b + q] += sign * blk[r][q];
+    };
+    put(di, di, 1); put(dj, dj, 1); put(di, dj, -1); put(dj, di, -1);
+  });
+  let maxDiag = 0;
+  for (let i = 0; i < n; i++) maxDiag = Math.max(maxDiag, K[i * n + i]);
+  if (maxDiag === 0) return null;
+  const tol = maxDiag * 1e-9;
+  const B = rhs.map(r => Float64Array.from(r));
+  for (let col = 0; col < n; col++) {
+    let p = col, best = Math.abs(K[col * n + col]);
+    for (let r = col + 1; r < n; r++) { const v = Math.abs(K[r * n + col]); if (v > best) { best = v; p = r; } }
+    if (best < tol) return null;
+    if (p !== col) {
+      for (let q = col; q < n; q++) { const t = K[col * n + q]; K[col * n + q] = K[p * n + q]; K[p * n + q] = t; }
+      B.forEach(b => { const t = b[col]; b[col] = b[p]; b[p] = t; });
+    }
+    const piv = K[col * n + col];
+    for (let r = col + 1; r < n; r++) {
+      const f = K[r * n + col] / piv;
+      if (f === 0) continue;
+      for (let q = col; q < n; q++) K[r * n + q] -= f * K[col * n + q];
+      B.forEach(b => { b[r] -= f * b[col]; });
+    }
+  }
+  return B.map(b => {
+    const u = new Float64Array(n);
+    for (let r = n - 1; r >= 0; r--) {
+      let s = b[r];
+      for (let q = r + 1; q < n; q++) s -= K[r * n + q] * u[q];
+      u[r] = s / K[r * n + r];
+    }
+    return u;
+  });
+}
+function memberForces(model, active, u) {
+  const { dof } = model;
+  const d = (node, k) => dof[node] < 0 ? 0 : u[dof[node] + k];
+  return model.members.map((m, e) => active[e]
+    ? m.k * ((d(m.j, 0) - d(m.i, 0)) * m.cx + (d(m.j, 1) - d(m.i, 1)) * m.cy) : 0);
+}
+function utilOf(m, f) { return f >= 0 ? f / m.t : (m.c > 0 ? -f / m.c : 0); }
+
+// Greinir eitt álagstilvik. Reipi sem lenda í þrýstingi slakna og eru tekin úr.
+function analyze(model, loads, broken) {
+  const active = model.members.map((m, e) => !(broken && broken.has(e)));
+  const F = Float64Array.from(model.self);
+  loads.forEach(([node, fy]) => { const d = model.dof[node]; if (d >= 0) F[d + 1] += fy; });
+  for (let it = 0; it < 8; it++) {
+    const r = solve(model, active, [F]);
+    if (!r) return { mech: true, active };
+    const f = memberForces(model, active, r[0]);
+    let changed = false;
+    model.members.forEach((m, e) => { if (active[e] && m.rope && f[e] < -1) { active[e] = false; changed = true; } });
+    if (!changed) {
+      const util = model.members.map((m, e) => active[e] ? utilOf(m, f[e]) : 0);
+      let worst = -1, max = 0;
+      util.forEach((v, e) => { if (v > max) { max = v; worst = e; } });
+      return { mech: false, u: r[0], f, util, active, max, worst };
+    }
+  }
+  return { mech: true, active };
+}
+
+// Burðargeta: mesti punktkraftur sem brúin ber á hvaða gólflið sem er.
+function capacity(model) {
+  let best = { lam: Infinity, gov: -1, at: -1 };
+  for (const node of model.deck) {
+    if (model.dof[node] < 0) continue;
+    const active = model.members.map(() => true);
+    const P = new Float64Array(model.nd); P[model.dof[node] + 1] = -1;
+    let lam = 0, gov = -1;
+    for (let it = 0; it < 8; it++) {
+      const r = solve(model, active, [model.self, P]);
+      if (!r) return { lam: 0, mech: true, gov: -1, at: node };
+      const fs = memberForces(model, active, r[0]), fp = memberForces(model, active, r[1]);
+      lam = 1e8; gov = -1;
+      model.members.forEach((m, e) => {
+        if (!active[e]) return;
+        let l = 1e8;
+        if (fs[e] > m.t || (!m.rope && fs[e] < -m.c)) l = 0;
+        else if (fp[e] > 1e-12) l = (m.t - fs[e]) / fp[e];
+        else if (!m.rope && fp[e] < -1e-12) l = (-m.c - fs[e]) / fp[e];
+        if (l < lam) { lam = l; gov = e; }
+      });
+      let changed = false;
+      const at = Math.min(lam, 1e6);
+      model.members.forEach((m, e) => { if (active[e] && m.rope && fs[e] + at * fp[e] < -1) { active[e] = false; changed = true; } });
+      if (!changed) break;
+    }
+    if (lam < best.lam) best = { lam, gov, at: node };
+  }
+  return best;
+}
+
+function checkDesign(L, mem) {
+  const has = new Set(mem.map(m => [m.a + '', m.b + ''].sort().join('|')));
+  for (let x = 0; x < L.S; x += DECK) {
+    if (!has.has([[x, 0] + '', [x + DECK, 0] + ''].sort().join('|')))
+      return `Gólfið er rofið milli ${x} og ${x + DECK} m. Leggðu bita eftir gólflínunni frá barmi til barms.`;
+  }
+  return null;
+}
+
+function sampleDesign(L) {
+  const S = L.S, h = S <= 14 ? 2 : 3, mem = [];
+  const add = (a, b) => mem.push({ a, b, mat: 'tre' });
+  for (let x = 0; x < S; x += 2) add([x, 0], [x + 2, 0]);
+  for (let x = 2; x < S - 2; x += 2) add([x, h], [x + 2, h]);
+  for (let x = 2; x <= S - 2; x += 2) add([x, 0], [x, h]);
+  add([0, 0], [2, h]); add([S, 0], [S - 2, h]);
+  for (let x = 2; x < S - 2; x += 2) x + 1 < S / 2 ? add([x, h], [x + 2, 0]) : add([x, 0], [x + 2, h]);
+  return mem;
+}
+/* ===== END ENGINE ===== */
+
+/* ===== UI ===== */
+const $ = id => document.getElementById(id);
+const fmt = (v, d = 0) => {
+  const [i, f] = Math.abs(v).toFixed(d).split('.');
+  return (v < 0 && +v.toFixed(d) !== 0 ? '−' : '') + i.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (f ? ',' + f : '');
+};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('andesbru:' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('andesbru:' + k, JSON.stringify(v)); } catch {} },
+};
+
+const hot = window.claude?.hot?.data;
+const state = {
+  lvl: hot?.lvl ?? store.get('lvl', 0),
+  designs: hot?.designs ?? store.get('designs', null) ?? {},
+  best: store.get('best', {}),
+  mat: 'bambus', tool: 'build', start: null, hover: null, undo: [],
+  run: null,
+};
+LEVELS.forEach(L => { if (!state.designs[L.id]) state.designs[L.id] = L.id === 'apurimac' ? sampleDesign(L) : []; });
+window.claude?.hot?.snapshot?.(() => ({ lvl: state.lvl, designs: state.designs }));
+
+const lvl = () => LEVELS[state.lvl];
+const design = () => state.designs[lvl().id];
+function save() { store.set('designs', state.designs); store.set('lvl', state.lvl); }
+
+/* --- stigahnappar og efni --- */
+function starStr(n) { return '★'.repeat(n) + '☆'.repeat(3 - n); }
+function starsFor(L, score) { return L.stars.filter(s => score >= s).length; }
+function renderLevels() {
+  $('levels').innerHTML = LEVELS.map((L, i) => {
+    const b = state.best[L.id];
+    return `<button class="lvl" role="tab" aria-selected="${i === state.lvl}" data-i="${i}">
+      <span class="n">${L.name}</span>
+      <span class="m">${L.S} m haf · ${fmt(L.kg)} kg</span>
+      <span class="best">${b ? starStr(starsFor(L, b)) + ' ' + fmt(b) + ' stig' : 'Óreynt'}</span></button>`;
+  }).join('');
+}
+$('levels').addEventListener('click', e => {
+  const b = e.target.closest('.lvl'); if (!b) return;
+  state.lvl = +b.dataset.i; state.start = null; state.undo = []; state.run = null; save(); refresh(); resetResult();
+});
+$('mats').innerHTML = Object.entries(MATS).map(([id, M]) => `
+  <label class="mat"><input type="radio" name="mat" id="mat-${id}" value="${id}" ${id === state.mat ? 'checked' : ''}>
+    <span class="sw" style="background:${M.color}"></span>
+    <span class="nm">${M.name}</span><span class="key">${M.key}</span>
+    <span class="sp">${fmt(M.kgm, 1)} kg/m · tog ${fmt(M.ten / 1000)} kN · ${M.comp ? 'þrýst. ' + fmt(M.comp / 1000) + ' kN' : 'ekkert þrýstiþol'} · ≤${M.maxL} m</span>
+  </label>`).join('');
+$('mats').addEventListener('change', e => { state.mat = e.target.value; });
+
+function setTool(t) { state.tool = t; state.start = null; $('tBuild').setAttribute('aria-pressed', t === 'build'); $('tErase').setAttribute('aria-pressed', t === 'erase'); }
+$('tBuild').onclick = () => setTool('build');
+$('tErase').onclick = () => setTool('erase');
+function pushUndo() { state.undo.push(JSON.stringify(design())); if (state.undo.length > 100) state.undo.shift(); }
+function edited() { state.run = null; save(); refresh(); resetResult(); }
+$('tUndo').onclick = () => { if (!state.undo.length) return; state.designs[lvl().id] = JSON.parse(state.undo.pop()); edited(); };
+$('tClear').onclick = () => { if (!design().length) return; pushUndo(); state.designs[lvl().id] = []; edited(); };
+$('tSample').onclick = () => { pushUndo(); state.designs[lvl().id] = sampleDesign(lvl()); edited(); };
+
+function refresh() {
+  const L = lvl(), mem = design(), mass = designMass(mem);
+  renderLevels();
+  $('mPlace').textContent = L.place;
+  $('mName').textContent = L.name;
+  $('mCargo').textContent = `${L.cargo}: ${fmt(L.kg)} kg yfir ${L.S} m gil.`;
+  $('sMass').textContent = fmt(mass) + ' kg';
+  $('sCargo').textContent = fmt(L.kg) + ' kg';
+  $('sCount').textContent = mem.length;
+  $('sPot').textContent = mass > 0 ? fmt(Math.round(100 * L.kg / mass)) : '–';
+  $('tUndo').disabled = !state.undo.length;
+  const busy = state.run && !state.run.done;
+  $('go').disabled = busy;
+  $('go').textContent = busy ? 'Prófun í gangi…' : 'Prófa brúna';
+}
+function resetResult() {
+  setResult('idle', `<p>Leggðu bita yfir gilið. Gólfið þarf að vera samfellt frá barmi til barms, og farmurinn ekur eftir því.</p>`);
+}
+function setResult(st, html) { const r = $('result'); r.dataset.state = st; r.innerHTML = html; }
+
+/* --- ritill --- */
+const cv = $('cv'), ctx = cv.getContext('2d');
+let VIEW = { s: 1, ox: 0, oy: 0 }, DPR = 1;
+function fit() {
+  const w = $('cwrap').clientWidth;
+  const h = Math.round(Math.max(260, Math.min(620, w < 560 ? w * .85 : w * .6)));
+  DPR = window.devicePixelRatio || 1;
+  cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR); cv.style.height = h + 'px';
+}
+function computeView() {
+  const L = lvl(), x0 = -BOUNDS.pad, x1 = L.S + BOUNDS.pad, y0 = -9.6, y1 = BOUNDS.y1 + .8;
+  const s = Math.min(cv.width / (x1 - x0), cv.height / (y1 - y0));
+  VIEW = { s, ox: (cv.width - s * (x1 - x0)) / 2 - s * x0, oy: (cv.height - s * (y1 - y0)) / 2 + s * y1 };
+}
+const sx = x => VIEW.ox + VIEW.s * x, sy = y => VIEW.oy - VIEW.s * y;
+function toWorld(e) {
+  const r = cv.getBoundingClientRect();
+  const px = (e.clientX - r.left) * DPR, py = (e.clientY - r.top) * DPR;
+  return [(px - VIEW.ox) / VIEW.s, (VIEW.oy - py) / VIEW.s];
+}
+function snap(w) {
+  const x = Math.round(w[0]), y = Math.round(w[1]);
+  if (Math.hypot(w[0] - x, w[1] - y) > .45) return null;
+  return validPoint(lvl(), x, y) ? [x, y] : null;
+}
+function same(a, b) { return a && b && a[0] === b[0] && a[1] === b[1]; }
+function nearestMember(w) {
+  let best = -1, bd = .35;
+  design().forEach((m, i) => {
+    const ax = m.a[0], ay = m.a[1], bx = m.b[0] - ax, by = m.b[1] - ay;
+    const t = Math.max(0, Math.min(1, ((w[0] - ax) * bx + (w[1] - ay) * by) / (bx * bx + by * by)));
+    const d = Math.hypot(w[0] - ax - t * bx, w[1] - ay - t * by);
+    if (d < bd) { bd = d; best = i; }
+  });
+  return best;
+}
+function removeMember(i) { pushUndo(); design().splice(i, 1); edited(); }
+function flash(msg) { state.flash = { msg, t: performance.now() }; }
+
+cv.addEventListener('pointermove', e => { state.hoverW = toWorld(e); state.hover = snap(state.hoverW); });
+cv.addEventListener('pointerleave', () => { state.hover = null; state.hoverW = null; });
+cv.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  if (state.start) { state.start = null; return; }
+  const i = nearestMember(toWorld(e)); if (i >= 0 && !(state.run && !state.run.done)) removeMember(i);
+});
+cv.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  if (state.run && !state.run.done) return;
+  if (state.run) { state.run = null; }
+  const w = toWorld(e);
+  state.hoverW = w; state.hover = snap(w);
+  if (state.tool === 'erase') { const i = nearestMember(w); if (i >= 0) removeMember(i); return; }
+  const p = snap(w);
+  if (!p) { if (state.start) state.start = null; return; }
+  if (!state.start) { state.start = p; return; }
+  if (same(p, state.start)) { state.start = null; return; }
+  const m = { a: state.start, b: p, mat: state.mat }, len = memLen(m), M = MATS[state.mat];
+  if (len > M.maxL + 1e-9) { flash(`${M.name} má mest vera ${M.maxL} m. Þessi biti er ${fmt(len, 1)} m.`); return; }
+  const key = (a, b) => [a + '', b + ''].sort().join('|');
+  const ex = design().findIndex(q => key(q.a, q.b) === key(m.a, m.b));
+  pushUndo();
+  if (ex >= 0) design()[ex].mat = state.mat; else design().push(m);
+  state.start = p;
+  edited();
+});
+window.addEventListener('keydown', e => {
+  if (e.target.closest('input, textarea')) return;
+  if (e.key === 'Escape') state.start = null;
+  const M = Object.entries(MATS).find(([, v]) => String(v.key) === e.key);
+  if (M) { state.mat = M[0]; $('mat-' + M[0]).checked = true; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); $('tUndo').click(); }
+});
+
+/* --- prófun --- */
+$('go').onclick = () => {
+  const L = lvl(), mem = design();
+  const err = checkDesign(L, mem);
+  if (err) { setResult('fail', `<p class="verdict">Ekki tilbúin</p><p>${err}</p>`); return; }
+  state.start = null;
+  const model = buildModel(L, mem);
+  const cap = capacity(model);
+  const self = analyze(model, [], null);
+  const run = { model, cap, L, t0: performance.now(), x: -4, P: L.kg * G, maxUtil: new Float64Array(model.members.length), broken: new Set(), phase: 'drive', done: false, res: null };
+  if (self.mech) { run.phase = 'fall'; run.reason = 'mech'; startCollapse(run, null); }
+  else if (self.max > 1) { run.phase = 'fall'; run.reason = 'self'; cascade(run, []); }
+  state.run = run;
+  refresh();
+  setResult('idle', `<p>${L.cargo.split(' með')[0]} leggja af stað yfir…</p>`);
+};
+function loadsAt(model, x, P) {
+  if (x < 0 || x > model.L.S) return [];
+  const k = Math.min(Math.floor(x / DECK), model.deck.length - 2), t = x / DECK - k;
+  return [[model.deck[k], -P * (1 - t)], [model.deck[k + 1], -P * t]];
+}
+function cascade(run, loads) {
+  for (let i = 0; i < 40; i++) {
+    const a = analyze(run.model, loads, run.broken);
+    if (a.mech) { run.last = null; break; }
+    const over = a.util.map((v, e) => [v, e]).filter(([v]) => v > 1);
+    if (!over.length) { run.last = a; break; }
+    over.forEach(([, e]) => run.broken.add(e));
+    if (run.firstBreak == null) { run.firstBreak = over.sort((p, q) => q[0] - p[0])[0][1]; run.breakF = a.f[run.firstBreak]; }
+  }
+  startCollapse(run, run.last ?? null);
+}
+function startCollapse(run, a) {
+  const m = run.model;
+  run.pts = m.nodes.map((n, k) => {
+    const d = m.dof[k], u = a && !a.mech && d >= 0 && a.u ? [a.u[d] * EXAG, a.u[d + 1] * EXAG] : [0, 0];
+    const x = n.x + u[0], y = n.y + u[1];
+    return { x, y, px: x, py: y, fixed: n.fixed };
+  });
+  run.phase = 'fall'; run.fallT = performance.now();
+}
+function stepCollapse(run, dt) {
+  const pts = run.pts, mem = run.model.members, g = 9.81 * .8;
+  for (let sub = 0; sub < 4; sub++) {
+    const h = dt / 4;
+    pts.forEach(p => {
+      if (p.fixed) return;
+      const vx = (p.x - p.px) * .995, vy = (p.y - p.py) * .995;
+      p.px = p.x; p.py = p.y; p.x += vx; p.y += vy - g * h * h;
+      if (p.y < -9.2) { p.y = -9.2; p.py = p.y + (p.y - p.py) * -.2; }
+    });
+    for (let it = 0; it < 12; it++) mem.forEach((m, e) => {
+      if (run.broken.has(e)) return;
+      const a = pts[m.i], b = pts[m.j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1e-9;
+      if (m.rope && d < m.len) return;
+      const diff = (d - m.len) / d, wa = a.fixed ? 0 : b.fixed ? 1 : .5, wb = b.fixed ? 0 : a.fixed ? 1 : .5;
+      a.x += dx * diff * wa; a.y += dy * diff * wa; b.x -= dx * diff * wb; b.y -= dy * diff * wb;
+    });
+  }
+}
+function tick(now) {
+  const run = state.run;
+  if (run && !run.done) {
+    const dt = Math.min(.05, (now - (run.prev ?? now)) / 1000); run.prev = now;
+    if (run.phase === 'drive') {
+      run.x += dt * (run.L.S + 8) / 6;
+      const loads = loadsAt(run.model, run.x, run.P);
+      const a = analyze(run.model, loads, null);
+      if (a.mech) { run.reason = 'mech'; cascade(run, loads); }
+      else {
+        run.last = a;
+        a.util.forEach((v, e) => { if (v > run.maxUtil[e]) run.maxUtil[e] = v; });
+        if (a.max > 1) { run.reason = 'break'; run.breakX = run.x; cascade(run, loads); }
+        else if (run.x > run.L.S + 4) { run.done = true; finish(run, true); }
+      }
+    } else if (run.phase === 'fall') {
+      stepCollapse(run, dt);
+      if (now - run.fallT > 2600) { run.done = true; finish(run, false); }
+    }
+  }
+  draw(now);
+  requestAnimationFrame(tick);
+}
+function describe(m) { return `${MATS[m.mat].name} (${fmt(m.len, 1)} m)`; }
+function finish(run, ok) {
+  const L = run.L, mass = designMass(design()), capKg = run.cap.lam / G;
+  const capTxt = run.cap.lam >= 1e8 - 1 ? 'mjög mikil' : `um ${fmt(Math.round(capKg / 10) * 10)} kg`;
+  if (ok) {
+    const score = Math.round(100 * L.kg / mass), st = starsFor(L, score);
+    const prev = state.best[L.id] || 0, rec = score > prev;
+    if (rec) { state.best[L.id] = score; store.set('best', state.best); }
+    const gov = run.cap.gov >= 0 ? run.model.members[run.cap.gov] : null;
+    const next = L.stars.find(s => s > score);
+    setResult('pass', `<p class="verdict">Brúin stóðst</p>
+      <div class="score"><b>${fmt(score)}</b><span>stig</span><span class="stars">${'★'.repeat(st)}<span class="off">${'★'.repeat(3 - st)}</span></span></div>
+      <dl class="kv"><dt>Massi brúar</dt><dd>${fmt(mass)} kg</dd><dt>Farmur</dt><dd>${fmt(L.kg)} kg</dd>
+      <dt>Burðargeta</dt><dd>${capTxt}</dd><dt>Mesta nýting</dt><dd>${fmt(Math.max(...run.maxUtil) * 100)}%</dd></dl>
+      <p>${rec && prev ? 'Nýtt met á þessu gili. ' : ''}${gov ? `Veikasti hlekkurinn er ${describe(gov)}. ` : ''}${next ? `${fmt(next)} stig gefa næstu stjörnu. Fjarlægðu efni þar sem nýtingin er lág (blátt).` : 'Allar stjörnur. Inkarnir væru stoltir.'}</p>`);
+  } else {
+    let why;
+    if (run.reason === 'mech') why = 'Grindin er hreyfanleg og leggst saman. Bættu við skástífum svo hún myndi þríhyrninga og festu hana við akkerin.';
+    else {
+      const m = run.model.members[run.firstBreak];
+      const what = m ? `${describe(m)} brast fyrst, ${run.breakF >= 0 ? 'slitnaði í togi' : 'kiknaði í þrýstingi'}` : 'Biti brast';
+      why = run.reason === 'self'
+        ? `Brúin ber ekki einu sinni eigin þunga. ${what}.`
+        : `${what}, þegar farmurinn var ${fmt(Math.max(0, run.breakX ?? 0), 1)} m út á brúnni.`;
+    }
+    const stood = run.reason !== 'mech' && run.last && !run.last.mech && run.last.u;
+    setResult('fail', `<p class="verdict">${stood ? 'Biti brast' : 'Brúin hrundi'}</p><p>${why}${stood ? ' Brúin hangir enn uppi en er ónothæf.' : ''}</p>
+      <dl class="kv"><dt>Massi brúar</dt><dd>${fmt(mass)} kg</dd><dt>Burðargeta</dt><dd>${run.cap.mech ? '0 kg' : capTxt}</dd><dt>Farmur</dt><dd>${fmt(L.kg)} kg</dd></dl>
+      <p>Smelltu á gilið til að halda áfram að byggja.</p>`);
+  }
+  refresh();
+}
+
+/* --- teikning --- */
+function rng(seed) { return () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+function ridge(seed, n) { const r = rng(seed); const a = []; let v = .5; for (let i = 0; i <= n; i++) { v += (r() - .5) * .5; v = Math.max(.1, Math.min(1, v)); a.push(v); } return a; }
+const RIDGES = [ridge(7, 14), ridge(19, 22)];
+function drawSky(W, H) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#5f9fd0'); g.addColorStop(.55, '#b9d6e8'); g.addColorStop(1, '#e9e2cf');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const base = sy(-1), layers = [{ r: RIDGES[0], top: sy(7.4), col: '#8495ad' }, { r: RIDGES[1], top: sy(4.6), col: '#64748a' }];
+  layers.forEach(({ r, top, col }, li) => {
+    const pts = r.map((v, i) => [i / (r.length - 1) * W, base - (base - top) * v]);
+    const grd = ctx.createLinearGradient(0, top, 0, base);
+    grd.addColorStop(0, '#f6f8fb'); grd.addColorStop(li ? .22 : .3, '#f0f3f7'); grd.addColorStop(li ? .3 : .38, col); grd.addColorStop(1, col);
+    ctx.fillStyle = grd; ctx.beginPath(); ctx.moveTo(0, base);
+    pts.forEach(([x, y], i) => { if (i % 2) ctx.lineTo(x, y); else ctx.lineTo(x, y + (li ? 6 : 10) * DPR); });
+    ctx.lineTo(W, base); ctx.closePath(); ctx.fill();
+  });
+}
+function drawRock(poly, seed) {
+  ctx.save();
+  ctx.beginPath(); poly.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath();
+  const g = ctx.createLinearGradient(0, sy(0), 0, sy(-9.5));
+  g.addColorStop(0, '#9a6649'); g.addColorStop(1, '#5b3a2c');
+  ctx.fillStyle = g; ctx.fill(); ctx.clip();
+  const r = rng(seed); ctx.strokeStyle = 'rgba(40,22,14,.28)'; ctx.lineWidth = 1.2 * DPR;
+  for (let y = -.6; y > -9.5; y -= .55 + r() * .5) {
+    ctx.beginPath(); ctx.moveTo(0, sy(y));
+    for (let x = -10; x < 40; x += 2) ctx.lineTo(sx(x), sy(y + (r() - .5) * .25));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawGorge(L, W, H, now) {
+  const jag = rng(3), face = [];
+  for (let y = 0; y >= -9.6; y -= .8) face.push(y);
+  const left = [[0, sy(0)], [sx(0), sy(0)]];
+  face.forEach(y => left.push([sx(isAnchorNear(L, 0, y) ? 0 : -jag() * .35), sy(y)]));
+  left.push([sx(-1.2), H], [0, H]);
+  const right = [[W, sy(0)], [sx(L.S), sy(0)]];
+  face.forEach(y => right.push([sx(isAnchorNear(L, L.S, y) ? L.S : L.S + jag() * .35), sy(y)]));
+  right.push([sx(L.S + 1.2), H], [W, H]);
+  // fljótið
+  const rg = ctx.createLinearGradient(0, sy(-8.6), 0, H);
+  rg.addColorStop(0, '#4d8a9a'); rg.addColorStop(1, '#2b5866');
+  ctx.fillStyle = rg; ctx.fillRect(0, sy(-8.9), W, H - sy(-8.9));
+  ctx.strokeStyle = 'rgba(230,245,245,.55)'; ctx.lineWidth = 1.5 * DPR;
+  for (let i = 0; i < 9; i++) {
+    const x = ((i * 0.37 + now / 9000) % 1) * (L.S + 4) - 2, y = -9 - (i % 3) * .18;
+    ctx.beginPath(); ctx.moveTo(sx(x), sy(y)); ctx.lineTo(sx(x + .9), sy(y)); ctx.stroke();
+  }
+  drawRock(left, 11); drawRock(right, 29);
+  if (L.pillar) {
+    const [a, b, top] = L.pillar, p = [[sx(a - .9), H], [sx(a - .2), sy(top - 2)], [sx(a), sy(top)], [sx(b), sy(top)], [sx(b + .3), sy(top - 2.5)], [sx(b + 1), H]];
+    drawRock(p, 47);
+  }
+  // ichu-gras á brúnum
+  ctx.fillStyle = '#c3ad5c';
+  ctx.fillRect(0, sy(0) - .18 * VIEW.s, sx(0), .22 * VIEW.s);
+  ctx.fillRect(sx(L.S), sy(0) - .18 * VIEW.s, W - sx(L.S), .22 * VIEW.s);
+  ctx.strokeStyle = '#a99446'; ctx.lineWidth = 1.2 * DPR; const gr = rng(5);
+  for (let x = -BOUNDS.pad - 2; x < L.S + BOUNDS.pad + 2; x += .22) {
+    if (x > -.1 && x < L.S + .1) continue;
+    const h = .25 + gr() * .3; ctx.beginPath(); ctx.moveTo(sx(x), sy(0)); ctx.lineTo(sx(x + (gr() - .5) * .2), sy(h)); ctx.stroke();
+  }
+}
+function isAnchorNear(L, x, y) { return L.anchors.some(a => a[0] === x && Math.abs(a[1] - y) < .9); }
+
+function utilColor(u) {
+  const t = Math.max(0, Math.min(1, u));
+  const stops = [[0, [64, 120, 200]], [.5, [70, 170, 110]], [.8, [235, 180, 40]], [1, [215, 40, 40]]];
+  let i = 0; while (i < stops.length - 2 && t > stops[i + 1][0]) i++;
+  const [ta, ca] = stops[i], [tb, cb] = stops[i + 1], k = (t - ta) / (tb - ta);
+  return `rgb(${ca.map((c, j) => Math.round(c + (cb[j] - c) * k)).join(',')})`;
+}
+function drawMember(ax, ay, bx, by, mat, isDeck, color, alpha) {
+  const M = MATS[mat], w = Math.max(2 * DPR, M.w * VIEW.s);
+  ctx.globalAlpha = alpha ?? 1;
+  ctx.lineCap = 'round';
+  if (isDeck) {
+    ctx.strokeStyle = '#3b2a1e'; ctx.lineWidth = w + .14 * VIEW.s;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+  }
+  ctx.strokeStyle = color || M.color; ctx.lineWidth = w;
+  if (mat === 'reipi' && !color) ctx.setLineDash([.18 * VIEW.s, .08 * VIEW.s]);
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+  ctx.setLineDash([]);
+  if (mat === 'bambus' && !color) {
+    const len = Math.hypot(bx - ax, by - ay), n = Math.floor(len / (.7 * VIEW.s));
+    ctx.strokeStyle = '#5e6d2a'; ctx.lineWidth = 1.5 * DPR;
+    const nx = -(by - ay) / len * w * .6, ny = (bx - ax) / len * w * .6;
+    for (let i = 1; i <= n; i++) { const t = i / (n + 1), x = ax + (bx - ax) * t, y = ay + (by - ay) * t; ctx.beginPath(); ctx.moveTo(x - nx, y - ny); ctx.lineTo(x + nx, y + ny); ctx.stroke(); }
+  }
+  ctx.globalAlpha = 1;
+}
+function drawAnchor(x, y) {
+  const s = VIEW.s, X = sx(x), Y = sy(y);
+  ctx.fillStyle = '#3d4247'; ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X - .35 * s, Y + .45 * s); ctx.lineTo(X + .35 * s, Y + .45 * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#c9ccd0'; ctx.beginPath(); ctx.arc(X, Y, .13 * s, 0, 7); ctx.fill();
+}
+function drawVehicle(type, x, y, ang) {
+  const s = VIEW.s;
+  ctx.save(); ctx.translate(sx(x), sy(y)); ctx.rotate(-ang); ctx.scale(s, -s);
+  const wheel = (cx, r) => { ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(cx, r, r, 0, 7); ctx.fill(); ctx.fillStyle = '#999'; ctx.beginPath(); ctx.arc(cx, r, r * .4, 0, 7); ctx.fill(); };
+  if (type === 'llamas') {
+    [[-1.5, '#efe7da'], [-.5, '#8a6a4f'], [.5, '#f2ece2'], [1.5, '#5b4a3c']].forEach(([cx, col]) => {
+      ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = .09;
+      [-.25, -.12, .12, .25].forEach(l => { ctx.beginPath(); ctx.moveTo(cx + l, .55); ctx.lineTo(cx + l, .02); ctx.stroke(); });
+      ctx.beginPath(); ctx.ellipse(cx, .7, .38, .2, 0, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx + .25, .75); ctx.lineTo(cx + .36, 1.35); ctx.lineTo(cx + .46, 1.33); ctx.lineTo(cx + .4, .7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx + .46, 1.38, .14, .07, 0, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx + .36, 1.42); ctx.lineTo(cx + .37, 1.56); ctx.lineTo(cx + .42, 1.44); ctx.fill();
+      ctx.fillStyle = '#c0254f'; ctx.fillRect(cx - .2, .78, .36, .14);
+      ctx.fillStyle = '#e8a920'; ctx.fillRect(cx - .2, .83, .36, .04);
+    });
+  } else if (type === 'cart') {
+    ctx.fillStyle = '#6b4a2e'; ctx.fillRect(-1.6, .55, 2.0, .5);
+    ctx.fillStyle = '#c8b27a'; [-1.4, -.9, -.4].forEach(cx => { ctx.beginPath(); ctx.ellipse(cx + .1, 1.2, .26, .2, 0, 0, 7); ctx.fill(); });
+    wheel(-.6, .5);
+    ctx.strokeStyle = '#4a3320'; ctx.lineWidth = .08; ctx.beginPath(); ctx.moveTo(.4, .8); ctx.lineTo(1.1, .95); ctx.stroke();
+    ctx.fillStyle = '#4b3a32'; ctx.beginPath(); ctx.ellipse(1.5, 1.0, .55, .32, 0, 0, 7); ctx.fill();
+    ctx.fillRect(1.15, .1, .1, .7); ctx.fillRect(1.75, .1, .1, .7);
+    ctx.beginPath(); ctx.ellipse(2.1, 1.1, .22, .16, -.4, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#ddd'; ctx.lineWidth = .05; ctx.beginPath(); ctx.moveTo(2.05, 1.25); ctx.lineTo(2.0, 1.45); ctx.stroke();
+  } else if (type === 'pickup') {
+    ctx.fillStyle = '#2f6f8f'; ctx.fillRect(-2.2, .45, 4.4, .6); ctx.fillRect(.4, 1.05, 1.3, .55);
+    ctx.fillStyle = '#bfe0ee'; ctx.fillRect(.6, 1.12, .9, .38);
+    ctx.fillStyle = '#e6c23a'; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.ellipse(-1.9 + i * .38, 1.15, .2, .12, .4, 0, 7); ctx.fill(); }
+    wheel(-1.4, .38); wheel(1.4, .38);
+  } else {
+    ctx.fillStyle = '#b8321f'; ctx.fillRect(1.6, .55, 1.4, 1.5);
+    ctx.fillStyle = '#c7e3ee'; ctx.fillRect(2.2, 1.4, .7, .5);
+    ctx.fillStyle = '#6a6f72'; ctx.fillRect(-3.0, .55, 4.5, 1.1);
+    ctx.fillStyle = '#4f7f6a'; ctx.beginPath(); ctx.moveTo(-2.9, 1.65); ctx.lineTo(-2.2, 2.25); ctx.lineTo(.6, 2.25); ctx.lineTo(1.4, 1.65); ctx.fill();
+    wheel(-2.3, .45); wheel(-1.3, .45); wheel(2.3, .45);
+  }
+  ctx.restore();
+}
+
+function draw(now) {
+  const L = lvl(), W = cv.width, H = cv.height;
+  computeView();
+  drawSky(W, H);
+  drawGorge(L, W, H, now);
+  const run = state.run, mem = design();
+  // rist
+  if (!run) {
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    for (let x = -BOUNDS.pad; x <= L.S + BOUNDS.pad; x++) for (let y = BOUNDS.y0; y <= BOUNDS.y1; y++)
+      if (validPoint(L, x, y)) { ctx.beginPath(); ctx.arc(sx(x), sy(y), Math.max(1.2 * DPR, .045 * VIEW.s), 0, 7); ctx.fill(); }
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.setLineDash([4 * DPR, 6 * DPR]); ctx.lineWidth = 1 * DPR;
+    ctx.beginPath(); ctx.moveTo(sx(0), sy(0)); ctx.lineTo(sx(L.S), sy(0)); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // staðsetningar liða
+  let pos;
+  if (run && run.phase === 'fall' && run.pts) pos = run.pts.map(p => [p.x, p.y]);
+  else if (run && run.last && run.last.u) pos = run.model.nodes.map((n, k) => { const d = run.model.dof[k]; return d < 0 ? [n.x, n.y] : [n.x + run.last.u[d] * EXAG, n.y + run.last.u[d + 1] * EXAG]; });
+  if (run) {
+    const m = run.model;
+    const P = pos || m.nodes.map(n => [n.x, n.y]);
+    m.members.forEach((mm, e) => {
+      if (run.broken.has(e)) return;
+      const slack = run.last && run.last.active && !run.last.active[e];
+      const col = run.phase === 'drive' && run.last ? utilColor(run.last.util[e]) : (run.done && run.phase === 'drive' ? utilColor(run.maxUtil[e]) : null);
+      drawMember(sx(P[mm.i][0]), sy(P[mm.i][1]), sx(P[mm.j][0]), sy(P[mm.j][1]), mm.mat, mm.src.a[1] === 0 && mm.src.b[1] === 0, col, slack ? .35 : 1);
+    });
+    // brotnir bitar: tveir stubbar
+    run.broken.forEach(e => {
+      const mm = m.members[e], a = P[mm.i], b = P[mm.j];
+      const ma = [a[0] + (b[0] - a[0]) * .35, a[1] + (b[1] - a[1]) * .35 - (run.phase === 'fall' ? .3 : 0)];
+      const mb = [b[0] + (a[0] - b[0]) * .35, b[1] + (a[1] - b[1]) * .35 - (run.phase === 'fall' ? .3 : 0)];
+      drawMember(sx(a[0]), sy(a[1]), sx(ma[0]), sy(ma[1]), mm.mat, false, '#d22', 1);
+      drawMember(sx(b[0]), sy(b[1]), sx(mb[0]), sy(mb[1]), mm.mat, false, '#d22', 1);
+    });
+    ctx.fillStyle = '#2a2f33';
+    P.forEach((p, k) => { if (!m.nodes[k].fixed) { ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), Math.max(2 * DPR, .1 * VIEW.s), 0, 7); ctx.fill(); } });
+    // farartæki
+    const x = run.phase === 'drive' ? run.x : (run.breakX ?? run.x);
+    let vx = x, vy = 0, ang = 0;
+    if (x >= 0 && x <= L.S) {
+      const k = Math.min(Math.floor(x / DECK), m.deck.length - 2), t = x / DECK - k, a = P[m.deck[k]], b = P[m.deck[k + 1]];
+      vx = a[0] + (b[0] - a[0]) * t; vy = a[1] + (b[1] - a[1]) * t; ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    }
+    if (!(run.done && run.phase === 'drive')) drawVehicle(L.vehicle, vx, vy + .12, ang);
+    else drawVehicle(L.vehicle, L.S + 2.6, .12, 0);
+  } else {
+    mem.forEach(mm => drawMember(sx(mm.a[0]), sy(mm.a[1]), sx(mm.b[0]), sy(mm.b[1]), mm.mat, mm.a[1] === 0 && mm.b[1] === 0));
+    const nodes = new Map(); mem.forEach(mm => { nodes.set(mm.a + '', mm.a); nodes.set(mm.b + '', mm.b); });
+    for (let x = DECK; x < L.S; x += DECK) nodes.set(x + ',0', [x, 0]);
+    nodes.forEach(p => { if (isAnchor(L, p[0], p[1])) return; ctx.fillStyle = '#2a2f33'; ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), Math.max(2.5 * DPR, .11 * VIEW.s), 0, 7); ctx.fill(); ctx.fillStyle = '#f2efe6'; ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), Math.max(1.2 * DPR, .05 * VIEW.s), 0, 7); ctx.fill(); });
+    drawVehicle(L.vehicle, -2.6, .12, 0);
+  }
+  L.anchors.forEach(a => drawAnchor(a[0], a[1]));
+  // byrjunarpunktur og draugabiti
+  if (!run && state.tool === 'build') {
+    const h = state.hover;
+    if (state.start) {
+      const M = MATS[state.mat], target = h || state.hoverW;
+      if (target) {
+        const len = Math.hypot(target[0] - state.start[0], target[1] - state.start[1]), bad = len > M.maxL + 1e-9;
+        ctx.globalAlpha = .7; drawMember(sx(state.start[0]), sy(state.start[1]), sx(target[0]), sy(target[1]), state.mat, false, bad ? '#d22' : null); ctx.globalAlpha = 1;
+        label(`${fmt(len, 1)} m${bad ? ' · of langur' : ''}`, sx(target[0]) + 10 * DPR, sy(target[1]) - 10 * DPR, bad);
+      }
+      ring(state.start, '#a3214a');
+    }
+    if (h) ring(h, '#ffffff');
+  } else if (!run && state.tool === 'erase' && state.hoverW) {
+    const i = nearestMember(state.hoverW);
+    if (i >= 0) { const mm = mem[i]; drawMember(sx(mm.a[0]), sy(mm.a[1]), sx(mm.b[0]), sy(mm.b[1]), mm.mat, false, '#d22', .8); }
+  }
+  // HUD
+  ctx.font = `600 ${13 * DPR}px "IBM Plex Mono", monospace`; ctx.textBaseline = 'top';
+  let hud = `${L.name.toUpperCase()} · haf ${L.S} m · farmur ${fmt(L.kg)} kg`;
+  if (run && run.phase === 'drive' && run.last) hud += ` · mesta nýting ${fmt(run.last.max * 100)}%`;
+  label(hud, 10 * DPR, 10 * DPR, false);
+  if (state.flash && now - state.flash.t < 2600) label(state.flash.msg, 10 * DPR, 36 * DPR, true);
+  if (run && run.phase === 'drive' && run.last) legend(W, H);
+}
+function ring(p, col) { ctx.strokeStyle = col; ctx.lineWidth = 2 * DPR; ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), Math.max(7 * DPR, .25 * VIEW.s), 0, 7); ctx.stroke(); }
+function label(text, x, y, bad) {
+  ctx.font = `500 ${12.5 * DPR}px "IBM Plex Mono", monospace`; ctx.textBaseline = 'top';
+  const w = ctx.measureText(text).width, p = 6 * DPR;
+  x = Math.min(x, cv.width - w - 2 * p - 4);
+  ctx.fillStyle = bad ? 'rgba(160,25,25,.9)' : 'rgba(20,26,24,.72)'; ctx.fillRect(x, y, w + 2 * p, 20 * DPR);
+  ctx.fillStyle = '#fff'; ctx.fillText(text, x + p, y + 4 * DPR);
+}
+function legend(W, H) {
+  const w = 150 * DPR, h = 10 * DPR, x = W - w - 14 * DPR, y = H - 34 * DPR;
+  const g = ctx.createLinearGradient(x, 0, x + w, 0);
+  [0, .25, .5, .65, .8, 1].forEach(t => g.addColorStop(t, utilColor(t)));
+  ctx.fillStyle = 'rgba(20,26,24,.72)'; ctx.fillRect(x - 8 * DPR, y - 22 * DPR, w + 16 * DPR, 40 * DPR);
+  ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#fff'; ctx.font = `500 ${11 * DPR}px "IBM Plex Mono", monospace`; ctx.textBaseline = 'bottom';
+  ctx.fillText('nýting 0%', x, y - 3 * DPR); const t = '100%'; ctx.fillText(t, x + w - ctx.measureText(t).width, y - 3 * DPR);
+}
+
+new ResizeObserver(fit).observe($('cwrap'));
+fit(); refresh();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
