@@ -419,7 +419,9 @@ th.now, td.now { background: #ffc94d1a; }
     const now = new Date();
     clock.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
     dateEl.textContent = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`;
-    const mins = now.getHours() * 60 + now.getMinutes();
+    // On the class day the line follows the clock; on other days it follows the hour the teacher shows.
+    const classDay = now.getFullYear() === 2026 && now.getMonth() === 9 && now.getDate() === 21;
+    const mins = classDay ? now.getHours() * 60 + now.getMinutes() : (parseInt(hour, 10) || 9) * 60 + 1;
     const next = [10, 11, 12, 13].find(H => mins < H * 60 + 1) ?? 14;
     nextEl.textContent = `Næst uppfært klukkan ${next}:00`;
   }
@@ -443,6 +445,7 @@ th.now, td.now { background: #ffc94d1a; }
       screen.classList.remove("flicker"); void screen.offsetWidth; screen.classList.add("flicker");
     }
     render(changed && animate);
+    if (changed) tick();
   }
 
   // Rebuild the whole document from the authored source with the new state embedded.
