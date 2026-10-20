@@ -1,0 +1,95 @@
+:root{--bg:#14161c;--bg2:#1d2029;--ink:#f4f1e8;--muted:#a3a6b0;--gold:#f6c33b;--back1:#1f3a8a;--back2:#16296a;--bolvun:#7d3bd1;--verkefni:#ef6a2c;--spurning:#139f9a;--face:#fbf8ef;--faceInk:#1a1c22;--cond:"Arial Narrow","Roboto Condensed","Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;min-height:100vh;background:radial-gradient(1200px 600px at 50% -10%,#2a2f3d 0%,var(--bg) 60%);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px clamp(16px,4vw,40px);border-bottom:2px solid #2a2e3a}
+.logo{font:italic 900 clamp(26px,5vw,40px)/1 var(--cond);text-transform:uppercase;letter-spacing:-.5px;transform:skewX(-6deg)}
+.logo-a{background:var(--gold);color:var(--bg);padding:2px 10px}
+.logo-b{color:var(--gold);padding-left:6px}
+.stats{display:flex;gap:10px;align-items:center}
+.stat{background:var(--bg2);border:1px solid #2f3442;border-radius:12px;padding:6px 14px;display:flex;gap:8px;align-items:baseline}
+.stat b{font:900 24px/1 var(--cond)}
+.stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat.score b{color:var(--gold)}
+
+.btn{border:2px solid #3a3f4e;background:var(--bg2);border-radius:999px;padding:8px 16px;font-weight:700}
+.btn:hover{border-color:var(--gold)}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+
+main{max-width:1200px;margin:0 auto;padding:22px clamp(16px,4vw,40px) 48px}
+.intro{color:var(--muted);margin:0 0 22px;max-width:70ch}
+.t-bolvun{color:#b88af0}.t-verkefni{color:#ff9a66}.t-spurning{color:#3fd2cb}
+
+/* Stokkurinn */
+.deck{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(10px,2vw,22px);perspective:1400px}
+@media (max-width:860px){.deck{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:600px){.deck{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:340px){.deck{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.stat{padding:5px 10px}.stat span{font-size:10px}.top .btn{padding:6px 12px;font-size:13px}}
+
+.card{position:relative;aspect-ratio:5/7;border:0;padding:0;background:none;border-radius:14px;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.8,.2,1);animation:deal .5s backwards}
+.card:hover:not(.flipped){transform:translateY(-6px) rotate(-1deg)}
+.card.flipped{transform:rotateY(180deg)}
+.card.flipped:hover{transform:rotateY(180deg) translateY(-4px)}
+.card.done .face{filter:saturate(.35) brightness(.85)}
+.card.done .face::after{content:"Lokið";position:absolute;top:66%;left:50%;transform:translate(-50%,-50%) rotate(-14deg);border:3px solid currentColor;color:#2a7a3f;background:rgba(255,255,255,.85);font:900 clamp(14px,2.4vw,22px)/1 var(--cond);text-transform:uppercase;padding:4px 10px;border-radius:6px}
+@keyframes deal{from{opacity:0;transform:translateY(30px) rotate(6deg) scale(.9)}}
+
+.side{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.45)}
+
+/* Bakhlið */
+.back{background:
+  repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 8px,transparent 8px 16px),
+  linear-gradient(160deg,var(--back1),var(--back2));
+  border:3px solid var(--face);display:grid;place-items:center}
+.back::before{content:"";position:absolute;inset:7px;border:2px solid rgba(246,195,59,.7);border-radius:9px}
+.back .emblem{width:62%;aspect-ratio:1;border-radius:50%;background:var(--gold);display:grid;place-items:center;transform:rotate(-8deg);box-shadow:0 0 0 5px var(--back2),0 0 0 7px var(--gold)}
+.back .emblem span{font:italic 900 clamp(18px,3.6vw,34px)/1 var(--cond);color:var(--back2);text-transform:uppercase}
+.back .num{position:absolute;bottom:12px;right:14px;font:900 clamp(11px,1.6vw,15px)/1 var(--cond);color:var(--gold)}
+
+/* Framhlið */
+.face{transform:rotateY(180deg);background:var(--face);color:var(--faceInk);display:flex;flex-direction:column;text-align:left}
+.face .band{background:var(--c);color:#fff;padding:clamp(6px,1.2vw,10px) clamp(8px,1.4vw,12px);font:900 clamp(11px,1.6vw,15px)/1 var(--cond);text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.face h3{margin:clamp(6px,1.2vw,12px) clamp(8px,1.4vw,12px) 4px;font:900 clamp(13px,2vw,20px)/1.05 var(--cond);text-transform:uppercase;color:var(--c)}
+.face p{margin:0 clamp(8px,1.4vw,12px);font-size:clamp(10px,1.25vw,13px);line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical}
+.face .foot{margin-top:auto;padding:clamp(6px,1.2vw,10px) clamp(8px,1.4vw,12px);border-top:2px dashed color-mix(in srgb,var(--c) 40%,transparent);font:800 clamp(10px,1.3vw,13px)/1 var(--cond);text-transform:uppercase;color:var(--c);display:flex;justify-content:space-between;align-items:center}
+.pips{display:inline-flex;gap:3px}
+.pips i{width:clamp(7px,1.1vw,11px);aspect-ratio:1;border-radius:50%;background:var(--c);display:inline-block}
+.pips i.off{background:transparent;box-shadow:inset 0 0 0 2px var(--c);opacity:.4}
+.band .pips i{background:#fff}.band .pips i.off{box-shadow:inset 0 0 0 2px #fff}
+.bolvun{--c:var(--bolvun)}.verkefni{--c:var(--verkefni)}.spurning{--c:var(--spurning)}
+.face.bolvun{background:linear-gradient(180deg,var(--face) 60%,#efe4fb)}
+
+/* Gluggar */
+.modal{border:0;padding:0;background:transparent;color:var(--ink);max-width:min(520px,calc(100vw - 32px));width:100%}
+.modal::backdrop{background:rgba(6,7,10,.72);backdrop-filter:blur(3px)}
+.modal[open]{animation:pop .25s ease-out}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}
+.panel{background:var(--bg2);border:2px solid var(--gold);border-radius:18px;padding:24px}
+.kicker{margin:0 0 6px;font:800 12px/1 var(--cond);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.panel h2{margin:0 0 16px;font:800 22px/1.25 system-ui,sans-serif}
+.panel input{width:100%;font:inherit;font-size:18px;padding:12px 14px;border-radius:12px;border:2px solid #3a3f4e;background:var(--bg);color:var(--ink)}
+.panel input:focus{border-color:var(--gold);outline:none}
+.feedback{min-height:1.5em;margin:10px 0 0;font-weight:700}
+.feedback.wrong{color:#ff7a7a}
+.feedback.right{color:#7be08f}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+.modal-card{max-width:min(380px,calc(100vw - 32px))}
+.big{position:relative;aspect-ratio:5/7;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.big .face{transform:none;position:absolute;inset:0}
+.big .face .band{font-size:17px;padding:14px 18px}
+.big .face h3{font-size:32px;margin:18px 18px 10px}
+.big .face p{font-size:17px;margin:0 18px;-webkit-line-clamp:unset}
+.big .face .foot{font-size:16px;padding:14px 18px}
+.big .pips i{width:14px}
+.modal-card .actions{justify-content:center}
+
+@media (prefers-reduced-motion:reduce){.card,.modal[open]{transition:none;animation:none}}

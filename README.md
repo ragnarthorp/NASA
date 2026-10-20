@@ -35,3 +35,11 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - `js/pdf.js`: PDF-útgáfa
 - `vendor/jspdf.umd.min.js`: [jsPDF](https://github.com/parallax/jsPDF) 2.5.1 (MIT-leyfi)
 - `vendor/pdf-fonts.js`: leturgerðir fyrir PDF, hlutmengi úr Liberation Sans/Mono (SIL Open Font License, sjá `vendor/pdf-fonts-LICENSE.txt`)
+
+## Spilastokkurinn (`spil.html`)
+
+Sérstök síða í stíl Jet Lag: The Game. 20 spil liggja á grúfu (stokkuð í hvert sinn sem byrjað er upp á nýtt). Smellt er á spil og þraut opnast; sé hún leyst rétt snýst spilið við. Spilið er **bölvun**, **verkefni** eða **spurning**; verkefni og spurningar gefa 1–3 stig þegar þau eru merkt lokið. Staðan vistast í vafranum.
+
+- `js/spil-gogn.js`: spilin 20 og þrautirnar (sem stendur sýnidæmi)
+- `js/spil.js`: viðmótið; nýjar tegundir þrauta eru skráðar í `SPIL_THRAUTIR`
+- `css/spil.css`: útlit
