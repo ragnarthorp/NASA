@@ -11,6 +11,7 @@
 //   kaflar.<lykill>.mat: "gott" | "bæta" | "vantar"
 //   kastad: "svalir" (kastað niður af svölum), "gólf" (kastað eftir gangi/sal) eða null ef óljóst
 //   einnig: önnur númer sem sama skýrsla var skilað undir
+//   ofullgerd: true ef skýrslan er nánast óútfyllt; hún birtist þá en er ekki talin með í niðurstöðum
 
 window.SKUTLUR = {
   verkefni: "Flýgur hringlaga skutla betur en hefðbundin skutla?",
@@ -37,6 +38,7 @@ window.SKUTLUR = {
       kost: "2 köst á hvora skutlu, lengri tíminn skráður",
       stadur: "Kastað af svölum",
       kastad: "svalir",
+      einnig: ["12"],
       maelingar: {
         timi: {
           eining: "s",
@@ -236,6 +238,7 @@ window.SKUTLUR = {
       kost: "3 köst á hvora skutlu, tekin upp á myndband",
       stadur: "Kastað af svölum",
       kastad: "svalir",
+      einnig: ["11"],
       maelingar: {
         timi: {
           eining: "s",
@@ -263,6 +266,88 @@ window.SKUTLUR = {
         "Hringlaga skutlan var lengur á lofti í öllum þremur köstunum.",
         "Tilgátan stóðst ekki og hópurinn segir það skýrt."
       ]
+    },
+
+    {
+      nr: "10",
+      titill: "Rannsókn á skutlum",
+      fjoldi: 7,
+      betur: "Ekki skilgreint (vegalengd, fallhraði og hve beint þær fljúga)",
+      maelt: ["tími", "vegalengd"],
+      kost: "Virðist eitt kast á hvora skutlu í hverri prófun",
+      stadur: "Vegalengd í íþróttasal; tími á lofti af svölum",
+      kastad: "svalir",
+      maelingar: {
+        timi: {
+          eining: "s",
+          hefdbundin: { gildi: [], tala: 4.03, lysing: "fall af svölum, eitt kast" },
+          hringlaga: { gildi: [], tala: 2.68, lysing: "fall af svölum, eitt kast" }
+        },
+        vegalengd: {
+          eining: "m",
+          hefdbundin: { gildi: [], tala: 7.5, lysing: "í íþróttasal" },
+          hringlaga: { gildi: [], tala: 1, lysing: "í íþróttasal" }
+        }
+      },
+      eigindlegt: {},
+      spa: { timi: "hringlaga", vegalengd: "hefdbundin" },
+      sigurvegari: { timi: "hefdbundin", vegalengd: "hefdbundin" },
+      tilgataStodst: { segja: "að hluta", gogn: "að hluta" },
+      kaflar: {
+        tilgangur: { mat: "bæta", texti: "Flýgur hringlaga skutla betur en hefðbundin skutla?", athugasemd: "Spurning úr sniðmátinu óbreytt; „betur“ ekki skilgreint, þó að hópurinn mæli þrennt." },
+        tilgata: { mat: "bæta", texti: "Venjulega skutlan fer lengra og fer hraðar niður. Erfiðast verður að fá nákvæmar mælingar.", athugasemd: "Tvær skýrar og prófanlegar spár, en hvorug rökstudd." },
+        efni: { mat: "gott", texti: "2 blöð og límstifti í skutlurnar; iPadar til að taka myndband og tímann." },
+        framkvaemd: { mat: "gott", texti: "Mældu hversu langt skutlurnar fóru í íþróttasal (tveir kastarar), hversu hratt þær duttu niður af svölunum og loks hvor flaug beinna.", athugasemd: "Þrjár aðskildar prófanir. Ekki tekið fram hversu oft var kastað." },
+        nidurstodur: { mat: "bæta", texti: "Vegalengd: venjuleg 7,5 m, hringlótt 1 m. Fall af svölum: venjuleg 4,03 s, hringlótt 2,68 s. Beinna flug: hringlótt. Erfitt var að kasta hringlóttu skutlunni.", athugasemd: "Eini hópurinn sem mælir í metrum. Virðist eitt kast á hvora skutlu. Í myndrænu samantektinni stendur að báðar fljúgi beint, en í töflunni að hringlótta fljúgi beinna." },
+        tulkun: { mat: "bæta", texti: "Aðeins myndræn spjöld með samantekt á mælingum og ályktunum.", athugasemd: "Enginn eiginn texti; spjöldin virðast gervigreindarunnin." },
+        umraedur: { mat: "gott", texti: "Tilgátan var að hluta rétt: venjulega skutlan fór lengra, en hringlótta skutlan fór „helmingi hraðar niður“. Venjulega skutlan er gerð til að haldast á lofti en hringlótta er með risagat í miðjunni. Áhugavert væri að kanna fall án loftmótstöðu, eins og í NASA-myndbandinu.", athugasemd: "Gerir skýran greinarmun á því hvaða hluti tilgátunnar stóðst. „Helmingi hraðar“ er ofmat: 4,03 / 2,68 ≈ 1,5." },
+        setning: { mat: "gott", texti: "Venjuleg skutla fer lengra en hringlótta skutlan fer hraðar niður og beinna." }
+      },
+      athugasemdir: [
+        "Af svölum var hefðbundna skutlan lengur á lofti – öfugt við 234 og 123, sem köstuðu líka af svölum.",
+        "Eini hópurinn sem mælir vegalengd í metrum.",
+        "Túlkun að mestu í myndum sem virðast gerðar með gervigreind."
+      ]
+    },
+
+    {
+      nr: "7",
+      titill: "Skutlu-hringurinn",
+      fjoldi: 7,
+      ofullgerd: true,
+      betur: "–",
+      maelt: [],
+      kost: "–",
+      stadur: "–",
+      kastad: null,
+      maelingar: { timi: null, vegalengd: null },
+      eigindlegt: {},
+      spa: { timi: null, vegalengd: null },
+      sigurvegari: { timi: null, vegalengd: null },
+      tilgataStodst: { segja: "ekki sagt", gogn: "ekki sagt" },
+      lysing: "Aðeins forsíða með titli, nöfnum og mynd af hringskutlu.",
+      kaflar: {},
+      athugasemdir: ["Skýrslan er bara forsíða; enginn kafli útfylltur."]
+    },
+
+    {
+      nr: "6",
+      titill: "Óútfyllt sniðmát",
+      fjoldi: null,
+      ofullgerd: true,
+      betur: "–",
+      maelt: [],
+      kost: "–",
+      stadur: "–",
+      kastad: null,
+      maelingar: { timi: null, vegalengd: null },
+      eigindlegt: {},
+      spa: { timi: null, vegalengd: null },
+      sigurvegari: { timi: null, vegalengd: null },
+      tilgataStodst: { segja: "ekki sagt", gogn: "ekki sagt" },
+      lysing: "Óbreytt sniðmát: engin nöfn, engin dagsetning og enginn kafli útfylltur.",
+      kaflar: {},
+      athugasemdir: ["Óútfyllt sniðmát. Ekki ljóst hvaða hópur skilaði því – mögulega hópur sem skilaði annarri útgáfu undir öðru númeri."]
     }
   ]
 };
