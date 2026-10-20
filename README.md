@@ -35,3 +35,13 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - `js/pdf.js`: PDF-útgáfa
 - `vendor/jspdf.umd.min.js`: [jsPDF](https://github.com/parallax/jsPDF) 2.5.1 (MIT-leyfi)
 - `vendor/pdf-fonts.js`: leturgerðir fyrir PDF, hlutmengi úr Liberation Sans/Mono (SIL Open Font License, sjá `vendor/pdf-fonts-LICENSE.txt`)
+
+## Skutlutilraunin (`skutlur/`)
+
+Sérstakur vefur með yfirliti yfir skýrslur nemenda um skutlutilraunina á þemadögum (hringlaga og hefðbundin pappírsskutla). Opnaðu `skutlur/index.html`.
+
+- **Yfirlit:** helstu tölur, myndrit yfir tíma á lofti og vegalengd, tafla yfir allar skýrslur og mat á hverjum lið.
+- **Skýrslur:** hver skýrsla fyrir sig, með mælingum (einstökum köstum þegar þau eru gefin), athugasemdum og öllum liðum.
+- **Liðir:** hver liður (tilgangur, tilgáta, …, niðurstaða í einni setningu) borinn saman milli skýrslna.
+
+Gögnin eru í `skutlur/skyrslur.js`; nýrri skýrslu er bætt við með því að afrita færslu þar. Nöfn nemenda eru ekki skráð því vefurinn er opinber.
