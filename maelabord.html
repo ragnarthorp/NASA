@@ -226,6 +226,9 @@ td input {
 }
 .sync { font-size: .8rem; color: var(--muted); }
 .sync b { color: var(--screen-ink); font-weight: 700; }
+.sync.warn b { color: var(--accent); }
+.panel .primary { background: var(--accent); color: #2a1a00; }
+.panel .primary:disabled { background: var(--panel); color: var(--muted); cursor: default; }
 td input::placeholder { color: #ffffff55; }
 th.now, td.now { background: #ffc94d1a; }
 .panel-foot { padding: 12px 18px 16px; display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
@@ -264,9 +267,9 @@ th.now, td.now { background: #ffc94d1a; }
 <aside class="panel" id="panel" hidden aria-label="Stjórnborð kennara">
   <div class="panel-head">
     <h2>Stjórnborð kennara</h2>
-    <p>Veldu klukkuna sem skjárinn sýnir og skráðu fjölda ljósa (0–25) fyrir mæla hópanna. Autt reitur heldur gildinu frá síðasta klukkutíma. Hinir 25 mælarnir breytast sjálfkrafa á heila tímanum. Flýtilyklar: <b>1–6</b> = 09:00–14:00, <b>K</b> = loka.</p>
+    <p>Skráðu fjölda ljósa (0–25) fyrir mæla hópanna og ýttu á <b>Birta</b>. Autt reitur heldur gildinu frá síðasta klukkutíma. Þegar þú velur klukku birtist hún strax öllum áhorfendum ásamt óbirtum gildum. Flýtilyklar: <b>1–6</b> = 09:00–14:00, <b>K</b> = loka.</p>
     <div class="seg" role="group" aria-label="Klukka" id="hourBtns"></div>
-    <p class="sync" id="sync">Tengist gagnasafni…</p>
+    <p class="sync" id="sync"></p>
   </div>
   <div class="panel-body">
     <table>
@@ -275,18 +278,24 @@ th.now, td.now { background: #ffc94d1a; }
     </table>
   </div>
   <div class="panel-foot">
-    <span class="sync">Gildin vistast þegar þú ferð úr reit eða ýtir á Enter.</span>
+    <button class="ghost primary" id="publishBtn" disabled>Birta</button>
     <button class="ghost" id="closeBtn">Loka</button>
   </div>
 </aside>
 
-<script>
+<script type="application/json" id="state">{"hour":"09","data":{}}</script>
+<script id="main">
 (() => {
+  // Snapshot of the page as authored, taken before any script changes the DOM.
+  const SOURCE = document.body.innerHTML;
+
   const N = 50, LIGHTS = 25, MAX_RANDOM = 12;
   const HOURS = ["09", "10", "11", "12", "13", "14"];
   // Hópur #1 → mælir 41, hópur #2 → mælir 45, … (raðnúmer mæla 1–50).
   const GROUP_GAUGES = [41, 45, 34, 36, 21, 43, 6, 18, 8, 19, 1, 20, 3, 15, 48, 50, 44, 4, 33, 5, 40, 24, 9, 11, 23];
   const LOCAL = "maelar-gogn-v2";
+  // A framed page is inside a viewer: never offer the local teacher mode there.
+  const IN_CLAUDE = !!(window.claude && window.claude.use) || window.self !== window.top;
 
   // Seeded generator so every reload shows the same codes and levels.
   function mulberry32(a) {
@@ -320,10 +329,21 @@ th.now, td.now { background: #ffc94d1a; }
     });
   });
 
-  // Teacher's real data: data[hour]["g<group>"] = lights lit.
+  // Shared state lives in the page itself: data[hour]["g<group>"] = lights lit.
   let data = Object.fromEntries(HOURS.map(h => [h, {}]));
   let hour = "09";
-  let db = null, canEdit = false;
+  function loadState(s) {
+    if (!s || typeof s !== "object") return;
+    HOURS.forEach(h => {
+      const src = s.data && s.data[h];
+      data[h] = {};
+      if (src) for (const k in src) if (Number.isFinite(src[k])) data[h][k] = src[k];
+    });
+    if (HOURS.includes(s.hour)) hour = s.hour;
+  }
+  try { loadState(JSON.parse(document.getElementById("state").textContent)); } catch (e) {}
+
+  let artifact = null, canEdit = false, dirty = false, publishing = false;
 
   function groupLevel(group, h) {
     for (let i = HOURS.indexOf(h); i >= 0; i--) {
@@ -412,22 +432,45 @@ th.now, td.now { background: #ffc94d1a; }
     render(changed && animate);
   }
 
-  // Writes go one at a time per document.
-  const queues = {};
-  function persist(path, body) {
-    if (!db) {
+  // Rebuild the whole document from the authored source with the new state embedded.
+  const RESET = ':root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}';
+  function buildDocument() {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = SOURCE;
+    tpl.content.querySelectorAll("script:not([id])").forEach(s => s.remove());
+    const json = JSON.stringify({ hour, data }).replace(/</g, "\\u003c");
+    tpl.content.getElementById("state").textContent = json;
+    return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>' +
+      RESET + '</style></head><body>' + tpl.innerHTML + '</body></html>';
+  }
+
+  async function publish() {
+    if (!artifact) {
       try { localStorage.setItem(LOCAL, JSON.stringify({ data, hour })); } catch (e) {}
+      dirty = false; updateStatus();
       return;
     }
-    queues[path] = (queues[path] || Promise.resolve())
-      .then(() => db.doc(path).set(body))
-      .catch(() => setSync("Ekki tókst að vista. Athugaðu nettenginguna og reyndu aftur.", true));
+    if (publishing) return;
+    publishing = true; updateStatus();
+    try {
+      await artifact.publish(buildDocument());
+      dirty = false;
+    } catch (e) {
+      const code = e && e.code;
+      setSync(code === "conflict"
+        ? "Önnur útgáfa var birt á sama tíma. Síðan endurhleðst; skráðu óbirtu gildin aftur."
+        : "Ekki tókst að birta. Athugaðu nettenginguna og reyndu aftur.", true);
+      publishing = false;
+      return;
+    }
+    publishing = false; updateStatus();
   }
 
   function chooseHour(h) {
     if (h === hour) return;
     showHour(h, true);
-    persist("board/state", { hour: h });
+    dirty = true;
+    publish();
   }
 
   // Teacher table
@@ -455,10 +498,12 @@ th.now, td.now { background: #ffc94d1a; }
         if (inp.value.trim() === "") delete next["g" + group];
         else next["g" + group] = Math.max(0, Math.min(LIGHTS, parseInt(inp.value, 10) || 0));
         data[h] = next;
+        dirty = true;
         fillInputs();
         render(false);
-        persist("readings/h" + h, next);
+        updateStatus();
       });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") inp.blur(); });
       inputs[inp.id] = inp;
       td.appendChild(inp);
       tr.appendChild(td);
@@ -479,11 +524,21 @@ th.now, td.now { background: #ffc94d1a; }
   }
 
   const sync = document.getElementById("sync");
+  const publishBtn = document.getElementById("publishBtn");
   function setSync(text, warn) {
     sync.innerHTML = "";
+    sync.classList.toggle("warn", !!warn);
     const b = document.createElement("b");
     b.textContent = warn ? "Athugið: " : "✓ ";
     sync.append(b, text);
+  }
+  function updateStatus() {
+    publishBtn.disabled = !dirty || publishing;
+    publishBtn.textContent = publishing ? "Birti…" : "Birta";
+    if (publishing) setSync("Birti nýja stöðu fyrir alla áhorfendur…");
+    else if (dirty) setSync("Óbirtar breytingar. Áhorfendur sjá þær ekki fyrr en þú ýtir á Birta.", true);
+    else if (artifact) setSync("Allir áhorfendur sjá þessa stöðu.");
+    else setSync("Gögnin vistast aðeins í þessum vafra.", true);
   }
 
   const panel = document.getElementById("panel");
@@ -491,53 +546,43 @@ th.now, td.now { background: #ffc94d1a; }
   const togglePanel = () => { if (canEdit) panel.hidden = !panel.hidden; };
   teacherBtn.addEventListener("click", togglePanel);
   document.getElementById("closeBtn").addEventListener("click", togglePanel);
+  publishBtn.addEventListener("click", publish);
   document.addEventListener("keydown", e => {
     if (!canEdit || e.target.tagName === "INPUT") return;
     const n = parseInt(e.key, 10);
     if (n >= 1 && n <= HOURS.length) chooseHour(HOURS[n - 1]);
     else if (e.key === "k" || e.key === "K") togglePanel();
   });
+  window.addEventListener("beforeunload", e => { if (dirty && artifact) e.preventDefault(); });
 
-  function enableTeacher() {
+  function enableTeacher(openPanel) {
     canEdit = true;
     teacherBtn.hidden = false;
+    if (openPanel) panel.hidden = false;
+    updateStatus();
   }
 
-  function startLocal() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(LOCAL) || "null");
-      if (saved && saved.data) HOURS.forEach(h => { data[h] = saved.data[h] || {}; });
-      if (saved && HOURS.includes(saved.hour)) hour = saved.hour;
-    } catch (e) {}
-    enableTeacher();
-    setSync("Gögnin vistast aðeins í þessum vafra.", true);
-    fillInputs();
-    const h = hour; hour = ""; showHour(h, false);
-  }
-
-  async function startShared() {
-    db = await window.claude.use("db");
-    if (!db) return startLocal();
-    const user = await window.claude.use("user");
-    if (await (user?.canEdit() ?? Promise.resolve(false))) enableTeacher();
-    setSync("Gögnin vistast í sameiginlegu gagnasafni síðunnar. Allir sem opna síðuna sjá sömu stöðu.");
-    db.doc("board/state").onSnapshot(snap => {
-      const h = snap.exists ? snap.data().hour : "09";
-      if (HOURS.includes(h) && h !== hour) showHour(h, true);
-    }, () => setSync("Tengingin við gagnasafnið rofnaði. Endurhlaðið síðuna.", true));
-    HOURS.forEach(h => {
-      db.doc("readings/h" + h).onSnapshot(snap => {
-        data[h] = snap.exists ? { ...snap.data() } : {};
-        fillInputs();
-        if (h <= hour) render(false);
-      }, () => {});
-    });
-  }
+  // Keep the teacher panel open when a new version replaces this one.
+  window.claude?.hot?.snapshot?.(() => ({ panelOpen: !panel.hidden }));
+  const hotData = window.claude?.hot?.data ?? {};
 
   fillInputs();
-  showHour("09", false);
-  hour = "09";
-  if (window.claude && window.claude.use) startShared().catch(startLocal);
-  else startLocal();
+  const first = hour; hour = ""; showHour(first, false);
+
+  if (IN_CLAUDE) {
+    (async () => {
+      if (!window.claude?.use) return;
+      const user = await window.claude.use("user");
+      if (!(await (user?.canEdit?.() ?? false))) return;
+      artifact = await window.claude.use("artifact");
+      if (artifact) enableTeacher(hotData.panelOpen);
+    })().catch(() => {});
+  } else {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LOCAL) || "null");
+      if (saved) { loadState(saved); fillInputs(); const h = hour; hour = ""; showHour(h, false); }
+    } catch (e) {}
+    enableTeacher(false);
+  }
 })();
 </script>
