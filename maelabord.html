@@ -1,0 +1,443 @@
+<title>Fimmtíu mælar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@500;700&family=VT323&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one projector screen. Header strip with the status display, then a 10 × 5 wall of gauges that reflows on smaller screens. */
+:root {
+  --space: #17113f;
+  --space-2: #221a5c;
+  --panel: #2b2275;
+  --panel-edge: #3a2f93;
+  --ink: #f5f2ff;
+  --muted: #a69de0;
+  --accent: #ffc94d;
+  --screen: #0d2a2a;
+  --screen-ink: #7dffcf;
+  --display: "Baloo 2", "Nunito", system-ui, sans-serif;
+  --body: "Nunito", system-ui, sans-serif;
+  --lcd: "VT323", "JetBrains Mono", ui-monospace, monospace;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  background:
+    radial-gradient(1.5px 1.5px at 12% 18%, #ffffffaa 50%, transparent 51%),
+    radial-gradient(1px 1px at 33% 72%, #ffffff88 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 58% 9%, #ffffff99 50%, transparent 51%),
+    radial-gradient(1px 1px at 81% 44%, #ffffff77 50%, transparent 51%),
+    radial-gradient(2px 2px at 92% 84%, #ffe9a088 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 91%, #ffffff66 50%, transparent 51%),
+    radial-gradient(circle at 105% -10%, #4a2f9a 0 22%, transparent 22.2%),
+    radial-gradient(ellipse at 50% 120%, var(--space-2), var(--space) 70%);
+  background-color: var(--space);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--body);
+}
+.wrap {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-block: 20px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 18px;
+}
+
+/* Header */
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.brand-mark {
+  width: 46px; height: 46px; flex: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe08a, var(--accent) 45%, #f08a2c);
+  box-shadow: 0 0 0 6px #ffc94d22, 0 0 24px #ffc94d55;
+  position: relative;
+}
+.brand-mark::after {
+  content: ""; position: absolute; inset: -9px -14px;
+  border: 3px solid #ffffff55; border-radius: 50%;
+  transform: rotate(-18deg) scaleY(.32);
+}
+h1 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 2.6vw, 2.3rem);
+  line-height: 1;
+  margin: 0;
+  letter-spacing: .01em;
+}
+.eyebrow {
+  font-size: .78rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .14em; margin: 4px 0 0;
+}
+
+/* Status display */
+.screen {
+  background: var(--screen);
+  border: 6px solid #3a2f93;
+  outline: 2px solid #120d33;
+  border-radius: 16px;
+  padding: 8px 18px 6px;
+  box-shadow: inset 0 0 22px #00000099, 0 6px 0 #120d33;
+  font-family: var(--lcd);
+  color: var(--screen-ink);
+  text-shadow: 0 0 8px #7dffcf99;
+  line-height: 1;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+.screen::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, #00000033 0 2px, transparent 2px 4px);
+}
+.screen small { display: block; font-size: 1.05rem; letter-spacing: .12em; opacity: .75; }
+.screen strong { font-weight: 400; font-size: clamp(1.7rem, 2.6vw, 2.4rem); letter-spacing: .04em; white-space: nowrap; }
+.screen .cursor { animation: blink 1s steps(1) infinite; }
+.screen.flicker { animation: flicker .7s linear; }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes flicker {
+  0%, 18%, 40%, 62% { opacity: 1; }
+  10%, 30%, 52% { opacity: .15; }
+  100% { opacity: 1; }
+}
+
+/* Gauge wall */
+.wall {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1200px) { .wall { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 560px)  { .wall { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } }
+@media (max-width: 380px)  { .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.gauge {
+  background: linear-gradient(180deg, var(--panel-edge), var(--panel) 38%);
+  border-radius: 18px;
+  padding: 8px 8px 10px;
+  box-shadow: 0 5px 0 #120d33, inset 0 1px 0 #ffffff1f;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  position: relative;
+}
+.gauge::before, .gauge::after {
+  content: ""; position: absolute; top: 9px; width: 5px; height: 5px; border-radius: 50%;
+  background: #1a1450; box-shadow: inset 0 1px 0 #ffffff22;
+}
+.gauge::before { left: 10px; }
+.gauge::after  { right: 10px; }
+.gauge svg { width: 100%; height: auto; display: block; overflow: visible; }
+.gauge .num {
+  font-family: var(--display); font-weight: 800; font-size: 22px; fill: var(--ink);
+}
+.gauge .lbl {
+  font-family: var(--body); font-weight: 700; font-size: 7px; fill: var(--muted);
+  letter-spacing: .18em;
+}
+.light {
+  stroke: hsl(var(--h) 30% 34% / .38);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  transition: stroke .25s ease, filter .25s ease;
+  transition-delay: var(--d, 0ms);
+}
+.light.on {
+  stroke: hsl(var(--h) 100% 62%);
+  filter: drop-shadow(0 0 1.6px hsl(var(--h) 100% 60%));
+}
+.code {
+  font-family: var(--mono); font-weight: 700; font-size: .82rem;
+  letter-spacing: .22em;
+  padding: 2px 6px 2px 9px;
+  border-radius: 7px;
+  background: #120d33;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+footer {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;
+  color: var(--muted); font-size: .85rem;
+}
+.legend { display: flex; align-items: center; gap: 8px; }
+.legend i {
+  display: block; width: 120px; height: 6px; border-radius: 3px;
+  background: linear-gradient(90deg, hsl(0 100% 62%), hsl(60 100% 58%), hsl(120 100% 55%));
+}
+
+/* Teacher controls */
+.teacher-btn {
+  position: fixed;
+  right: calc(14px + env(safe-area-inset-right, 0px));
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 0; cursor: pointer;
+  background: #ffffff14; color: var(--muted);
+  font: 800 15px var(--display);
+  opacity: .35; transition: opacity .2s;
+}
+.teacher-btn:hover, .teacher-btn:focus-visible { opacity: 1; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.panel {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  width: min(420px, calc(100vw - 24px));
+  background: #1d1650;
+  border: 2px solid var(--panel-edge);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px #000000aa;
+  display: flex; flex-direction: column;
+  z-index: 20;
+}
+.panel-head { padding: 16px 18px 10px; display: grid; gap: 10px; }
+.panel-head h2 { font-family: var(--display); font-size: 1.35rem; margin: 0; line-height: 1.1; }
+.panel-head p { margin: 0; color: var(--muted); font-size: .85rem; line-height: 1.45; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg button, .panel .ghost {
+  border: 0; cursor: pointer; border-radius: 10px;
+  padding: 8px 14px; font: 700 .95rem var(--body);
+  background: var(--panel); color: var(--ink);
+}
+.seg button[aria-pressed="true"] { background: var(--accent); color: #2a1a00; }
+.panel label.chk { display: flex; gap: 8px; align-items: center; font-size: .88rem; }
+.panel-body { overflow: auto; padding: 0 18px; flex: 1; }
+table { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+th { text-align: left; color: var(--muted); font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; padding: 6px 4px; position: sticky; top: 0; background: #1d1650; }
+td { padding: 4px; border-top: 1px solid #ffffff12; }
+td.mono { font-family: var(--mono); color: var(--accent); letter-spacing: .1em; }
+td input {
+  width: 4.2em; padding: 4px 6px; border-radius: 7px; border: 1px solid var(--panel-edge);
+  background: #120d33; color: var(--ink); font: 700 .9rem var(--mono);
+}
+.panel-foot { padding: 12px 18px 16px; display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .light { transition: none; }
+  .screen.flicker, .screen .cursor { animation: none; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div>
+        <h1>Eftirlitsstöðin</h1>
+        <p class="eyebrow">50 mælar · 25 ljós á hverjum</p>
+      </div>
+    </div>
+    <div class="screen" id="screen" role="status" aria-live="polite">
+      <small>STAÐAN KLUKKAN</small>
+      <strong><span id="clock">09:00</span>&nbsp; 21.10.2026<span class="cursor">_</span></strong>
+    </div>
+  </header>
+
+  <main class="wall" id="wall" aria-label="Mælar"></main>
+
+  <footer>
+    <div class="legend"><span>Rautt</span><i aria-hidden="true"></i><span>Grænt</span></div>
+    <span>Finndu mælinn með raðnúmeri hópsins og lestu af honum.</span>
+  </footer>
+</div>
+
+<button class="teacher-btn" id="teacherBtn" aria-label="Opna stjórnborð kennara (K)" title="Kennari (K)">K</button>
+
+<aside class="panel" id="panel" hidden aria-label="Stjórnborð kennara">
+  <div class="panel-head">
+    <h2>Stjórnborð kennara</h2>
+    <p>Veldu hvaða stöðu skjárinn sýnir. Hægt er að breyta fjölda ljósa kl. 10:00 fyrir hvern hóp. Flýtilyklar: <b>1</b> = 09:00, <b>2</b> = 10:00, <b>K</b> = loka.</p>
+    <div class="seg" role="group" aria-label="Tími">
+      <button id="show9" aria-pressed="true">Sýna 09:00</button>
+      <button id="show10" aria-pressed="false">Sýna 10:00</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="drift" checked> Aðrir mælar breytast líka lítillega kl. 10</label>
+  </div>
+  <div class="panel-body">
+    <table>
+      <thead><tr><th>Hópur</th><th>Mælir</th><th>Kóði</th><th>09:00</th><th>10:00</th></tr></thead>
+      <tbody id="groupRows"></tbody>
+    </table>
+  </div>
+  <div class="panel-foot">
+    <button class="ghost" id="resetBtn">Endurstilla 10:00 gildi</button>
+    <button class="ghost" id="closeBtn">Loka</button>
+  </div>
+</aside>
+
+<script>
+(() => {
+  const N = 50, LIGHTS = 25, MAX9 = 12, GROUPS = 25;
+  const STORE = "maelar-10-overrides";
+
+  // Seeded generator so every reload shows the same codes and levels.
+  function mulberry32(a) {
+    return () => {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rnd = mulberry32(20261021);
+  const int = (lo, hi) => lo + Math.floor(rnd() * (hi - lo + 1));
+
+  const codes = [], used = new Set();
+  while (codes.length < N) {
+    const c = String(int(0, 9999)).padStart(4, "0");
+    if (!used.has(c)) { used.add(c); codes.push(c); }
+  }
+  const level9 = Array.from({ length: N }, () => int(0, MAX9));
+
+  // Groups 1–25 get a shuffled set of gauges so neighbours are not obvious.
+  const order = [...Array(N).keys()];
+  for (let i = N - 1; i > 0; i--) { const j = int(0, i); [order[i], order[j]] = [order[j], order[i]]; }
+  const groupGauge = order.slice(0, GROUPS);
+  const groupOf = new Map(groupGauge.map((g, k) => [g, k]));
+
+  // Default 10:00 levels: group gauges move clearly, others drift a little.
+  const default10 = level9.map((v, i) => {
+    if (groupOf.has(i)) {
+      let n; do { n = int(0, LIGHTS); } while (Math.abs(n - v) < 4);
+      return n;
+    }
+    return v;
+  });
+  const drift10 = level9.map(v => rnd() < 0.45 ? Math.max(0, Math.min(MAX9, v + (rnd() < .5 ? -1 : 1) * int(1, 2))) : v);
+
+  let overrides = {};
+  try { overrides = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { overrides = {}; }
+  const saveOverrides = () => { try { localStorage.setItem(STORE, JSON.stringify(overrides)); } catch (e) {} };
+
+  let state = "9";
+  const driftBox = document.getElementById("drift");
+
+  function levelAt(i) {
+    if (state === "9") return level9[i];
+    if (groupOf.has(i)) return overrides[i] ?? default10[i];
+    return driftBox.checked ? drift10[i] : level9[i];
+  }
+
+  // Build gauges
+  const NS = "http://www.w3.org/2000/svg";
+  const wall = document.getElementById("wall");
+  const cx = 50, cy = 50, r1 = 31, r2 = 43;
+  const gaugeLights = [];
+  for (let i = 0; i < N; i++) {
+    const el = document.createElement("div");
+    el.className = "gauge";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 100 76");
+    svg.setAttribute("aria-hidden", "true");
+    const lights = [];
+    for (let k = 0; k < LIGHTS; k++) {
+      const a = (-120 + k * (240 / (LIGHTS - 1))) * Math.PI / 180;
+      const s = Math.sin(a), c = Math.cos(a);
+      const ln = document.createElementNS(NS, "line");
+      ln.setAttribute("x1", (cx + r1 * s).toFixed(2));
+      ln.setAttribute("y1", (cy - r1 * c).toFixed(2));
+      ln.setAttribute("x2", (cx + r2 * s).toFixed(2));
+      ln.setAttribute("y2", (cy - r2 * c).toFixed(2));
+      ln.setAttribute("class", "light");
+      ln.style.setProperty("--h", Math.round(k / (LIGHTS - 1) * 120));
+      svg.appendChild(ln);
+      lights.push(ln);
+    }
+    const lbl = document.createElementNS(NS, "text");
+    lbl.setAttribute("x", cx); lbl.setAttribute("y", 40);
+    lbl.setAttribute("text-anchor", "middle"); lbl.setAttribute("class", "lbl");
+    lbl.textContent = "MÆLIR";
+    const num = document.createElementNS(NS, "text");
+    num.setAttribute("x", cx); num.setAttribute("y", 62);
+    num.setAttribute("text-anchor", "middle"); num.setAttribute("class", "num");
+    num.textContent = String(i + 1).padStart(2, "0");
+    svg.append(lbl, num);
+    const code = document.createElement("div");
+    code.className = "code";
+    code.textContent = codes[i];
+    el.append(svg, code);
+    el.setAttribute("aria-label", `Mælir ${i + 1}, kóði ${codes[i]}`);
+    wall.appendChild(el);
+    gaugeLights.push(lights);
+  }
+
+  function render(animate) {
+    for (let i = 0; i < N; i++) {
+      const lvl = levelAt(i);
+      gaugeLights[i].forEach((ln, k) => {
+        ln.style.setProperty("--d", animate ? `${k * 28 + (i % 10) * 18}ms` : "0ms");
+        ln.classList.toggle("on", k < lvl);
+      });
+    }
+  }
+
+  const clock = document.getElementById("clock");
+  const screen = document.getElementById("screen");
+  const b9 = document.getElementById("show9"), b10 = document.getElementById("show10");
+
+  function setState(s) {
+    if (s === state) return;
+    state = s;
+    clock.textContent = s === "9" ? "09:00" : "10:00";
+    b9.setAttribute("aria-pressed", s === "9");
+    b10.setAttribute("aria-pressed", s === "10");
+    screen.classList.remove("flicker"); void screen.offsetWidth; screen.classList.add("flicker");
+    render(true);
+  }
+
+  // Teacher panel
+  const panel = document.getElementById("panel");
+  const rows = document.getElementById("groupRows");
+  function buildRows() {
+    rows.innerHTML = "";
+    groupGauge.forEach((g, k) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${k + 1}</td><td>${String(g + 1).padStart(2, "0")}</td><td class="mono">${codes[g]}</td><td>${level9[g]}</td><td></td>`;
+      const inp = document.createElement("input");
+      inp.type = "number"; inp.min = 0; inp.max = LIGHTS; inp.id = `g10-${g}`;
+      inp.value = overrides[g] ?? default10[g];
+      inp.setAttribute("aria-label", `Ljós kl. 10 á mæli ${g + 1}`);
+      inp.addEventListener("input", () => {
+        const v = Math.max(0, Math.min(LIGHTS, parseInt(inp.value, 10) || 0));
+        overrides[g] = v; saveOverrides();
+        if (state === "10") render(false);
+      });
+      tr.lastChild.appendChild(inp);
+      rows.appendChild(tr);
+    });
+  }
+  buildRows();
+
+  const togglePanel = () => { panel.hidden = !panel.hidden; };
+  document.getElementById("teacherBtn").addEventListener("click", togglePanel);
+  document.getElementById("closeBtn").addEventListener("click", togglePanel);
+  b9.addEventListener("click", () => setState("9"));
+  b10.addEventListener("click", () => setState("10"));
+  driftBox.addEventListener("change", () => { if (state === "10") render(true); });
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    overrides = {}; saveOverrides(); buildRows(); if (state === "10") render(false);
+  });
+  document.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "1") setState("9");
+    else if (e.key === "2") setState("10");
+    else if (e.key === "k" || e.key === "K") togglePanel();
+  });
+
+  render(false);
+})();
+</script>
