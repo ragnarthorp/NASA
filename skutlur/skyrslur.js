@@ -9,6 +9,8 @@
 //   eining: "s", "skref" eða "hænuskref". Ef ekkert var mælt er gildið null.
 //   Eigindleg niðurstaða (án mælinga) fer í "eigindlegt".
 //   kaflar.<lykill>.mat: "gott" | "bæta" | "vantar"
+//   kastad: "svalir" (kastað niður af svölum), "gólf" (kastað eftir gangi/sal) eða null ef óljóst
+//   einnig: önnur númer sem sama skýrsla var skilað undir
 
 window.SKUTLUR = {
   verkefni: "Flýgur hringlaga skutla betur en hefðbundin skutla?",
@@ -34,6 +36,7 @@ window.SKUTLUR = {
       maelt: ["tími"],
       kost: "2 köst á hvora skutlu, lengri tíminn skráður",
       stadur: "Kastað af svölum",
+      kastad: "svalir",
       maelingar: {
         timi: {
           eining: "s",
@@ -71,6 +74,8 @@ window.SKUTLUR = {
       maelt: ["tími"],
       kost: "4 köst alls, eftir nokkrar prufur",
       stadur: "Fyrst á gangi, síðan á stærra svæði",
+      kastad: "gólf",
+      einnig: ["18"],
       maelingar: {
         timi: {
           eining: "s",
@@ -106,7 +111,9 @@ window.SKUTLUR = {
       betur: "Hraðar (en mældu tíma á lofti)",
       maelt: ["tími"],
       kost: "2 köst á hvora skutlu, tveir kastarar",
-      stadur: "Sami staður, svipaður kraftur",
+      stadur: "Ekki tilgreint (sami staður, svipaður kraftur)",
+      kastad: null,
+      einnig: ["13"],
       maelingar: {
         timi: {
           eining: "s",
@@ -144,6 +151,8 @@ window.SKUTLUR = {
       maelt: ["tími", "vegalengd"],
       kost: "6 köst með hefðbundinni, 7 með hringlaga",
       stadur: "Á gangi",
+      kastad: "gólf",
+      einnig: ["15"],
       maelingar: {
         timi: {
           eining: "s",
@@ -184,6 +193,8 @@ window.SKUTLUR = {
       maelt: ["tími", "vegalengd"],
       kost: "Kemur ekki fram",
       stadur: "Á gangi",
+      kastad: "gólf",
+      einnig: ["16"],
       maelingar: {
         timi: {
           eining: "s",
@@ -213,6 +224,44 @@ window.SKUTLUR = {
       athugasemdir: [
         "Ályktun um tíma á lofti stangast á við eigin mælingar.",
         "Tilgátan í umræðukafla er víðari en í tilgátukafla."
+      ]
+    },
+
+    {
+      nr: "123",
+      titill: "Skutlutilraun (án titils)",
+      fjoldi: 6,
+      betur: "Lengur í loftinu á leið niður af svölunum",
+      maelt: ["tími"],
+      kost: "3 köst á hvora skutlu, tekin upp á myndband",
+      stadur: "Kastað af svölum",
+      kastad: "svalir",
+      maelingar: {
+        timi: {
+          eining: "s",
+          hefdbundin: { gildi: [3.18, 2.88, 2.59], tala: 2.9, lysing: "meðaltal 3 kasta (námundað fyrst)" },
+          hringlaga: { gildi: [3.59, 4.46, 4.37], tala: 4.2, lysing: "meðaltal 3 kasta (námundað fyrst)" }
+        },
+        vegalengd: null
+      },
+      eigindlegt: {},
+      spa: { timi: "hefdbundin", vegalengd: null },
+      sigurvegari: { timi: "hringlaga", vegalengd: null },
+      tilgataStodst: { segja: "nei", gogn: "nei" },
+      kaflar: {
+        tilgangur: { mat: "gott", texti: "Kanna hvort hringlaga pappírsskutla flýgur jafn lengi eða lengur en hefðbundin. Rannsóknarspurning: Hvor skutlan er lengur í loftinu að fara niður af svölunum?", athugasemd: "Hópurinn umorðaði spurninguna þannig að hún er mælanleg (tími á lofti) – gott." },
+        tilgata: { mat: "bæta", texti: "„Skutlan hjá Fanney helst lengur í loftinu“ því oddurinn brýtur loftið og hún hefur vængi sem styðja við hana. Erfiðast verður að búa til skutlurnar.", athugasemd: "Rökstudd, en skutlan er nefnd eftir nemanda í stað gerðar (á við hefðbundnu skutluna)." },
+        efni: { mat: "bæta", texti: "Aðeins blöð í skutlurnar og ekki fleiri gögn.", athugasemd: "Tíminn var tekinn og kastið tekið upp á myndband, en tæki til þess eru ekki talin upp." },
+        framkvaemd: { mat: "gott", texti: "Vönduðu sig við skutlurnar. Köstuðu hvorri um það bil 3 sinnum af svölunum og tóku upp myndband. Námunduðu tímana að einum aukastaf, lögðu saman og deildu með þremur.", athugasemd: "Skýr lýsing, líka á útreikningi meðaltals. Talað um „hraðamun“ en mældur var tími." },
+        nidurstodur: { mat: "gott", texti: "2 skutlur, 2 × 3 prófanir. Hefðbundin: 2,9 s. Hringlaga: 4,2 s (meðaltöl).", athugasemd: "Einstök köst sýnd á handskrifuðu blaði (3,18 · 2,88 · 2,59 og 3,59 · 4,46 · 4,37 s). Hringlaga lengur á lofti í öllum köstum." },
+        tulkun: { mat: "gott", texti: "Fjalla um það sem gæti hafa skekkt niðurstöðurnar: afl kastsins, tímatakan (ýtt of seint eða snemma á takkann) og vindur eða blástur.", athugasemd: "Besta umfjöllun hópanna um óvissu og skekkjuvalda. Skýra hins vegar ekki hvers vegna hringlaga skutlan helst lengur á lofti." },
+        umraedur: { mat: "gott", texti: "Tilgátan reyndist röng: hringlaga skutlan svífur betur. Munurinn var lítill í fyrstu tilraun en jókst í seinni köstum. „Það er betra að prófa fyrst áður en maður segir skoðun sína.“ Næst mætti mæla vegalengd og kasta oftar.", athugasemd: "Heiðarlegt og vel ígrundað, góðar hugmyndir að framhaldi." },
+        setning: { mat: "bæta", texti: "Hringlaga skutlan flýgur lengur í lyftu heldur en hefðbundin skutla vegna hvernig þær eru í laginu.", athugasemd: "Niðurstaðan er rétt, en tilraunin sýnir ekki að lögunin sé orsökin („í lyftu“ á líklega að vera „í lofti“)." }
+      },
+      athugasemdir: [
+        "Eini hópurinn sem ræðir skekkjuvalda markvisst.",
+        "Hringlaga skutlan var lengur á lofti í öllum þremur köstunum.",
+        "Tilgátan stóðst ekki og hópurinn segir það skýrt."
       ]
     }
   ]

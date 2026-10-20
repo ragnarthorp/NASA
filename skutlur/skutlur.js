@@ -5,6 +5,7 @@
 
   const GERD = { hefdbundin: "Hefðbundin", hringlaga: "Hringlaga" };
   const MAT = { gott: "Vel gert", "bæta": "Má bæta", vantar: "Vantar" };
+  const KASTAD = { svalir: "Af svölum", "gólf": "Eftir gangi/sal" };
 
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const tala = (n, d = 2) => n == null ? "–" : String(+Number(n).toFixed(d)).replace(".", ",");
@@ -48,6 +49,12 @@
     const hriTimi = timi.filter(r => r.sigurvegari.timi === "hringlaga").length;
     const hefVeg = veg.filter(r => r.sigurvegari.vegalengd === "hefdbundin").length;
     const stodst = R.filter(r => r.tilgataStodst.gogn === "já").length;
+    const stadir = Object.keys(KASTAD).map(k => {
+      const h = R.filter(r => r.kastad === k && r.sigurvegari.timi);
+      const hri = h.filter(r => r.sigurvegari.timi === "hringlaga");
+      return `<tr><td>${KASTAD[k]}</td><td class="num">${h.length}</td><td class="num"><b>${hri.length}</b> af ${h.length}</td>
+        <td>${h.map(r => `<a href="#skyrsla/${r.nr}">${r.nr}</a> ${gerdMerki(r.sigurvegari.timi)}`).join(" ")}</td></tr>`;
+    }).join("");
     const legend = `<div class="legend"><span><i class="sw-hef"></i>Hefðbundin</span><span><i class="sw-hri"></i>Hringlaga</span></div>`;
 
     const lidaTafla = D.kaflar.map(k => {
@@ -59,6 +66,7 @@
 
     const skyrsluTafla = R.map(r => `<tr class="click" data-href="#skyrsla/${r.nr}">
         <td><a href="#skyrsla/${r.nr}"><b>${r.nr}</b></a></td>
+        <td>${KASTAD[r.kastad] || "–"}</td>
         <td>${r.maelt.map(esc).join(", ")}</td>
         <td>${esc(r.kost)}</td>
         <td>${gerdMerki(r.sigurvegari.timi)}</td>
@@ -77,12 +85,16 @@
       </div>
       <div class="grid2">
         <section class="panel"><h2>Tími á lofti</h2>${legend}${sulur("timi", "s", null)}
-          <p class="chartnote">Sameiginlegur kvarði (sekúndur). Skýrsla 234 kastaði af svölum og skráði lengsta kastið af tveimur.</p></section>
+          <p class="chartnote">Sameiginlegur kvarði (sekúndur). Skýrslur ${R.filter(r => r.kastad === "svalir").map(r => r.nr).join(" og ")} köstuðu af svölum, sem skýrir lengri tíma; 234 skráði lengsta kastið af tveimur.</p></section>
         <section class="panel"><h2>Vegalengd</h2>${legend}${sulur("vegalengd", "", null)}
           <p class="chartnote">Hóparnir mældu í ólíkum einingum (skref, hænuskref), svo hver hópur hefur sinn kvarða. Berðu saman innan hóps, ekki milli hópa.</p></section>
       </div>
+      <section class="panel"><h2>Skiptir máli hvar var kastað?</h2>
+        <p class="small muted">Hvor skutlan var lengur á lofti, eftir því hvort kastað var niður af svölum eða lárétt eftir gangi eða sal.</p>
+        <div class="tablewrap"><table><thead><tr><th>Kastað</th><th>Hópar</th><th>Hringlaga lengur á lofti</th><th>Skýrslur</th></tr></thead><tbody>${stadir}</tbody></table></div>
+        <p class="chartnote">Af svölum fær hringlaga skutlan að svífa niður; í láréttu kasti skiptir meira máli hve vel skutlan klýfur loftið. Hóparnir eru fáir og köstin fá, svo þetta er vísbending en ekki sönnun.</p></section>
       <section class="panel"><h2>Skýrslurnar</h2><div class="tablewrap"><table>
-        <thead><tr><th>Skýrsla</th><th>Mælt</th><th>Köst</th><th>Lengur á lofti</th><th>Fór lengra</th><th>Tilgáta stóðst – að sögn hóps</th><th>– samkvæmt gögnum</th></tr></thead>
+        <thead><tr><th>Skýrsla</th><th>Kastað</th><th>Mælt</th><th>Köst</th><th>Lengur á lofti</th><th>Fór lengra</th><th>Tilgáta stóðst – að sögn hóps</th><th>– samkvæmt gögnum</th></tr></thead>
         <tbody>${skyrsluTafla}</tbody></table></div></section>
       <section class="panel"><h2>Liðir skýrslunnar</h2><p class="small muted">Fjöldi skýrslna eftir mati á hverjum lið.</p><div class="tablewrap"><table>
         <thead><tr><th>Liður</th><th>${matMerki("gott")}</th><th>${matMerki("bæta")}</th><th>${matMerki("vantar")}</th></tr></thead>
@@ -106,7 +118,7 @@
 
   function skyrsla(nr) {
     const r = finna(nr) || R[0];
-    const side = R.map(x => `<a href="#skyrsla/${x.nr}" aria-current="${x === r}">Skýrsla ${x.nr}<small>${esc(x.titill)} · ${x.fjoldi} nemendur</small></a>`).join("");
+    const side = R.map(x => `<a href="#skyrsla/${x.nr}" aria-current="${x === r}">Skýrsla ${x.nr}<small>${esc(x.titill)} · ${x.fjoldi} nemendur${x.einnig ? ` · einnig skilað sem ${x.einnig.join(", ")}` : ""}</small></a>`).join("");
     const kaflar = D.kaflar.map(k => {
       const c = r.kaflar[k.lykill] || { mat: "vantar", texti: "" };
       return `<div class="section"><div class="head"><h3><a href="#lidur/${k.lykill}" style="color:inherit">${esc(k.heiti)}</a></h3>${matMerki(c.mat)}</div>
@@ -121,6 +133,7 @@
         <div><dt>„Að fljúga betur“</dt><dd>${esc(r.betur)}</dd></div>
         <div><dt>Köst</dt><dd>${esc(r.kost)}</dd></div>
         <div><dt>Staður</dt><dd>${esc(r.stadur)}</dd></div>
+        ${r.einnig ? `<div><dt>Einnig skilað sem</dt><dd>Skýrsla ${r.einnig.map(esc).join(", ")}</dd></div>` : ""}
         <div><dt>Lengur á lofti</dt><dd>${gerdMerki(r.sigurvegari.timi)}</dd></div>
         <div><dt>Fór lengra</dt><dd>${gerdMerki(r.sigurvegari.vegalengd)}</dd></div>
         <div><dt>Tilgáta stóðst – að sögn hóps</dt><dd>${jaNei(r.tilgataStodst.segja)}</dd></div>
@@ -139,6 +152,12 @@
       const m = (r.kaflar[k.lykill] || {}).mat || "vantar";
       return `<td><span class="dot ${m}" title="Skýrsla ${r.nr}: ${MAT[m]}" role="img" aria-label="${MAT[m]}"></span></td>`;
     }).join("")}</tr>`).join("");
+    const stadir = Object.keys(KASTAD).map(k => {
+      const h = R.filter(r => r.kastad === k && r.sigurvegari.timi);
+      const hri = h.filter(r => r.sigurvegari.timi === "hringlaga");
+      return `<tr><td>${KASTAD[k]}</td><td class="num">${h.length}</td><td class="num"><b>${hri.length}</b> af ${h.length}</td>
+        <td>${h.map(r => `<a href="#skyrsla/${r.nr}">${r.nr}</a> ${gerdMerki(r.sigurvegari.timi)}`).join(" ")}</td></tr>`;
+    }).join("");
     const legend = `<div class="legend">${Object.keys(MAT).map(m => `<span><span class="dot ${m}" style="vertical-align:-2px;margin-right:6px"></span>${MAT[m]}</span>`).join("")}</div>`;
 
     let detail = "";
