@@ -196,7 +196,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); ou
   top: calc(12px + env(safe-area-inset-top, 0px));
   right: calc(12px + env(safe-area-inset-right, 0px));
   bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  width: min(420px, calc(100vw - 24px));
+  width: min(640px, calc(100vw - 24px));
   background: #1d1650;
   border: 2px solid var(--panel-edge);
   border-radius: 20px;
@@ -221,9 +221,13 @@ th { text-align: left; color: var(--muted); font-weight: 700; font-size: .72rem;
 td { padding: 4px; border-top: 1px solid #ffffff12; }
 td.mono { font-family: var(--mono); color: var(--accent); letter-spacing: .1em; }
 td input {
-  width: 4.2em; padding: 4px 6px; border-radius: 7px; border: 1px solid var(--panel-edge);
+  width: 3.4em; padding: 4px 6px; border-radius: 7px; border: 1px solid var(--panel-edge);
   background: #120d33; color: var(--ink); font: 700 .9rem var(--mono);
 }
+.sync { font-size: .8rem; color: var(--muted); }
+.sync b { color: var(--screen-ink); font-weight: 700; }
+td input::placeholder { color: #ffffff55; }
+th.now, td.now { background: #ffc94d1a; }
 .panel-foot { padding: 12px 18px 16px; display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -255,34 +259,34 @@ td input {
   </footer>
 </div>
 
-<button class="teacher-btn" id="teacherBtn" aria-label="Opna stjórnborð kennara (K)" title="Kennari (K)">K</button>
+<button class="teacher-btn" id="teacherBtn" hidden aria-label="Opna stjórnborð kennara (K)" title="Kennari (K)">K</button>
 
 <aside class="panel" id="panel" hidden aria-label="Stjórnborð kennara">
   <div class="panel-head">
     <h2>Stjórnborð kennara</h2>
-    <p>Veldu hvaða stöðu skjárinn sýnir. Hægt er að breyta fjölda ljósa kl. 10:00 fyrir hvern hóp. Flýtilyklar: <b>1</b> = 09:00, <b>2</b> = 10:00, <b>K</b> = loka.</p>
-    <div class="seg" role="group" aria-label="Tími">
-      <button id="show9" aria-pressed="true">Sýna 09:00</button>
-      <button id="show10" aria-pressed="false">Sýna 10:00</button>
-    </div>
-    <label class="chk"><input type="checkbox" id="drift" checked> Aðrir mælar breytast líka lítillega kl. 10</label>
+    <p>Veldu klukkuna sem skjárinn sýnir og skráðu fjölda ljósa (0–25) fyrir mæla hópanna. Autt reitur heldur gildinu frá síðasta klukkutíma. Hinir 25 mælarnir breytast sjálfkrafa á heila tímanum. Flýtilyklar: <b>1–6</b> = 09:00–14:00, <b>K</b> = loka.</p>
+    <div class="seg" role="group" aria-label="Klukka" id="hourBtns"></div>
+    <p class="sync" id="sync">Tengist gagnasafni…</p>
   </div>
   <div class="panel-body">
     <table>
-      <thead><tr><th>Hópur</th><th>Mælir</th><th>Kóði</th><th>09:00</th><th>10:00</th></tr></thead>
+      <thead><tr id="headRow"><th>Hópur</th><th>Mælir</th><th>Kóði</th></tr></thead>
       <tbody id="groupRows"></tbody>
     </table>
   </div>
   <div class="panel-foot">
-    <button class="ghost" id="resetBtn">Endurstilla 10:00 gildi</button>
+    <span class="sync">Gildin vistast þegar þú ferð úr reit eða ýtir á Enter.</span>
     <button class="ghost" id="closeBtn">Loka</button>
   </div>
 </aside>
 
 <script>
 (() => {
-  const N = 50, LIGHTS = 25, MAX9 = 12, GROUPS = 25;
-  const STORE = "maelar-10-overrides";
+  const N = 50, LIGHTS = 25, MAX_RANDOM = 12;
+  const HOURS = ["09", "10", "11", "12", "13", "14"];
+  // Hópur #1 → mælir 41, hópur #2 → mælir 45, … (raðnúmer mæla 1–50).
+  const GROUP_GAUGES = [41, 45, 34, 36, 21, 43, 6, 18, 8, 19, 1, 20, 3, 15, 48, 50, 44, 4, 33, 5, 40, 24, 9, 11, 23];
+  const LOCAL = "maelar-gogn-v2";
 
   // Seeded generator so every reload shows the same codes and levels.
   function mulberry32(a) {
@@ -301,35 +305,35 @@ td input {
     const c = String(int(0, 9999)).padStart(4, "0");
     if (!used.has(c)) { used.add(c); codes.push(c); }
   }
-  const level9 = Array.from({ length: N }, () => int(0, MAX9));
+  const start9 = Array.from({ length: N }, () => int(0, MAX_RANDOM));
+  const groupOf = new Map(GROUP_GAUGES.map((g, k) => [g - 1, k + 1]));
 
-  // Groups 1–25 get a shuffled set of gauges so neighbours are not obvious.
-  const order = [...Array(N).keys()];
-  for (let i = N - 1; i > 0; i--) { const j = int(0, i); [order[i], order[j]] = [order[j], order[i]]; }
-  const groupGauge = order.slice(0, GROUPS);
-  const groupOf = new Map(groupGauge.map((g, k) => [g, k]));
-
-  // Default 10:00 levels: group gauges move clearly, others drift a little.
-  const default10 = level9.map((v, i) => {
-    if (groupOf.has(i)) {
-      let n; do { n = int(0, LIGHTS); } while (Math.abs(n - v) < 4);
-      return n;
-    }
-    return v;
+  // Gauges outside the groups drift a little each hour, the same way every time.
+  const randomLevels = { "09": start9 };
+  HOURS.slice(1).forEach((h, n) => {
+    const r = mulberry32(777 + n * 131);
+    const prev = randomLevels[HOURS[n]];
+    randomLevels[h] = prev.map(v => {
+      if (r() < 0.55) return v;
+      const step = (r() < 0.5 ? -1 : 1) * (1 + Math.floor(r() * 3));
+      return Math.max(0, Math.min(MAX_RANDOM, v + step));
+    });
   });
-  const drift10 = level9.map(v => rnd() < 0.45 ? Math.max(0, Math.min(MAX9, v + (rnd() < .5 ? -1 : 1) * int(1, 2))) : v);
 
-  let overrides = {};
-  try { overrides = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { overrides = {}; }
-  const saveOverrides = () => { try { localStorage.setItem(STORE, JSON.stringify(overrides)); } catch (e) {} };
+  // Teacher's real data: data[hour]["g<group>"] = lights lit.
+  let data = Object.fromEntries(HOURS.map(h => [h, {}]));
+  let hour = "09";
+  let db = null, canEdit = false;
 
-  let state = "9";
-  const driftBox = document.getElementById("drift");
-
-  function levelAt(i) {
-    if (state === "9") return level9[i];
-    if (groupOf.has(i)) return overrides[i] ?? default10[i];
-    return driftBox.checked ? drift10[i] : level9[i];
+  function groupLevel(group, h) {
+    for (let i = HOURS.indexOf(h); i >= 0; i--) {
+      const v = data[HOURS[i]]["g" + group];
+      if (Number.isFinite(v)) return v;
+    }
+    return start9[GROUP_GAUGES[group - 1] - 1];
+  }
+  function levelAt(i, h) {
+    return groupOf.has(i) ? groupLevel(groupOf.get(i), h) : randomLevels[h][i];
   }
 
   // Build gauges
@@ -377,7 +381,7 @@ td input {
 
   function render(animate) {
     for (let i = 0; i < N; i++) {
-      const lvl = levelAt(i);
+      const lvl = levelAt(i, hour);
       gaugeLights[i].forEach((ln, k) => {
         ln.style.setProperty("--d", animate ? `${k * 28 + (i % 10) * 18}ms` : "0ms");
         ln.classList.toggle("on", k < lvl);
@@ -387,57 +391,153 @@ td input {
 
   const clock = document.getElementById("clock");
   const screen = document.getElementById("screen");
-  const b9 = document.getElementById("show9"), b10 = document.getElementById("show10");
+  const hourBtns = document.getElementById("hourBtns");
+  HOURS.forEach(h => {
+    const b = document.createElement("button");
+    b.textContent = h + ":00";
+    b.dataset.h = h;
+    b.addEventListener("click", () => chooseHour(h));
+    hourBtns.appendChild(b);
+  });
 
-  function setState(s) {
-    if (s === state) return;
-    state = s;
-    clock.textContent = s === "9" ? "09:00" : "10:00";
-    b9.setAttribute("aria-pressed", s === "9");
-    b10.setAttribute("aria-pressed", s === "10");
-    screen.classList.remove("flicker"); void screen.offsetWidth; screen.classList.add("flicker");
-    render(true);
+  function showHour(h, animate) {
+    const changed = h !== hour;
+    hour = h;
+    clock.textContent = h + ":00";
+    hourBtns.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.h === h));
+    document.querySelectorAll("[data-col]").forEach(c => c.classList.toggle("now", c.dataset.col === h));
+    if (changed && animate) {
+      screen.classList.remove("flicker"); void screen.offsetWidth; screen.classList.add("flicker");
+    }
+    render(changed && animate);
   }
 
-  // Teacher panel
-  const panel = document.getElementById("panel");
+  // Writes go one at a time per document.
+  const queues = {};
+  function persist(path, body) {
+    if (!db) {
+      try { localStorage.setItem(LOCAL, JSON.stringify({ data, hour })); } catch (e) {}
+      return;
+    }
+    queues[path] = (queues[path] || Promise.resolve())
+      .then(() => db.doc(path).set(body))
+      .catch(() => setSync("Ekki tókst að vista. Athugaðu nettenginguna og reyndu aftur.", true));
+  }
+
+  function chooseHour(h) {
+    if (h === hour) return;
+    showHour(h, true);
+    persist("board/state", { hour: h });
+  }
+
+  // Teacher table
+  const headRow = document.getElementById("headRow");
+  HOURS.forEach(h => {
+    const th = document.createElement("th");
+    th.textContent = h; th.dataset.col = h;
+    headRow.appendChild(th);
+  });
   const rows = document.getElementById("groupRows");
-  function buildRows() {
-    rows.innerHTML = "";
-    groupGauge.forEach((g, k) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${k + 1}</td><td>${String(g + 1).padStart(2, "0")}</td><td class="mono">${codes[g]}</td><td>${level9[g]}</td><td></td>`;
+  const inputs = {};
+  GROUP_GAUGES.forEach((g, k) => {
+    const group = k + 1;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>#${group}</td><td>${String(g).padStart(2, "0")}</td><td class="mono">${codes[g - 1]}</td>`;
+    HOURS.forEach(h => {
+      const td = document.createElement("td");
+      td.dataset.col = h;
       const inp = document.createElement("input");
-      inp.type = "number"; inp.min = 0; inp.max = LIGHTS; inp.id = `g10-${g}`;
-      inp.value = overrides[g] ?? default10[g];
-      inp.setAttribute("aria-label", `Ljós kl. 10 á mæli ${g + 1}`);
-      inp.addEventListener("input", () => {
-        const v = Math.max(0, Math.min(LIGHTS, parseInt(inp.value, 10) || 0));
-        overrides[g] = v; saveOverrides();
-        if (state === "10") render(false);
+      inp.type = "number"; inp.min = 0; inp.max = LIGHTS; inp.inputMode = "numeric";
+      inp.id = `g${group}-h${h}`;
+      inp.setAttribute("aria-label", `Hópur ${group}, ljós kl. ${h}:00`);
+      inp.addEventListener("change", () => {
+        const next = { ...data[h] };
+        if (inp.value.trim() === "") delete next["g" + group];
+        else next["g" + group] = Math.max(0, Math.min(LIGHTS, parseInt(inp.value, 10) || 0));
+        data[h] = next;
+        fillInputs();
+        render(false);
+        persist("readings/h" + h, next);
       });
-      tr.lastChild.appendChild(inp);
-      rows.appendChild(tr);
+      inputs[inp.id] = inp;
+      td.appendChild(inp);
+      tr.appendChild(td);
+    });
+    rows.appendChild(tr);
+  });
+
+  function fillInputs() {
+    GROUP_GAUGES.forEach((g, k) => {
+      const group = k + 1;
+      HOURS.forEach((h, n) => {
+        const inp = inputs[`g${group}-h${h}`];
+        const v = data[h]["g" + group];
+        if (document.activeElement !== inp) inp.value = Number.isFinite(v) ? v : "";
+        inp.placeholder = n === 0 ? start9[g - 1] : groupLevel(group, HOURS[n - 1]);
+      });
     });
   }
-  buildRows();
 
-  const togglePanel = () => { panel.hidden = !panel.hidden; };
-  document.getElementById("teacherBtn").addEventListener("click", togglePanel);
+  const sync = document.getElementById("sync");
+  function setSync(text, warn) {
+    sync.innerHTML = "";
+    const b = document.createElement("b");
+    b.textContent = warn ? "Athugið: " : "✓ ";
+    sync.append(b, text);
+  }
+
+  const panel = document.getElementById("panel");
+  const teacherBtn = document.getElementById("teacherBtn");
+  const togglePanel = () => { if (canEdit) panel.hidden = !panel.hidden; };
+  teacherBtn.addEventListener("click", togglePanel);
   document.getElementById("closeBtn").addEventListener("click", togglePanel);
-  b9.addEventListener("click", () => setState("9"));
-  b10.addEventListener("click", () => setState("10"));
-  driftBox.addEventListener("change", () => { if (state === "10") render(true); });
-  document.getElementById("resetBtn").addEventListener("click", () => {
-    overrides = {}; saveOverrides(); buildRows(); if (state === "10") render(false);
-  });
   document.addEventListener("keydown", e => {
-    if (e.target.tagName === "INPUT") return;
-    if (e.key === "1") setState("9");
-    else if (e.key === "2") setState("10");
+    if (!canEdit || e.target.tagName === "INPUT") return;
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= HOURS.length) chooseHour(HOURS[n - 1]);
     else if (e.key === "k" || e.key === "K") togglePanel();
   });
 
-  render(false);
+  function enableTeacher() {
+    canEdit = true;
+    teacherBtn.hidden = false;
+  }
+
+  function startLocal() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LOCAL) || "null");
+      if (saved && saved.data) HOURS.forEach(h => { data[h] = saved.data[h] || {}; });
+      if (saved && HOURS.includes(saved.hour)) hour = saved.hour;
+    } catch (e) {}
+    enableTeacher();
+    setSync("Gögnin vistast aðeins í þessum vafra.", true);
+    fillInputs();
+    const h = hour; hour = ""; showHour(h, false);
+  }
+
+  async function startShared() {
+    db = await window.claude.use("db");
+    if (!db) return startLocal();
+    const user = await window.claude.use("user");
+    if (await (user?.canEdit() ?? Promise.resolve(false))) enableTeacher();
+    setSync("Gögnin vistast í sameiginlegu gagnasafni síðunnar. Allir sem opna síðuna sjá sömu stöðu.");
+    db.doc("board/state").onSnapshot(snap => {
+      const h = snap.exists ? snap.data().hour : "09";
+      if (HOURS.includes(h) && h !== hour) showHour(h, true);
+    }, () => setSync("Tengingin við gagnasafnið rofnaði. Endurhlaðið síðuna.", true));
+    HOURS.forEach(h => {
+      db.doc("readings/h" + h).onSnapshot(snap => {
+        data[h] = snap.exists ? { ...snap.data() } : {};
+        fillInputs();
+        if (h <= hour) render(false);
+      }, () => {});
+    });
+  }
+
+  fillInputs();
+  showHour("09", false);
+  hour = "09";
+  if (window.claude && window.claude.use) startShared().catch(startLocal);
+  else startLocal();
 })();
 </script>
