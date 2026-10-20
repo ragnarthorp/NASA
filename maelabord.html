@@ -101,7 +101,7 @@ h1 {
   content: ""; position: absolute; inset: 0; pointer-events: none;
   background: repeating-linear-gradient(0deg, #00000033 0 2px, transparent 2px 4px);
 }
-.screen small { display: block; font-size: 1.05rem; letter-spacing: .12em; opacity: .75; }
+.screen small { display: block; font-size: 1.15rem; letter-spacing: .08em; opacity: .8; margin-top: 4px; }
 .screen strong { font-weight: 400; font-size: clamp(1.7rem, 2.6vw, 2.4rem); letter-spacing: .04em; white-space: nowrap; }
 .screen .cursor { animation: blink 1s steps(1) infinite; }
 .screen.flicker { animation: flicker .7s linear; }
@@ -244,20 +244,20 @@ th.now, td.now { background: #ffc94d1a; }
     <div class="brand">
       <div class="brand-mark" aria-hidden="true"></div>
       <div>
-        <h1>Eftirlitsstöðin</h1>
-        <p class="eyebrow">50 mælar · 25 ljós á hverjum</p>
+        <h1>Hver er staðan?</h1>
+        <p class="eyebrow">Stigasöfnun hópsins fram að þessu</p>
       </div>
     </div>
     <div class="screen" id="screen" role="status" aria-live="polite">
-      <small>STAÐAN KLUKKAN</small>
-      <strong><span id="clock">09:00</span>&nbsp; 21.10.2026<span class="cursor">_</span></strong>
+      <strong><span id="clock">09:00</span>&nbsp; <span id="date">21.10.2026</span><span class="cursor">_</span></strong>
+      <small id="next">Stig næst uppfærð klukkan 10:00</small>
     </div>
   </header>
 
   <main class="wall" id="wall" aria-label="Mælar"></main>
 
   <footer>
-    <div class="legend"><span>Rautt</span><i aria-hidden="true"></i><span>Grænt</span></div>
+    <div class="legend"><span>1</span><i aria-hidden="true"></i><span>10</span></div>
     <span>Finndu mælinn með raðnúmeri hópsins og lestu af honum.</span>
   </footer>
 </div>
@@ -411,6 +411,20 @@ th.now, td.now { background: #ffc94d1a; }
 
   const clock = document.getElementById("clock");
   const screen = document.getElementById("screen");
+
+  // Real clock, plus the next scheduled update: 10:00 until 10:01, then 11:00, … up to 14:00.
+  const dateEl = document.getElementById("date"), nextEl = document.getElementById("next");
+  const pad = n => String(n).padStart(2, "0");
+  function tick() {
+    const now = new Date();
+    clock.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    dateEl.textContent = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`;
+    const mins = now.getHours() * 60 + now.getMinutes();
+    const next = [10, 11, 12, 13, 14].find(H => mins < H * 60 + 1);
+    nextEl.textContent = next ? `Stig næst uppfærð klukkan ${next}:00` : "Lokastaða klukkan 14:00";
+  }
+  tick();
+  setInterval(tick, 5000);
   const hourBtns = document.getElementById("hourBtns");
   HOURS.forEach(h => {
     const b = document.createElement("button");
@@ -423,7 +437,6 @@ th.now, td.now { background: #ffc94d1a; }
   function showHour(h, animate) {
     const changed = h !== hour;
     hour = h;
-    clock.textContent = h + ":00";
     hourBtns.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.h === h));
     document.querySelectorAll("[data-col]").forEach(c => c.classList.toggle("now", c.dataset.col === h));
     if (changed && animate) {
