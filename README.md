@@ -45,3 +45,7 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Bátshermir
+
+`batur/index.html`: bátur siglir yfir á með straumi. Nemandinn stillir breidd árinnar, straumhraða, hraða og stefnu bátsins og massa hans, og sér tíma yfir, rek, hraðavigra og fyrri ferðir til samanburðar. Síðan er sjálfstæð og þarf ekki nettengingu.
