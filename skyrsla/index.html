@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#183e43">
+<title>Skýrslusmiðja farartækja</title>
+<style>
+:root{--ink:#183e43;--muted:#5d7373;--paper:#f7f6f1;--line:#dce3df;--accent:#177d88;--warn:#9a5a1e;--warnbg:#fbf1e4;--ok:#2f7a4f;--okbg:#e7f3ec;--bad:#a3402a;--card:#fff;--soft:#eef3f0;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;font-weight:600}
+button:hover{background:#eaf1ed}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.primary:hover{background:#286169}
+button.small{padding:4px 10px;font-size:13px;border-radius:8px}
+button.link{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;font-weight:600}
+:focus-visible{outline:3px solid #dfaa53;outline-offset:2px}
+input,select,textarea{border:1px solid #cad5cf;border-radius:9px;padding:9px 11px;background:#fff;width:100%}
+input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--accent)}
+textarea{resize:vertical;min-height:110px;line-height:1.5}
+h1{font:600 30px/1.2 Georgia,serif;margin:0 0 8px}
+h2{font-size:21px;margin:0 0 6px}
+p{margin:0 0 10px}
+.muted{color:var(--muted)}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 24px;background:#fff;border-bottom:1px solid var(--line)}
+.brand{display:flex;gap:12px;align-items:center}
+.brand b{font-size:26px;letter-spacing:-1px;border-left:5px solid var(--accent);padding-left:12px}
+.brand span{font-size:12px;color:var(--muted);line-height:1.35}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.reminder{background:var(--warnbg);color:var(--warn);border-bottom:1px solid #ecd6b8;padding:8px 24px;font-size:14px}
+.reminder b{color:#7a4413}
+
+.shell{display:grid;grid-template-columns:250px minmax(0,1fr);max-width:1180px;margin:0 auto;gap:24px;padding:22px 24px 60px}
+.steps{position:sticky;top:12px;align-self:start;display:flex;flex-direction:column;gap:2px}
+.steps button{display:flex;align-items:center;gap:10px;text-align:left;border:0;background:transparent;padding:8px 10px;border-radius:10px;font-weight:550;color:var(--muted)}
+.steps button:hover{background:#eaf1ed}
+.steps button[aria-current=step]{background:var(--ink);color:#fff}
+.steps .dot{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--soft);color:var(--ink);font-size:12px;font-weight:700}
+.steps .done .dot{background:var(--ok);color:#fff}
+.steps .part .dot{background:#f1dcbf;color:#7a4413}
+.steps button[aria-current=step] .dot{box-shadow:0 0 0 2px #fff}
+.progress{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin:4px 10px 12px}
+.progress i{display:block;height:100%;background:var(--ok);transition:width .3s}
+.ptext{font-size:12px;color:var(--muted);margin:0 10px}
+
+.head{margin-bottom:18px}
+.head .eyebrow{font-size:12px;font-weight:750;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.head p{color:var(--muted);max-width:720px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.q{margin-bottom:6px}
+.q>label,.q>.lbl{display:block;font-weight:700;margin-bottom:4px;font-size:16px}
+.q .req{color:var(--bad);font-weight:700}
+.help{font-size:14px;color:var(--muted);margin:0 0 10px}
+.help ul{margin:4px 0 0;padding-left:20px}
+.starters{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.starters span{font-size:12px;color:var(--muted);align-self:center}
+.starters button{font-size:13px;font-weight:500;padding:3px 10px;border-radius:99px;background:var(--soft);border-color:transparent}
+.meter{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--muted)}
+.meter .bar{flex:0 0 110px;height:6px;border-radius:99px;background:var(--soft);overflow:hidden}
+.meter .bar i{display:block;height:100%;width:0;background:#d39b52}
+.meter.good .bar i{background:var(--ok)}
+.meter.good b{color:var(--ok)}
+details.ex{margin-top:10px;font-size:14px;border-left:3px solid var(--accent);padding:2px 0 2px 12px}
+details.ex summary{cursor:pointer;color:var(--accent);font-weight:600}
+details.ex blockquote{margin:8px 0 2px;font-style:italic;color:#335}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+
+.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.goal{display:block;border:2px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;background:#fff}
+.goal:has(input:checked){border-color:var(--accent);background:#eef7f7}
+.goal b{display:block;margin-bottom:4px}
+.goal small{color:var(--muted);font-size:13px;display:block}
+.goal input{float:right}
+
+.concepts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.concept{display:flex;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;background:#fff}
+.concept:has(input:checked){border-color:var(--accent);background:#eef7f7}
+.concept b{display:block}
+.concept small{color:var(--muted);font-size:13px;line-height:1.4;display:block}
+
+.photo{border:2px dashed #b9c8c1;border-radius:14px;padding:16px;text-align:center;background:#fafcfb}
+.photo.has{border-style:solid;border-color:var(--line);padding:10px}
+.photo.must:not(.has){border-color:#d39b52;background:var(--warnbg)}
+.photo img{max-width:100%;max-height:340px;border-radius:10px;display:block;margin:0 auto 10px}
+.photo .act{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pick{display:inline-block;background:var(--ink);color:#fff;border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.pick:hover{background:#286169}
+.pick input{display:none}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:10px}
+.gitem{border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff}
+.gitem img{width:100%;height:140px;object-fit:cover;border-radius:8px;display:block;margin-bottom:6px}
+.gitem input{font-size:13px;padding:6px 8px}
+.gitem .bar2{display:flex;justify-content:space-between;margin-top:6px}
+
+table.grid{width:100%;border-collapse:collapse;font-size:14px}
+table.grid th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:6px;border-bottom:1px solid var(--line)}
+table.grid td{padding:4px;border-bottom:1px solid #eef2ef;vertical-align:middle}
+table.grid input,table.grid select{padding:6px 8px;font-size:14px}
+.wrapx{overflow-x:auto}
+.sum{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--soft);font-size:15px}
+.sum.ok{background:var(--okbg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chips button{font-size:13px;font-weight:500;padding:3px 10px;border-radius:99px}
+
+.check{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #eef2ef;cursor:pointer}
+.check input{margin-top:5px;width:18px;height:18px}
+.alert{border-radius:14px;padding:14px 16px;margin-bottom:16px;font-size:15px}
+.alert.warn{background:var(--warnbg);border:1px solid #ecd6b8;color:#6e3e12}
+.alert.ok{background:var(--okbg);border:1px solid #bfe0cb;color:#1f5a38}
+.alert ul{margin:6px 0 0;padding-left:20px}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:20}
+.toast.show{opacity:1}
+.selfrow{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;align-items:start;padding:12px 0;border-bottom:1px solid #eef2ef}
+.selfrow textarea{min-height:70px;grid-column:1/-1}
+.selfrow b{display:block}
+.selfrow small{color:var(--muted)}
+
+/* skýrslan */
+.paper{background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 24px rgba(24,62,67,.08);padding:56px 64px;max-width:820px;margin:0 auto}
+.report{font:15.5px/1.6 Arial,"Helvetica Neue",sans-serif;color:#1a1a1a}
+.report h1{font:700 30px/1.2 Arial,sans-serif;text-align:center;margin:0 0 6px;color:#111}
+.report h2{font:400 23px/1.3 Arial,sans-serif;margin:30px 0 10px;color:#111;break-after:avoid}
+.report h3{font:700 15.5px/1.4 Arial,sans-serif;margin:16px 0 4px;break-after:avoid}
+.report p{margin:0 0 10px}
+.report ul{margin:0 0 10px;padding-left:24px}
+.report blockquote{margin:6px 0 14px 36px;font-style:italic}
+.report figure{margin:12px 0;break-inside:avoid;text-align:center}
+.report figure img{max-width:100%;max-height:420px;border-radius:2px}
+.report figcaption{font-size:13px;color:#555;margin-top:4px}
+.report table{border-collapse:collapse;margin:8px 0 14px;font-size:14.5px;break-inside:avoid}
+.report th,.report td{border:1px solid #333;padding:6px 10px;text-align:left;vertical-align:top}
+.report th{font-weight:700;background:#f3f3f3}
+.report .cover{display:flex;flex-direction:column;min-height:900px;break-after:page;padding-top:30px}
+.report .cover .sub{text-align:center;color:#444;margin-bottom:22px}
+.report .cover .main img{max-height:440px}
+.report .cover .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+.report .cover .foot figure{margin:0;flex:0 0 46%}
+.report .cover .foot figure img{max-height:220px}
+.report .cover .meta{text-align:right;font-size:14.5px;line-height:1.55}
+.report .ph{border:2px dashed #999;color:#777;background:#fafafa;display:flex;align-items:center;justify-content:center;min-height:180px;font-style:italic;padding:12px}
+.report .cover .main .ph{min-height:320px}
+.report .missing{background:#fff1d6;color:#8a4b0d;font-style:italic;padding:0 4px;border-radius:3px}
+.report .pics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.report .pics figure{margin:0}
+.report .pics img{width:100%;height:150px;object-fit:cover}
+.report .dots{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 12px}
+.report .dots span{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;color:#fff;background:#bbb}
+.report .dots .y{background:#2f7a4f}.report .dots .n{background:#b5543a}
+.report .box{border:1px solid #333;padding:10px 14px;margin:8px 0 16px;break-inside:avoid}
+.report .appendix{break-before:page}
+.report td.num{text-align:center;white-space:nowrap}
+
+@media screen and (max-width:820px){
+  .shell{grid-template-columns:1fr;padding:14px 16px 50px;gap:12px}
+  .steps{position:static;flex-direction:row;overflow-x:auto;padding-bottom:6px}
+  .steps button .t{display:none}
+  .steps button[aria-current=step] .t{display:inline;white-space:nowrap}
+  .progress,.ptext{display:none}
+  .top,.reminder{padding-left:16px;padding-right:16px}
+  .paper{padding:24px 18px}
+  .report .cover{min-height:0}
+  .report .cover .foot{flex-direction:column;align-items:stretch}
+  .report .cover .meta{text-align:left}
+}
+@page{size:A4;margin:18mm 18mm 16mm}
+@media print{
+  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .noprint,.top,.reminder,.steps,.toast{display:none!important}
+  .shell{display:block;padding:0;max-width:none}
+  .paper{border:0;box-shadow:none;padding:0;max-width:none;border-radius:0}
+  .report .cover{min-height:250mm;padding-top:10mm}
+  .report .missing{background:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>Skýrslusmiðja</b><span>Vísindasmiðja · Farartæki<br>Hanna · smíða · prófa · bæta</span></div>
+  <div class="tools">
+    <button id="bSave" title="Sækja öryggisafrit af allri vinnunni (líka myndum)">Vista afrit</button>
+    <button id="bOpen" title="Opna öryggisafrit sem var vistað áður">Opna afrit</button>
+    <button id="bReset" title="Hreinsa allt og byrja á nýrri skýrslu">Ný skýrsla</button>
+  </div>
+</header>
+<div class="reminder">📸 <b>Munið:</b> takið mynd af <b>lokaafurðinni</b> og af <b>stöðinni ykkar eftir frágang</b>. Skýrslan verður ekki tilbúin til útprentunar fyrr en báðar myndirnar eru komnar inn.</div>
+<div class="shell">
+  <nav class="steps" id="steps" aria-label="Skref"></nav>
+  <main id="view" tabindex="-1"></main>
+</div>
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ---------- Gögn ---------- */
+const GOALS={
+  sigla:{name:'Siglt með farm',short:'Sigling',
+    crit:'Tækið siglir með farm yfir Bugðu, t.d. hálfan lítra af vatni (500 g). Band er í tækinu svo hægt sé að ná því til baka.',
+    measure:'Farmur (g)',ok:'Komst yfir með farminn?',
+    rq:'Er hægt að smíða farartæki sem siglir yfir Bugðu með 500 g farm og hvernig hafa flotkraftur og knýr (t.d. frá teygju eða blöðru) áhrif á það hvort tækið kemst yfir?',
+    measures:['Massi tækisins tóms (g)','Mesti farmur sem tækið bar (g)','Lengd tækisins (cm)','Breidd tækisins (cm)','Tími yfir ána (s)','Breidd árinnar (m)'],
+    concepts:['flot','thyngd','knyr','teygja','massamidja','thettleiki']},
+  flug:{name:'Flug og lending',short:'Flug',
+    crit:'Tækið lendir á sama stað í a.m.k. 3 af 10 tilraunum þegar það flýgur 5 metra eða lengra – EÐA flýgur þvert yfir Sólina á skólalóðinni (eða sambærilega vegalengd inni) í 3 af 10 tilraunum.',
+    measure:'Vegalengd (m)',ok:'Lenti á markstaðnum?',
+    rq:'Er hægt að smíða farartæki sem flýgur a.m.k. 5 metra og lendir á sama stað í 3 af 10 tilraunum og hvaða áhrif hafa lögun vængja og þyngdardreifing á flugið?',
+    measures:['Massi tækisins (g)','Vænghaf (cm)','Lengd tækisins (cm)','Lengsta flug (m)','Meðalvegalengd (m)','Fjarlægð frá markstað að meðaltali (cm)'],
+    concepts:['lyfti','loftmot','thyngd','massamidja','knyr','tregda']},
+  stigi:{name:'Nákvæm ferð niður stiga',short:'Stigi',
+    crit:'Tækinu er ýtt fram af tröppu í stiganum með margföldunartöflunni. Það fer sjálft yfir næstu tröppu fyrir neðan en stoppar í tröppunni þar fyrir neðan, í a.m.k. 3 af 10 tilraunum.',
+    measure:'Hvar stoppaði tækið?',ok:'Stoppaði í réttri tröppu?',
+    rq:'Er hægt að smíða farartæki sem fer sjálft yfir eina tröppu og stoppar í þeirri næstu í 3 af 10 tilraunum og hvernig hafa núningur og hreyfiorka áhrif á hvar það stoppar?',
+    measures:['Massi tækisins (g)','Lengd tækisins (cm)','Hæð tröppu (cm)','Dýpt tröppu (cm)','Efni undir tækinu (þar sem það snertir)'],
+    concepts:['orka','nuning','thyngd','tregda','massamidja']}
+};
+const CONCEPTS=[
+  {id:'thyngd',n:'Þyngdarafl',d:'Jörðin togar allt niður. Þyngd = massi × 9,8 N/kg.'},
+  {id:'flot',n:'Flotkraftur',d:'Vatnið ýtir hlutnum upp jafn fast og þyngd vatnsins sem hann ryður frá sér (lögmál Arkímedesar).'},
+  {id:'thettleiki',n:'Eðlismassi',d:'Hversu mikill massi er í ákveðnu rúmmáli. Hlutur með minni eðlismassa en vatn flýtur.'},
+  {id:'lyfti',n:'Lyftikraftur',d:'Vængir beina loftinu niður og loftið ýtir vængnum upp á móti.'},
+  {id:'loftmot',n:'Loftmótstaða',d:'Loftið hægir á hlut á hreyfingu. Stærri flötur og meiri hraði gefa meiri mótstöðu.'},
+  {id:'nuning',n:'Núningur',d:'Kraftur þar sem fletir snertast. Hann vinnur á móti hreyfingu og getur stöðvað tæki.'},
+  {id:'knyr',n:'Verkun og gagnverkun',d:'3. lögmál Newtons: ef tækið ýtir lofti eða vatni aftur á bak ýtir það tækinu áfram.'},
+  {id:'tregda',n:'Tregða',d:'1. lögmál Newtons: hlutur heldur áfram á sömu ferð nema kraftur breyti hreyfingunni.'},
+  {id:'orka',n:'Stöðuorka og hreyfiorka',d:'Þegar tækið fer niður breytist stöðuorka í hreyfiorku. Núningur breytir henni svo í varma.'},
+  {id:'teygja',n:'Teygjuorka',d:'Teygja eða blaðra geymir orku sem breytist í hreyfiorku þegar hún losnar.'},
+  {id:'massamidja',n:'Massamiðja og jafnvægi',d:'Hvar þyngdin er staðsett ræður því hvort tækið er stöðugt, veltur eða stingst niður.'},
+  {id:'thrystingur',n:'Þrýstingur',d:'Kraftur sem dreifist á flöt. Loft í blöðru er undir þrýstingi og streymir út.'}
+];
+const SELF=[
+  {id:'honnun',n:'Hönnun og útlit',max:3},
+  {id:'skyrsla',n:'Skýrslugerð um hönnun, smíði og prófun tækisins',max:5},
+  {id:'samheldni',n:'Samheldni í hópnum, vinnubrögð og stemning',max:3},
+  {id:'arangur',n:'Árangur við að leysa markmiðið',max:3},
+  {id:'umgengni',n:'Umgengni og frágangur',max:5},
+  {id:'frumleiki',n:'Frumleiki',max:5}
+];
+const CHECKS=[
+  'Rusl er komið í ruslið og flokkað rétt',
+  'Afgangsefni er skilað á sinn stað',
+  'Verkfæri eru komin á sinn stað (límbyssur teknar úr sambandi)',
+  'Borð og gólf við stöðina eru hrein',
+  'Stólar eru komnir á sinn stað',
+  'Farartækið er geymt á merktum stað'
+];
+const EX={
+  purpose:'Í þessari tilraun ætlum við að kanna hvort hægt sé að byggja hring úr Pringles-flögum sem stendur sjálfur, án þess að nota lím, límband eða annan stuðning. Við viljum einnig skoða hvaða kraftar gera það mögulegt að flögurnar haldist saman þótt ekkert sé að festa þær.',
+  rq:'Er hægt að byggja sjálfberandi hring úr Pringles-flögum án líms eða annars stuðnings og hvað veldur því að hringurinn helst uppi?',
+  hypothesis:'Við höldum að flögurnar geti stutt hver aðra ef þeim er raðað nógu þétt saman og hver flaga skarast við þá næstu. Við teljum að þyngdarafl og núningur hafi áhrif á það hvort hringurinn stendur eða hrynur.',
+  hardest:'Við teljum að erfiðasti hluti verkefnisins verði að loka hringnum án þess að hann hrynji.',
+  build:'Fyrst tókum við nokkrar Pringles-flögur og skoðuðum lögun þeirra. Við tókum eftir því að flögurnar eru bognar og geta því legið hver upp að annarri á ákveðinn hátt. […] Fyrsta tilraunin hrundi áður en okkur tókst að loka hringnum. Við prófuðum því aftur og breyttum því hvernig flögurnar sköruðust.',
+  results:'Í fyrstu þremur tilraununum hrundi byggingin áður en okkur tókst að loka hringnum. Við tókum eftir því að hringurinn varð stöðugri þegar flögurnar sköruðust hæfilega mikið og hallinn á þeim var svipaður.',
+  interpretation:'Þyngdarafl togar allar flögurnar niður. Vegna þess hvernig flögunum er raðað þrýsta þær hins vegar jafnframt hver á aðra. Núningur myndast þar sem flögurnar snertast. Núningurinn hjálpar til við að koma í veg fyrir að þær renni auðveldlega hver frá annarri.',
+  surprise:'Það sem kom okkur mest á óvart var hversu stöðug byggingin varð þegar hringnum hafði verið lokað. Á meðan við vorum að byggja hann virtist hann mjög óstöðugur.',
+  learned:'Það sýnir að það að tilraun mistakist í fyrstu getur gefið mikilvægar upplýsingar. Við notuðum það sem við lærðum af fyrstu tilraununum til að bæta næstu tilraun.',
+  further:'Hefur stærð hringsins áhrif á stöðugleika hans? Við gætum þá byggt þrjá hringi með mismunandi þvermál og mælt hversu lengi hver þeirra stendur. Þannig væri aðeins einni breytu – stærð hringsins – breytt.',
+  summary:'Tilraunin sýndi að hægt er að byggja sjálfberandi hring úr Pringles-flögum vegna samspils lögunar byggingarinnar, þrýstings milli flagnanna, núnings og þyngdarafls.'
+};
+
+/* Skrefin. need: telst með í framvindu. min: lágmarksfjöldi orða. */
+const STEPS=[
+ {id:'hopur',t:'Hópurinn',intro:'Byrjið á grunnupplýsingunum. Þær fara á forsíðu skýrslunnar.',f:[
+  {k:'title',type:'text',l:'Heiti farartækisins',need:1,ph:'t.d. Bugðubáturinn Blaðra',h:'Gefið tækinu nafn. Nafnið verður fyrirsögn skýrslunnar.'},
+  {k:'members',type:'lines',l:'Nöfn allra í hópnum',need:1,min:1,ph:'Eitt fullt nafn í hverja línu',h:'Skrifið fullt nafn, eitt í hverja línu.'},
+  {type:'row',f:[
+   {k:'klass',type:'text',l:'Bekkur / hópur',need:1,ph:'t.d. 9. ÁS'},
+   {k:'date',type:'date',l:'Dagsetning',need:1},
+   {k:'subject',type:'text',l:'Námsgrein / þema',ph:'Þemadagar – Vísindasmiðja'}]},
+  {k:'goal',type:'goal',l:'Hvaða markmið völduð þið?',need:1},
+  {k:'group',type:'photo',l:'Mynd af hópnum',need:1,h:'Takið mynd af öllum í hópnum, helst með farartækið. Hún fer á forsíðuna.'}
+ ]},
+ {id:'tilgangur',t:'Tilgangur',intro:'Hvað ætlið þið að gera og hvað viljið þið komast að? Góð skýrsla byrjar á skýrum tilgangi og rannsóknarspurningu.',f:[
+  {k:'purpose',type:'area',l:'Hver er tilgangurinn með verkefninu?',need:1,min:35,
+   h:'Lýsið verkefninu með ykkar eigin orðum: <ul><li>Hvað á tækið að gera?</li><li>Hvaða kröfur þarf það að uppfylla (t.d. 3 af 10 tilraunum)?</li><li>Hvað viljið þið skilja betur (t.d. hvaða kraftar eru að verki)?</li></ul>',
+   st:['Í þessu verkefni ætlum við að hanna og smíða farartæki sem ','Tækið þarf að ','Við viljum einnig skoða hvaða kraftar '],ex:'purpose'},
+  {k:'rq',type:'area',l:'Rannsóknarspurningin ykkar',need:1,min:12,small:1,
+   h:'Ein spurning sem hægt er að svara með tilraun. Byrjið t.d. á „Er hægt að…“, „Hvernig…“ eða „Hvaða áhrif hefur…“. Góð spurning nefnir bæði hvað á að gerast og hvað gæti valdið því.',
+   ex:'rq',goalEx:1}
+ ]},
+ {id:'tilgata',t:'Tilgáta',intro:'Tilgáta er ágiskun sem byggir á þekkingu. Skrifið hana áður en þið prófið, og rökstyðjið hana.',f:[
+  {k:'hypothesis',type:'area',l:'Hvað haldið þið að gerist og af hverju?',need:1,min:35,
+   h:'Segið hvort þið haldið að tækið nái markmiðinu og <b>af hverju</b>. Notið orðið „vegna þess að“.',
+   st:['Við teljum að ','Við höldum að tækið muni ',' vegna þess að '],ex:'hypothesis'},
+  {k:'concepts',type:'concepts',l:'Hvaða kraftar og hugtök skipta mestu máli fyrir ykkar tæki?',need:1,h:'Merkið við að minnsta kosti tvö. Þau hugtök sem eru stjörnumerkt eiga oft við ykkar markmið. Þið útskýrið þau betur í túlkuninni.'},
+  {k:'hardest',type:'area',l:'Hvað haldið þið að verði erfiðast og af hverju?',need:1,min:15,small:1,ex:'hardest',st:['Við teljum að erfiðasti hlutinn verði ']}
+ ]},
+ {id:'honnun',t:'Hönnun',intro:'Lýsið hvernig hugmyndin að tækinu varð til. Hér er metið hvort hönnunin sé úthugsuð og frumleg.',f:[
+  {k:'ideas',type:'area',l:'Hvaða hugmyndir fenguð þið í byrjun?',need:1,min:30,h:'Nefnið að minnsta kosti tvær hugmyndir – líka þær sem þið hættuð við.',st:['Fyrsta hugmyndin okkar var ','Önnur hugmynd var ']},
+  {k:'chosen',type:'area',l:'Hvaða hönnun völduð þið og af hverju?',need:1,min:45,
+   h:'Lýsið lögun, stærð, efni og hvernig tækið hreyfist. Útskýrið af hverju þessi hönnun ætti að virka betur en hinar – tengið við kraftana sem þið völduð.',
+   st:['Við völdum að ','Tækið er gert úr ','Við teljum að þessi hönnun virki vel vegna þess að ']},
+  {k:'rejected',type:'area',l:'Hverju hættuð þið við og af hverju?',need:1,min:15,small:1},
+  {k:'original',type:'area',l:'Útlit og frumleiki: hvað er sérstakt við ykkar tæki?',need:1,min:15,small:1,h:'Hvað gerir tækið ykkar ólíkt tækjum hinna hópanna? Lögðuð þið vinnu í útlitið?'},
+  {k:'sketch',type:'gallery',l:'Teikning eða skissa af hönnuninni',need:1,h:'Takið mynd af skissunni. Merkið helstu hluta tækisins inn á teikninguna og skrifið stutta myndatexta.'},
+  {k:'cards',type:'area',l:'Spilin: söfnuðuð þið rauðum eða bláum spilum?',min:0,small:1,h:'Valfrjálst. Hvaða spil fenguð þið og hvernig notuðuð þið þau?'}
+ ]},
+ {id:'efni',t:'Efni og áhöld',intro:'Listi yfir allt sem þið notuðuð. Annar hópur á að geta safnað sama efni eftir listanum.',f:[
+  {k:'materials',type:'lines',l:'Efni (eitt atriði í línu, með magni)',need:1,min:3,ph:'2 plastflöskur (1,5 L)\n1 blaðra\n30 cm límband',h:'Skrifið magn og stærð þar sem það á við.'},
+  {k:'tools',type:'lines',l:'Áhöld og mælitæki',need:1,min:2,ph:'Skæri\nLímbyssa\nMálband\nVog\nSkeiðklukka'}
+ ]},
+ {id:'framkvaemd',t:'Framkvæmd',intro:'Lýsið nákvæmlega hvað þið gerðuð, í réttri röð og í þátíð. Myndir úr ferlinu gera skýrsluna mun betri.',f:[
+  {k:'build',type:'area',l:'Hvernig smíðuðuð þið tækið? Skref fyrir skref.',need:1,min:70,
+   h:'Skrifið í þátíð og í réttri röð. Einhver annar á að geta smíðað eins tæki eftir lýsingunni ykkar.',
+   st:['Fyrst ','Síðan ','Þegar við ','tókum við eftir því að ','Að lokum '],ex:'build'},
+  {k:'process',type:'gallery',l:'Myndir úr smíðinni',need:1,h:'Takið myndir á meðan þið vinnið, t.d. 3–5 myndir sem sýna skrefin. Skrifið stuttan myndatexta við hverja mynd.'},
+  {k:'problems',type:'area',l:'Hvaða vandamál komu upp við smíðina og hvernig leystuð þið þau?',need:1,min:25},
+  {k:'method',type:'area',l:'Hvernig prófuðuð þið tækið?',need:1,min:35,
+   h:'<ul><li>Hvar fór prófunin fram?</li><li>Hvað mælduð þið og með hverju?</li><li>Var allt haft eins í hverri tilraun (sanngjörn tilraun)? Hverju var haldið föstu?</li></ul>',
+   st:['Við prófuðum tækið ','Við mældum ','Til að tilraunin væri sanngjörn ']}
+ ]},
+ {id:'profanir',t:'Prófanir',intro:'Skráið hverja einustu tilraun – líka þær sem misheppnuðust. Það er einmitt það sem gerir skýrsluna trúverðuga.',f:[
+  {k:'trials',type:'trials',l:'Tilraunir',need:1,h:'Gerið helst 10 tilraunir. Ef þið breytið tækinu, hækkið „útgáfu“ (1, 2, 3…) svo það sjáist hvaða breyting hafði áhrif.'},
+  {k:'changes',type:'area',l:'Hvað bættuð þið á milli tilrauna?',need:1,min:30,h:'Hanna – smíða – prófa – bæta. Hvað breyttuð þið eftir misheppnaða tilraun og hvaða áhrif hafði breytingin?',st:['Eftir tilraun ',' breyttum við ','Það hafði þau áhrif að ']},
+  {k:'measures',type:'measures',l:'Aðrar mælingar',need:1,h:'Mælið tækið og skráið með einingu (g, cm, m, s). Smellið á tillögu til að bæta henni við.'},
+  {k:'results',type:'area',l:'Lýsið niðurstöðunum með orðum',need:1,min:35,h:'Segið <b>hvað</b> gerðist og nefnið tölur. Útskýringin á því <b>af hverju</b> kemur í næsta skrefi.',ex:'results',st:['Tækið náði markmiðinu í ','Í fyrstu tilraununum ','Við tókum eftir því að ']}
+ ]},
+ {id:'tulkun',t:'Túlkun',intro:'Hér sýnið þið að þið skiljið eðlisfræðina. Útskýrið af hverju tækið hegðaði sér eins og það gerði.',f:[
+  {k:'interpretation',type:'area',l:'Hvað þýða niðurstöðurnar? Af hverju virkaði (eða virkaði ekki) tækið?',need:1,min:45,ex:'interpretation',st:['Þetta þýðir að ','Ástæðan fyrir því að ','Þess vegna ']},
+  {k:'cx',type:'conceptx',need:1}
+ ]},
+ {id:'umraedur',t:'Umræður',intro:'Berið niðurstöðurnar saman við tilgátuna og hugsið um hvað þið lærðuð. Það má alveg mistakast – það sem skiptir máli er hvað þið lærðuð af því.',f:[
+  {k:'hypoOk',type:'radio',l:'Stóðst tilgátan?',need:1,o:[['ja','Já, tilgátan reyndist rétt'],['adhluta','Að hluta'],['nei','Nei, tilgátan reyndist röng']]},
+  {k:'hypoWhy',type:'area',l:'Rökstyðjið: hvað í niðurstöðunum sýnir það?',need:1,min:20,small:1,st:['Tilgátan okkar var að ','Niðurstöðurnar sýna að ']},
+  {k:'surprise',type:'area',l:'Hvað kom ykkur mest á óvart?',need:1,min:15,small:1,ex:'surprise'},
+  {k:'learned',type:'area',l:'Hvað lærðuð þið af því sem mistókst?',need:1,min:20,small:1,ex:'learned'},
+  {k:'improve',type:'area',l:'Hvað mynduð þið gera öðruvísi ef þið byrjuðuð upp á nýtt?',need:1,min:20,small:1},
+  {k:'further',type:'area',l:'Framhaldsrannsókn: hvaða spurningu væri áhugavert að kanna næst?',need:1,min:10,small:1,ex:'further'},
+  {type:'row',f:[
+   {k:'fVar',type:'text',l:'Hvaða einni breytu mynduð þið breyta?',need:1,ph:'t.d. stærð vængjanna'},
+   {k:'fKeep',type:'text',l:'Hverju mynduð þið halda eins?',need:1,ph:'t.d. massa og kastkrafti'},
+   {k:'fMeasure',type:'text',l:'Hvað mynduð þið mæla?',need:1,ph:'t.d. vegalengd flugsins'}]},
+  {k:'summary',type:'area',l:'Niðurstaða í einni setningu',need:1,min:12,small:1,h:'Svarið rannsóknarspurningunni í einni setningu og nefnið hvað olli niðurstöðunni.',ex:'summary',st:['Tilraunin sýndi að ']}
+ ]},
+ {id:'samvinna',t:'Samvinna',intro:'Hver gerði hvað? Hér er líka metin samheldni, vinnubrögð og stemning í hópnum.',f:[
+  {k:'roles',type:'roles',l:'Verkaskipting',need:1,h:'Skrifið hvað hver og einn gerði, t.d. smíði, mælingar, myndatöku, skráningu, skýrsluskrif, söfnun spila.'},
+  {k:'teamwork',type:'area',l:'Hvernig gekk samvinnan?',need:1,min:30,h:'Hvað gekk vel? Hvað hefði mátt ganga betur? Hvernig leystuð þið ágreining eða tókuð ákvarðanir?',st:['Samvinnan gekk ','Það sem gekk vel var ','Næst myndum við ']}
+ ]},
+ {id:'fragangur',t:'Frágangur',intro:'Gangið frá stöðinni ykkar og takið myndirnar. Umgengni og frágangur gilda allt að 5 stigum – jafnmikið og skýrslan sjálf.',f:[
+  {k:'checks',type:'checks',l:'Gátlisti fyrir frágang',need:1},
+  {k:'final',type:'photo',l:'Mynd af lokaafurðinni',need:1,must:1,h:'Takið skýra mynd af tilbúnu farartækinu á hreinum bakgrunni. Hún fer á forsíðu skýrslunnar. Ef tækið gæti skemmst í prófunum, takið myndina strax!'},
+  {k:'station',type:'photo',l:'Mynd af stöðinni eftir frágang',need:1,must:1,h:'Takið mynd af borðinu og svæðinu í kring þegar búið er að ganga frá. Myndin sýnir að stöðin er hrein og tilbúin fyrir næsta hóp.'}
+ ]},
+ {id:'sjalfsmat',t:'Sjálfsmat',intro:'Metið ykkur af sanngirni samkvæmt matskvarðanum (25 stig alls) og rökstyðjið hverja einkunn. Sjálfsmatið fylgir skýrslunni sem viðauki.',f:[
+  {k:'self',type:'self',need:1}
+ ]},
+ {id:'skyrsla',t:'Skýrslan',report:1}
+];
+
+/* ---------- Ástand og vistun ---------- */
+const today=()=>new Date().toISOString().slice(0,10);
+const blank=()=>({v:1,a:{date:today(),subject:'Þemadagar – Vísindasmiðja'},concepts:[],trials:Array.from({length:10},()=>({ver:'1',val:'',ok:'',note:''})),measures:[],photos:{},gal:{},roles:{},checks:{},self:{},step:0});
+let S=blank();
+const DB={db:null,
+  open(){return new Promise(r=>{try{const q=indexedDB.open('nasa-skyrsla',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>{this.db=q.result;r()};q.onerror=()=>r()}catch(e){r()}})},
+  get(k){return new Promise(r=>{if(!this.db)return r(null);try{const q=this.db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result||null);q.onerror=()=>r(null)}catch(e){r(null)}})},
+  set(k,v){return new Promise(r=>{if(!this.db)return r(false);try{const t=this.db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>r(true);t.onerror=()=>r(false)}catch(e){r(false)}})}
+};
+let saveT=null;
+function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{const ok=await DB.set('state',S);if(!ok)toast('Ekki tókst að vista í vafranum – munið að „Vista afrit“.')},400)}
+function changed(){save();renderSteps()}
+
+/* ---------- Hjálparföll ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const words=s=>(s||'').trim().split(/\s+/).filter(Boolean).length;
+const lines=s=>(s||'').split('\n').map(x=>x.trim()).filter(Boolean);
+const members=()=>lines(S.a.members);
+const goal=()=>GOALS[S.a.goal]||null;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800)}
+function joinNames(a){return a.length<2?(a[0]||''):a.slice(0,-1).join(', ')+' og '+a[a.length-1]}
+const MON=['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'];
+function isDate(d){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||'');return m?`${+m[3]}. ${MON[+m[2]-1]} ${m[1]}`:''}
+function allFields(st){const out=[];(st.f||[]).forEach(f=>f.type==='row'?out.push(...f.f):out.push(f));return out}
+function trialStats(){const t=S.trials.filter(x=>x.ok);const y=t.filter(x=>x.ok==='ja').length;return{n:t.length,y,rate:t.length?Math.round(100*y/t.length):0}}
+
+function fieldDone(f){
+  const a=S.a;
+  switch(f.type){
+    case 'text':case 'date':case 'goal':case 'radio':return !!(a[f.k]||'').trim();
+    case 'area':return f.min?words(a[f.k])>=f.min:!!(a[f.k]||'').trim();
+    case 'lines':return lines(a[f.k]).length>=(f.min||1);
+    case 'photo':return !!S.photos[f.k];
+    case 'gallery':return (S.gal[f.k]||[]).length>0;
+    case 'concepts':return S.concepts.length>=2;
+    case 'conceptx':return S.concepts.length>0&&S.concepts.every(c=>words(a['c_'+c])>=15);
+    case 'trials':return trialStats().n>=3;
+    case 'measures':return S.measures.filter(m=>m.l&&m.v).length>=2;
+    case 'roles':{const m=members();return m.length>0&&m.every(n=>(S.roles[n]||'').trim())}
+    case 'checks':return CHECKS.every((_,i)=>S.checks[i]);
+    case 'self':return SELF.every(c=>S.self[c.id]&&S.self[c.id].s&&words(S.self[c.id].w)>=8);
+  }
+  return true;
+}
+function stepProgress(st){const fs=allFields(st).filter(f=>f.need);if(!fs.length)return null;const d=fs.filter(fieldDone).length;return{d,n:fs.length}}
+
+/* ---------- Valmynd ---------- */
+function renderSteps(){
+  let D=0,N=0;
+  const h=STEPS.map((st,i)=>{const p=stepProgress(st);if(p){D+=p.d;N+=p.n}
+    const cls=p?(p.d===p.n?'done':p.d>0?'part':''):'';
+    return `<button class="${cls}" data-go="${i}" ${S.step===i?'aria-current="step"':''}><span class="dot">${p&&p.d===p.n?'✓':i+1}</span><span class="t">${esc(st.t)}</span></button>`}).join('');
+  const pct=N?Math.round(100*D/N):0;
+  $('#steps').innerHTML=h+`<div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div><p class="ptext">${pct}% lokið</p>`;
+}
+$('#steps').addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(+b.dataset.go)});
+function go(i){S.step=Math.max(0,Math.min(STEPS.length-1,i));save();render();window.scrollTo({top:0});$('#view').focus({preventScroll:true})}
+
+/* ---------- Reitir ---------- */
+function meterHTML(f){const n=words(S.a[f.k]);const ok=n>=f.min;return `<div class="meter ${ok?'good':''}" data-meter="${f.k}"><span class="bar"><i style="width:${Math.min(100,100*n/f.min)}%"></i></span><span>${n} orð · ${ok?'<b>gott!</b>':'markmið: a.m.k. '+f.min}</span></div>`}
+function updMeter(k,min){const el=document.querySelector(`[data-meter="${k}"]`);if(el)el.outerHTML=meterHTML({k,min})}
+function exHTML(f){
+  let h='';
+  if(f.goalEx&&goal())h+=`<details class="ex"><summary>Dæmi fyrir ykkar markmið (${esc(goal().short)})</summary><blockquote>${esc(goal().rq)}</blockquote><p class="muted">Ekki afrita – skrifið ykkar eigin spurningu sem passar við ykkar hönnun.</p></details>`;
+  if(f.ex)h+=`<details class="ex"><summary>Dæmi úr fyrirmyndarskýrslu (Pringles-hringurinn)</summary><blockquote>${esc(EX[f.ex])}</blockquote></details>`;
+  return h;
+}
+function lbl(f,forId){return `<${forId?'label for="'+forId+'"':'div class="lbl"'}>${esc(f.l)}${f.need?'':' <span class="muted" style="font-weight:400">(valfrjálst)</span>'}</${forId?'label':'div'}>${f.h?`<div class="help">${f.h}</div>`:''}`}
+
+function fieldHTML(f){
+  const a=S.a,id='f_'+f.k;
+  switch(f.type){
+  case 'row':return `<div class="row">${f.f.map(x=>`<div>${fieldHTML(x)}</div>`).join('')}</div>`;
+  case 'text':case 'date':return `<div class="q">${lbl(f,id)}<input id="${id}" type="${f.type}" data-k="${f.k}" value="${esc(a[f.k])}" placeholder="${esc(f.ph||'')}"></div>`;
+  case 'lines':return `<div class="q">${lbl(f,id)}<textarea id="${id}" data-k="${f.k}" placeholder="${esc(f.ph||'')}" style="min-height:120px">${esc(a[f.k])}</textarea></div>`;
+  case 'area':return `<div class="q">${lbl(f,id)}<textarea id="${id}" data-k="${f.k}" data-min="${f.min}" ${f.small?'style="min-height:80px"':''}>${esc(a[f.k])}</textarea>
+    ${f.min?meterHTML(f):''}
+    ${f.st?`<div class="starters"><span>Byrjun á setningu:</span>${f.st.map(s=>`<button type="button" data-start="${f.k}" data-txt="${esc(s)}">${esc(s.trim())}…</button>`).join('')}</div>`:''}
+    ${exHTML(f)}</div>`;
+  case 'goal':return `<div class="q">${lbl(f)}<div class="goals">${Object.entries(GOALS).map(([k,g])=>`<label class="goal"><input type="radio" name="goal" value="${k}" ${a.goal===k?'checked':''}><b>${esc(g.name)}</b><small>${esc(g.crit)}</small></label>`).join('')}</div></div>`;
+  case 'radio':return `<div class="q">${lbl(f)}<div class="row">${f.o.map(([v,t])=>`<label class="goal" style="padding:10px 12px"><input type="radio" name="${f.k}" data-radio="${f.k}" value="${v}" ${a[f.k]===v?'checked':''}><b>${esc(t)}</b></label>`).join('')}</div></div>`;
+  case 'photo':{const src=S.photos[f.k];return `<div class="q">${lbl(f)}<div class="photo ${src?'has':''} ${f.must?'must':''}">
+    ${src?`<img src="${src}" alt="${esc(f.l)}">`:`<p>${f.must?'<b>Þessi mynd er nauðsynleg.</b><br>':''}Engin mynd komin enn.</p>`}
+    <div class="act"><label class="pick">${src?'Skipta um mynd':'📷 Taka eða velja mynd'}<input type="file" accept="image/*" data-photo="${f.k}"></label>${src?`<button type="button" data-delphoto="${f.k}">Fjarlægja</button>`:''}</div></div></div>`}
+  case 'gallery':{const g=S.gal[f.k]||[];return `<div class="q">${lbl(f)}<div class="gallery">${g.map((p,i)=>`<div class="gitem"><img src="${p.src}" alt=""><input data-cap="${f.k}" data-i="${i}" value="${esc(p.cap)}" placeholder="Myndatexti"><div class="bar2"><span>${i>0?`<button class="small" data-mv="${f.k}" data-i="${i}" title="Færa framar">←</button>`:''}</span><button class="small" data-delg="${f.k}" data-i="${i}">Fjarlægja</button></div></div>`).join('')}</div>
+    <label class="pick">📷 Bæta við myndum<input type="file" accept="image/*" multiple data-gal="${f.k}"></label></div>`}
+  case 'concepts':{const rec=goal()?goal().concepts:[];return `<div class="q">${lbl(f)}<div class="concepts">${CONCEPTS.map(c=>`<label class="concept"><input type="checkbox" data-concept="${c.id}" ${S.concepts.includes(c.id)?'checked':''}><span><b>${esc(c.n)}${rec.includes(c.id)?' ★':''}</b><small>${esc(c.d)}</small></span></label>`).join('')}</div></div>`}
+  case 'conceptx':{if(!S.concepts.length)return `<div class="alert warn">Þið hafið ekki valið nein hugtök. <button class="link" data-go="2">Veljið krafta og hugtök í skrefinu „Tilgáta“</button>.</div>`;
+    return S.concepts.map(cid=>{const c=CONCEPTS.find(x=>x.id===cid);if(!c)return '';return fieldHTML({k:'c_'+cid,type:'area',l:`${c.n}: hvernig hafði þetta áhrif á tækið ykkar?`,need:1,min:15,small:1,h:`${esc(c.d)} Tengið hugtakið við það sem þið sáuð í prófununum.`})}).join('')}
+  case 'trials':{const g=goal();const st=trialStats();
+    return `<div class="q">${lbl(f)}${!g?'<div class="alert warn">Veljið fyrst markmið í skrefinu „Hópurinn“.</div>':''}
+    <div class="wrapx"><table class="grid"><thead><tr><th>#</th><th>Útgáfa</th><th>${esc(g?g.measure:'Mæling')}</th><th>${esc(g?g.ok:'Tókst?')}</th><th>Athugasemd</th><th></th></tr></thead><tbody>
+    ${S.trials.map((t,i)=>`<tr><td>${i+1}</td><td style="width:70px"><input data-tr="${i}" data-f="ver" value="${esc(t.ver)}"></td><td style="width:150px"><input data-tr="${i}" data-f="val" value="${esc(t.val)}"></td>
+      <td style="width:110px"><select data-tr="${i}" data-f="ok"><option value=""></option><option value="ja" ${t.ok==='ja'?'selected':''}>Já</option><option value="nei" ${t.ok==='nei'?'selected':''}>Nei</option></select></td>
+      <td><input data-tr="${i}" data-f="note" value="${esc(t.note)}" placeholder="Hvað gerðist?"></td><td><button class="small" data-deltr="${i}" title="Eyða línu" aria-label="Eyða tilraun ${i+1}">✕</button></td></tr>`).join('')}
+    </tbody></table></div><p style="margin-top:8px"><button class="small" id="addTrial">+ Bæta við tilraun</button></p>
+    <div class="sum ${st.y>=3?'ok':''}" id="trialSum">${trialSumText()}</div></div>`}
+  case 'measures':{const g=goal();const sug=(g?g.measures:[]).filter(s=>!S.measures.some(m=>m.l===s));
+    return `<div class="q">${lbl(f)}${sug.length?`<div class="chips">${sug.map(s=>`<button type="button" data-addm="${esc(s)}">+ ${esc(s)}</button>`).join('')}</div>`:''}
+    <table class="grid"><thead><tr><th>Mæling</th><th>Niðurstaða</th><th></th></tr></thead><tbody>
+    ${S.measures.map((m,i)=>`<tr><td><input data-m="${i}" data-f="l" value="${esc(m.l)}"></td><td><input data-m="${i}" data-f="v" value="${esc(m.v)}" placeholder="tala og eining"></td><td><button class="small" data-delm="${i}" aria-label="Eyða">✕</button></td></tr>`).join('')}
+    </tbody></table><p style="margin-top:8px"><button class="small" data-addm="">+ Ný lína</button></p></div>`}
+  case 'roles':{const m=members();if(!m.length)return `<div class="alert warn">Skráið fyrst nöfnin í skrefinu <button class="link" data-go="0">„Hópurinn“</button>.</div>`;
+    return `<div class="q">${lbl(f)}${m.map(n=>`<div class="row" style="grid-template-columns:200px 1fr;margin-bottom:8px;align-items:center"><b>${esc(n)}</b><input data-role="${esc(n)}" value="${esc(S.roles[n])}" placeholder="Hvað gerði ${esc(n.split(' ')[0])}?"></div>`).join('')}</div>`}
+  case 'checks':return `<div class="q">${lbl(f)}${CHECKS.map((c,i)=>`<label class="check"><input type="checkbox" data-check="${i}" ${S.checks[i]?'checked':''}><span>${esc(c)}</span></label>`).join('')}</div>`;
+  case 'self':{const tot=SELF.reduce((s,c)=>s+(+((S.self[c.id]||{}).s)||0),0);
+    return `<div class="q">${SELF.map(c=>{const v=S.self[c.id]||{};return `<div class="selfrow"><div><b>${esc(c.n)}</b><small>1–${c.max} stig</small></div>
+      <select data-self="${c.id}" data-f="s" aria-label="Stig fyrir ${esc(c.n)}"><option value="">Veljið stig</option>${Array.from({length:c.max},(_,i)=>`<option ${+v.s===i+1?'selected':''}>${i+1}</option>`).join('')}</select>
+      <textarea data-self="${c.id}" data-f="w" placeholder="Rökstuðningur: af hverju eigið þið þessi stig skilið?">${esc(v.w)}</textarea></div>`}).join('')}
+      <div class="sum" id="selfTot">Samtals: <b>${tot}</b> af 25 stigum</div></div>`}
+  }
+  return '';
+}
+function trialSumText(){const g=goal(),st=trialStats();if(!st.n)return 'Engar tilraunir skráðar enn. Fyllið út „Já“ eða „Nei“ fyrir hverja tilraun.';
+  return `Tækið náði markmiðinu í <b>${st.y} af ${st.n}</b> tilraunum (${st.rate}%). ${st.y>=3?'Markmiðinu um a.m.k. 3 heppnaðar tilraunir er náð. 🎉':'Markmiðið er a.m.k. 3 heppnaðar tilraunir af 10. Munið: þið getið samt fengið góða einkunn ef skýrslan er vel unnin!'}`}
+
+/* ---------- Teikna skref ---------- */
+function render(){
+  renderSteps();
+  const st=STEPS[S.step],i=S.step;
+  if(st.report)return renderReport();
+  $('#view').innerHTML=`<div class="head"><div class="eyebrow">Skref ${i+1} af ${STEPS.length}</div><h1>${esc(st.t)}</h1><p>${st.intro}</p></div>
+   <div class="panel">${st.f.map(f=>`<div style="margin-bottom:22px">${fieldHTML(f)}</div>`).join('')}</div>
+   <div class="nav">${i>0?`<button data-go="${i-1}">← ${esc(STEPS[i-1].t)}</button>`:'<span></span>'}<button class="primary" data-go="${i+1}">${esc(STEPS[i+1].t)} →</button></div>`;
+}
+
+/* ---------- Atburðir ---------- */
+const V=$('#view');
+V.addEventListener('input',e=>{const t=e.target,d=t.dataset;
+  if(d.k){S.a[d.k]=t.value;if(d.min)updMeter(d.k,+d.min);changed();return}
+  if(d.tr){S.trials[+d.tr][d.f]=t.value;const s=$('#trialSum');if(s){s.innerHTML=trialSumText();s.classList.toggle('ok',trialStats().y>=3)}changed();return}
+  if(d.m){S.measures[+d.m][d.f]=t.value;changed();return}
+  if(d.cap){S.gal[d.cap][+d.i].cap=t.value;changed();return}
+  if(d.role!==undefined){S.roles[d.role]=t.value;changed();return}
+  if(d.self){(S.self[d.self]=S.self[d.self]||{})[d.f]=t.value;if(d.f==='s'){const tot=SELF.reduce((s,c)=>s+(+((S.self[c.id]||{}).s)||0),0);$('#selfTot').innerHTML=`Samtals: <b>${tot}</b> af 25 stigum`}changed();return}
+});
+V.addEventListener('change',async e=>{const t=e.target,d=t.dataset;
+  if(t.name==='goal'){S.a.goal=t.value;changed();return}
+  if(d.radio){S.a[d.radio]=t.value;changed();return}
+  if(d.concept){const c=d.concept;S.concepts=t.checked?[...new Set([...S.concepts,c])]:S.concepts.filter(x=>x!==c);changed();return}
+  if(d.check){S.checks[d.check]=t.checked;changed();return}
+  if(d.photo&&t.files[0]){toast('Vinn úr mynd…');const src=await shrink(t.files[0]);if(src){S.photos[d.photo]=src;changed();render();toast('Mynd vistuð ✓')}return}
+  if(d.gal&&t.files.length){toast('Vinn úr myndum…');const g=S.gal[d.gal]=S.gal[d.gal]||[];for(const fl of t.files){const src=await shrink(fl);if(src)g.push({src,cap:''})}changed();render();toast('Myndir vistaðar ✓');return}
+});
+V.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(d.go!==undefined){go(+d.go);return}
+  if(d.start){const ta=document.getElementById('f_'+d.start);let v=ta.value;const txt=d.txt;
+    if(v&&!/\s$/.test(v))v+=txt.startsWith(' ')?'':(/[.!?]$/.test(v.trim())?' ':' ');
+    ta.value=v+txt;S.a[d.start]=ta.value;ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);updMeter(d.start,+ta.dataset.min);changed();return}
+  if(d.delphoto){if(confirm('Fjarlægja myndina?')){delete S.photos[d.delphoto];changed();render()}return}
+  if(d.delg){S.gal[d.delg].splice(+d.i,1);changed();render();return}
+  if(d.mv){const g=S.gal[d.mv],i=+d.i;[g[i-1],g[i]]=[g[i],g[i-1]];changed();render();return}
+  if(b.id==='addTrial'){const last=S.trials[S.trials.length-1];S.trials.push({ver:last?last.ver:'1',val:'',ok:'',note:''});changed();render();return}
+  if(d.deltr){S.trials.splice(+d.deltr,1);changed();render();return}
+  if(d.addm!==undefined){S.measures.push({l:d.addm,v:''});changed();render();return}
+  if(d.delm){S.measures.splice(+d.delm,1);changed();render();return}
+  if(b.id==='bPrint'){window.print();return}
+});
+
+/* Minnka myndir svo þær komist í vistun og skýrslu */
+function shrink(file,max=1400){return new Promise(res=>{const url=URL.createObjectURL(file);const img=new Image();
+  img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',.82))};
+  img.onerror=()=>{URL.revokeObjectURL(url);toast('Ekki tókst að lesa myndina. Prófið JPG eða PNG.');res(null)};img.src=url})}
+
+/* ---------- Skýrslan ---------- */
+function paras(s){return lines(s).length?(s||'').trim().split(/\n\s*\n/).map(p=>`<p>${esc(p.trim()).replace(/\n/g,'<br>')}</p>`).join(''):''}
+const miss=t=>`<p><span class="missing">[${esc(t)}]</span></p>`;
+function txt(k,label){const v=S.a[k];return (v||'').trim()?paras(v):miss('Vantar: '+label)}
+function ph(src,label,alt){return src?`<img src="${src}" alt="${esc(alt||label)}">`:`<div class="ph">[${esc(label)}]</div>`}
+function pics(k){const g=S.gal[k]||[];if(!g.length)return '';return `<div class="pics">${g.map((p,i)=>`<figure><img src="${p.src}" alt="${esc(p.cap)}"><figcaption>Mynd: ${esc(p.cap||'')}</figcaption></figure>`).join('')}</div>`}
+function list(k,label){const l=lines(S.a[k]);return l.length?`<ul>${l.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:miss('Vantar: '+label)}
+
+function buildReport(){
+  const a=S.a,g=goal(),m=members(),st=trialStats();let n=0;const H=t=>`<h2>${++n}. ${esc(t)}</h2>`;
+  const cnames=S.concepts.map(c=>(CONCEPTS.find(x=>x.id===c)||{}).n).filter(Boolean);
+  const trials=S.trials.filter(t=>t.ok||t.val||t.note);
+  const hyp={ja:'Tilgátan okkar reyndist rétt.',adhluta:'Tilgátan okkar reyndist rétt að hluta.',nei:'Tilgátan okkar reyndist ekki rétt.'}[a.hypoOk]||'';
+  const ms=S.measures.filter(x=>x.l||x.v);
+  const doneChecks=CHECKS.filter((_,i)=>S.checks[i]);
+  const selfTot=SELF.reduce((s,c)=>s+(+((S.self[c.id]||{}).s)||0),0);
+  return `<div class="report">
+  <section class="cover">
+    <h1>${esc(a.title||'[Heiti farartækisins]')}</h1>
+    <p class="sub">${g?esc(g.name):''}</p>
+    <figure class="main">${ph(S.photos.final,'Setjið mynd af farartækinu hér','Farartækið')}</figure>
+    <div class="foot">
+      <figure>${ph(S.photos.group,'Setjið mynd af hópnum hér','Hópurinn')}</figure>
+      <div class="meta">${esc(joinNames(m))||'<span class="missing">[Nöfn]</span>'}<br>${esc(a.klass||'')}<br>${esc(isDate(a.date))}<br>${esc(a.subject||'')}</div>
+    </div>
+  </section>
+
+  ${H('Tilgangur og rannsóknarspurning')}
+  ${txt('purpose','tilgangur')}
+  ${g?`<p>Markmiðið sem við völdum var <b>${esc(g.name.toLowerCase())}</b>: ${esc(g.crit)}</p>`:''}
+  <p>Rannsóknarspurningin okkar er:</p>
+  <blockquote>${(a.rq||'').trim()?esc(a.rq.trim()):'<span class="missing">[Vantar: rannsóknarspurning]</span>'}</blockquote>
+
+  ${H('Tilgáta')}
+  ${txt('hypothesis','tilgáta')}
+  ${cnames.length?`<p>Við teljum að eftirfarandi kraftar og hugtök skipti mestu máli fyrir tækið okkar: ${esc(joinNames(cnames.map(x=>x.toLowerCase())))}.</p>`:''}
+  ${paras(a.hardest)}
+
+  ${H('Efni og áhöld')}
+  <h3>Efni</h3>${list('materials','efnislisti')}
+  <h3>Áhöld og mælitæki</h3>${list('tools','áhöld')}
+
+  ${H('Hönnun')}
+  <h3>Hugmyndir</h3>${txt('ideas','hugmyndir')}
+  <h3>Hönnunin sem við völdum</h3>${txt('chosen','valin hönnun')}
+  ${pics('sketch')}
+  <h3>Það sem við hættum við</h3>${txt('rejected','það sem hætt var við')}
+  <h3>Útlit og frumleiki</h3>${txt('original','frumleiki')}
+  ${(a.cards||'').trim()?`<h3>Spil og aukastig</h3>${paras(a.cards)}`:''}
+
+  ${H('Framkvæmd')}
+  <h3>Smíði</h3>${txt('build','lýsing á smíði')}
+  ${pics('process')}
+  <h3>Vandamál og lausnir</h3>${txt('problems','vandamál og lausnir')}
+  <h3>Prófun</h3>${txt('method','lýsing á prófun')}
+
+  ${H('Niðurstöður')}
+  ${st.n?`<p>Tækið náði markmiðinu í <b>${st.y} af ${st.n}</b> tilraunum (${st.rate}%).</p>
+  <div class="dots" aria-hidden="true">${S.trials.filter(t=>t.ok).map((t,i)=>`<span class="${t.ok==='ja'?'y':'n'}">${i+1}</span>`).join('')}</div>`:''}
+  ${trials.length?`<table><thead><tr><th>Tilraun</th><th>Útgáfa</th><th>${esc(g?g.measure:'Mæling')}</th><th>Tókst?</th><th>Athugasemd</th></tr></thead><tbody>
+    ${trials.map((t,i)=>`<tr><td class="num">${i+1}</td><td class="num">${esc(t.ver)}</td><td>${esc(t.val)}</td><td class="num">${t.ok==='ja'?'Já':t.ok==='nei'?'Nei':''}</td><td>${esc(t.note)}</td></tr>`).join('')}</tbody></table>`:miss('Vantar: tilraunatafla')}
+  ${ms.length?`<table><thead><tr><th>Mæling</th><th>Niðurstaða</th></tr></thead><tbody>${ms.map(x=>`<tr><td>${esc(x.l)}</td><td>${esc(x.v)}</td></tr>`).join('')}</tbody></table>`:''}
+  ${txt('results','niðurstöður með orðum')}
+  <h3>Bætingar á milli tilrauna</h3>${txt('changes','bætingar')}
+
+  ${H('Túlkun')}
+  ${txt('interpretation','túlkun')}
+  ${S.concepts.map(cid=>{const c=CONCEPTS.find(x=>x.id===cid);return c?`<h3>${esc(c.n)}</h3>${txt('c_'+cid,'útskýring á '+c.n.toLowerCase())}`:''}).join('')}
+
+  ${H('Umræður')}
+  ${hyp?`<p>${hyp}</p>`:''}${txt('hypoWhy','rökstuðningur fyrir tilgátu')}
+  ${paras(a.surprise)||miss('Vantar: hvað kom á óvart')}
+  ${paras(a.learned)||miss('Vantar: hvað við lærðum')}
+  <h3>Það sem við myndum gera öðruvísi</h3>${txt('improve','hvað mætti gera betur')}
+  <h3>Framhaldsrannsókn</h3>
+  <p>Ef við myndum halda rannsókninni áfram væri áhugavert að kanna:</p>
+  ${(a.further||'').trim()?`<blockquote>${esc(a.further.trim())}</blockquote>`:miss('Vantar: framhaldsspurning')}
+  ${(a.fVar||a.fKeep||a.fMeasure)?`<ul>${a.fVar?`<li>Við myndum aðeins breyta einni breytu: ${esc(a.fVar)}.</li>`:''}${a.fKeep?`<li>Við myndum halda þessu eins: ${esc(a.fKeep)}.</li>`:''}${a.fMeasure?`<li>Við myndum mæla: ${esc(a.fMeasure)}.</li>`:''}</ul>`:''}
+
+  ${H('Samvinna og verkaskipting')}
+  ${m.length?`<table><thead><tr><th>Nafn</th><th>Hlutverk og verkefni</th></tr></thead><tbody>${m.map(x=>`<tr><td>${esc(x)}</td><td>${esc(S.roles[x]||'')}</td></tr>`).join('')}</tbody></table>`:''}
+  ${txt('teamwork','samvinna')}
+
+  ${H('Frágangur')}
+  <p>${doneChecks.length===CHECKS.length?'Við gengum frá stöðinni okkar:':'Við gengum frá stöðinni okkar. Þetta var gert:'}</p>
+  ${doneChecks.length?`<ul>${doneChecks.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:miss('Vantar: gátlisti fyrir frágang')}
+  <figure>${ph(S.photos.station,'Setjið mynd af stöðinni eftir frágang hér','Stöðin eftir frágang')}<figcaption>Stöðin okkar eftir frágang.</figcaption></figure>
+
+  <h2>Niðurstaða í einni setningu</h2>
+  <div class="box">${txt('summary','niðurstaða í einni setningu')}</div>
+
+  <section class="appendix">
+  <h2>Viðauki: Sjálfsmat</h2>
+  <table><thead><tr><th>Matsþáttur</th><th>Stig</th><th>Rökstuðningur</th></tr></thead><tbody>
+  ${SELF.map(c=>{const v=S.self[c.id]||{};return `<tr><td>${esc(c.n)}</td><td class="num">${v.s?esc(v.s):'–'} / ${c.max}</td><td>${esc(v.w||'')}</td></tr>`}).join('')}
+  <tr><th>Alls</th><th class="num">${selfTot} / 25</th><th></th></tr></tbody></table>
+  </section>
+  </div>`;
+}
+
+function renderReport(){
+  const mustMissing=[];if(!S.photos.final)mustMissing.push('mynd af lokaafurðinni');if(!S.photos.station)mustMissing.push('mynd af stöðinni eftir frágang');
+  const todo=[];STEPS.forEach((st,i)=>{allFields(st).filter(f=>f.need&&!fieldDone(f)).forEach(f=>todo.push([i,st.t,f.l||({conceptx:'Útskýringar á hugtökum',self:'Stig og rökstuðningur'}[f.type])]))});
+  const fi=STEPS.findIndex(s=>s.id==='fragangur');
+  $('#view').innerHTML=`<div class="head noprint"><div class="eyebrow">Skref ${STEPS.length} af ${STEPS.length}</div><h1>Skýrslan ykkar</h1><p>Svona lítur skýrslan út. Lesið hana yfir saman – lagið það sem vantar eða hljómar ekki rétt með því að fara aftur í viðkomandi skref.</p></div>
+  ${mustMissing.length?`<div class="alert warn noprint"><b>📸 Skýrslan er ekki tilbúin.</b> Það vantar ${esc(joinNames(mustMissing))}. Gangið frá stöðinni ykkar og takið myndirnar áður en skýrslunni er skilað. <button class="link" data-go="${fi}">Fara í Frágang →</button></div>`:''}
+  ${todo.length?`<div class="alert warn noprint"><b>Þetta á eftir að klára (${todo.length}):</b><ul>${todo.slice(0,12).map(([i,t,l])=>`<li><button class="link" data-go="${i}">${esc(t)}</button>: ${esc(l)}</li>`).join('')}${todo.length>12?`<li>… og ${todo.length-12} í viðbót</li>`:''}</ul></div>`
+    :`<div class="alert ok noprint"><b>Allt er komið! 🎉</b> Lesið skýrsluna yfir einu sinni enn og prentið hana síðan eða vistið sem PDF.</div>`}
+  <div class="panel noprint" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <button class="primary" id="bPrint" ${mustMissing.length?'disabled':''}>🖨️ Prenta / vista sem PDF</button>
+    <span class="muted" style="font-size:14px">${mustMissing.length?'Opnast þegar myndirnar af lokaafurð og stöð eru komnar.':'Veljið „Vista sem PDF“ í prentglugganum ef þið skilið rafrænt.'}</span>
+  </div>
+  <div class="paper">${buildReport()}</div>
+  <div class="nav noprint"><button data-go="${STEPS.length-2}">← ${esc(STEPS[STEPS.length-2].t)}</button><span></span></div>`;
+}
+/* Ekki prenta með Ctrl+P fyrr en myndirnar eru komnar */
+window.addEventListener('beforeprint',()=>{if(STEPS[S.step].report&&(!S.photos.final||!S.photos.station))toast('Munið myndirnar af lokaafurð og stöð eftir frágang!');if(!STEPS[S.step].report){S.step=STEPS.length-1;render()}});
+
+/* ---------- Afrit ---------- */
+$('#bSave').onclick=()=>{const name=(S.a.title||'skyrsla').replace(/[^\wÁÐÉÍÓÚÝÞÆÖáðéíóúýþæö-]+/g,'-');const b=new Blob([JSON.stringify(S)],{type:'application/json'});const u=URL.createObjectURL(b);const l=document.createElement('a');l.href=u;l.download=`${name}-afrit.json`;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);toast('Afrit sótt ✓')};
+$('#bOpen').onclick=()=>$('#fileIn').click();
+$('#fileIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const d=JSON.parse(await f.text());if(!d||!d.a)throw 0;S=Object.assign(blank(),d);changed();render();toast('Afrit opnað ✓')}catch(err){toast('Þetta er ekki gilt afrit.')}};
+$('#bReset').onclick=()=>{if(confirm('Byrja á nýrri skýrslu? Öll vinna sem er á þessu tæki hverfur. Vistið afrit fyrst ef þið viljið geyma hana.')){S=blank();changed();render()}};
+
+(async()=>{await DB.open();const d=await DB.get('state');if(d&&d.a)S=Object.assign(blank(),d);render()})();
+</script>
+</body>
+</html>

@@ -35,3 +35,13 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - `js/pdf.js`: PDF-útgáfa
 - `vendor/jspdf.umd.min.js`: [jsPDF](https://github.com/parallax/jsPDF) 2.5.1 (MIT-leyfi)
 - `vendor/pdf-fonts.js`: leturgerðir fyrir PDF, hlutmengi úr Liberation Sans/Mono (SIL Open Font License, sjá `vendor/pdf-fonts-LICENSE.txt`)
+
+## Skýrslusmiðja farartækja
+
+`skyrsla/index.html` er sjálfstæður vefur fyrir nemendur í vísindasmiðjunni (farartæki: siglt með farm, flug og lending, nákvæm ferð niður stiga). Hópurinn svarar ítarlegum spurningum í 12 skrefum (tilgangur, tilgáta, hönnun, efni, framkvæmd, prófanir, túlkun, umræður, samvinna, frágangur, sjálfsmat) og fær í lokin uppsetta skýrslu sem má prenta eða vista sem PDF.
+
+- Hjálp við hverja spurningu: leiðbeiningar, setningabyrjanir, orðamælir og dæmi úr fyrirmyndarskýrslu.
+- Tilraunatafla reiknar árangur (x af 10) og valin eðlisfræðihugtök verða að spurningum í túlkuninni.
+- Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
+- **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
+- Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
