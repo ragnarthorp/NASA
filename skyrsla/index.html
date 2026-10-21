@@ -268,7 +268,7 @@ const STEPS=[
   {k:'title',type:'text',l:'Heiti farartækisins',need:1,ph:'t.d. Bugðubáturinn Blaðra',h:'Gefið tækinu nafn. Nafnið verður fyrirsögn skýrslunnar.'},
   {k:'members',type:'lines',l:'Nöfn allra í hópnum',need:1,min:1,ph:'Eitt fullt nafn í hverja línu',h:'Skrifið fullt nafn, eitt í hverja línu.'},
   {type:'row',f:[
-   {k:'klass',type:'text',l:'Bekkur / hópur',need:1,ph:'t.d. 9. ÁS'},
+   {k:'hopnr',type:'text',l:'Hópnúmer',need:1,ph:'t.d. 4'},
    {k:'date',type:'date',l:'Dagsetning',need:1},
    {k:'subject',type:'text',l:'Námsgrein / þema',ph:'Þemadagar – Vísindasmiðja'}]},
   {k:'goal',type:'goal',l:'Hvaða markmið völduð þið?',need:1},
@@ -540,7 +540,7 @@ function buildReport(){
     <figure class="main">${ph(S.photos.final,'Setjið mynd af farartækinu hér','Farartækið')}</figure>
     <div class="foot">
       <figure>${ph(S.photos.group,'Setjið mynd af hópnum hér','Hópurinn')}</figure>
-      <div class="meta">${esc(joinNames(m))||'<span class="missing">[Nöfn]</span>'}<br>${esc(a.klass||'')}<br>${esc(isDate(a.date))}<br>${esc(a.subject||'')}</div>
+      <div class="meta">${esc(joinNames(m))||'<span class="missing">[Nöfn]</span>'}<br>${(a.hopnr||'').trim()?'Hópur '+esc(a.hopnr.trim().replace(/^hópur\s*/i,'')):''}<br>${esc(isDate(a.date))}<br>${esc(a.subject||'')}</div>
     </div>
   </section>
 
