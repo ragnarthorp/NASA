@@ -1,0 +1,1139 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rafmagnsfræði 1 upprifjun</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Útlit: rannsóknarstofuborð. Ljós grunnur með koparlit sem áherslu og grænan rafrásaplötulit sem aukalit.
+   Haus með námskeiðskóða, flipar efst, efni í einum dálki (max 980px). */
+:root{
+  --bg:#f2f4f3; --surface:#ffffff; --sunk:#e8eceb; --ink:#1b252d; --muted:#56646d; --line:#d3dbdc;
+  --copper:#a9521f; --copper-soft:#f5e4d8; --board:#1d5b48; --board-soft:#deede7;
+  --ok:#277246; --okbg:#e3f2e8; --bad:#ad3527; --badbg:#f8e3df; --wire:#34424b;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171b; --surface:#192127; --sunk:#0d1215; --ink:#e3e9ea; --muted:#9aa8ae; --line:#2b373e;
+  --copper:#e48d58; --copper-soft:#3a2418; --board:#63c29e; --board-soft:#15302a;
+  --ok:#6fcf93; --okbg:#173325; --bad:#f08a7a; --badbg:#3a1d19; --wire:#b9c6cb; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171b; --surface:#192127; --sunk:#0d1215; --ink:#e3e9ea; --muted:#9aa8ae; --line:#2b373e;
+  --copper:#e48d58; --copper-soft:#3a2418; --board:#63c29e; --board-soft:#15302a;
+  --ok:#6fcf93; --okbg:#173325; --bad:#f08a7a; --badbg:#3a1d19; --wire:#b9c6cb; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--copper);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,5vw,42px)}
+h2{font-size:28px}
+h3{font-size:21px}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.label{font:600 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Haus og flipar */
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.top .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding-block:10px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand b{font:700 22px/1 var(--f-display);letter-spacing:.01em}
+.brand span{font:600 11px/1 var(--f-mono);color:var(--copper);letter-spacing:.06em}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;margin-left:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs a{white-space:nowrap;text-decoration:none;color:var(--muted);font-weight:600;font-size:15px;padding:7px 12px;border-radius:8px}
+nav.tabs a:hover{color:var(--ink);background:var(--sunk)}
+nav.tabs a[aria-current="page"]{color:var(--ink);background:var(--copper-soft);box-shadow:inset 0 -2px 0 var(--copper)}
+main{padding-block:28px 60px}
+section.view{display:grid;gap:28px}
+
+/* Almennar einingar */
+.btn{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:600;font-size:15px}
+.btn:hover{border-color:var(--copper)}
+.btn.primary{background:var(--copper);border-color:var(--copper);color:var(--surface)}
+.btn.small{padding:4px 10px;font-size:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;min-width:0}
+.lead{font-size:19px;color:var(--muted);max-width:62ch}
+.prose{display:grid;gap:12px;max-width:70ch}
+.prose ul,.prose ol{margin:0;padding-left:22px;display:grid;gap:4px}
+.key{border-left:3px solid var(--copper);padding:4px 0 4px 14px;display:grid;gap:6px}
+.formula{font:600 22px/1.3 var(--f-mono);color:var(--board);background:var(--board-soft);border-radius:8px;padding:10px 14px;display:inline-block}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px/1.2 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+td.mono{white-space:nowrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.note{font-size:14px;color:var(--muted)}
+.tag{display:inline-block;font:600 11px/1 var(--f-mono);letter-spacing:.05em;padding:4px 7px;border-radius:5px;background:var(--sunk);color:var(--muted)}
+.tag.ok{background:var(--okbg);color:var(--ok)}
+sup{font-size:.7em}
+
+/* Yfirlit */
+.hero{display:grid;gap:14px}
+.route{display:grid;gap:10px;counter-reset:s}
+.route a{display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.route a:hover{border-color:var(--copper)}
+.route .num{font:600 15px/1 var(--f-mono);color:var(--copper)}
+.route .t{font-weight:700;font-size:17px}
+.route .d{font-size:14px;color:var(--muted)}
+.meter{display:block;height:6px;border-radius:3px;background:var(--sunk);overflow:hidden;margin-top:6px;max-width:220px}
+.meter i{display:block;height:100%;background:var(--board)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.steps div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:4px;font-size:15px}
+.steps b{font-family:var(--f-display);font-size:19px}
+
+/* Kaflar */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips a{text-decoration:none;color:var(--muted);font-size:14px;font-weight:600;border:1px solid var(--line);border-radius:20px;padding:4px 12px;background:var(--surface)}
+.chips a[aria-current="page"]{color:var(--surface);background:var(--ink);border-color:var(--ink)}
+.chips a.done::after{content:" ✓";color:var(--ok)}
+.chips a[aria-current="page"].done::after{color:var(--surface)}
+.ch-head{display:grid;gap:8px}
+.example{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:12px}
+.example ol{margin:0;padding-left:22px;display:grid;gap:8px}
+.example li{font-size:16px}
+.example li .mono{background:var(--sunk);padding:1px 6px;border-radius:4px}
+.ch-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:18px}
+
+/* Spurningar */
+.qlist{display:grid;gap:12px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:grid;gap:10px;min-width:0}
+.q.right{border-color:var(--ok)}
+.q.wrong{border-color:var(--bad)}
+.q .qt{font-weight:600}
+.q .qn{font:600 12px/1 var(--f-mono);color:var(--copper);margin-right:6px}
+.opts{display:grid;gap:6px}
+.opt{text-align:left;cursor:pointer;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 12px;font-size:16px}
+.opt:hover:not(:disabled){border-color:var(--copper)}
+.opt:disabled{cursor:default}
+.opt.is-right{background:var(--okbg);border-color:var(--ok);color:var(--ok);font-weight:600}
+.opt.is-wrong{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+.numrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.numrow input{width:200px;max-width:100%}
+input[type=text],select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg)}
+input[type=text]:focus{border-color:var(--copper);outline:none}
+.fb{font-size:15px;border-radius:8px;padding:10px 12px;background:var(--sunk)}
+.fb.ok{background:var(--okbg)}
+.fb.bad{background:var(--badbg)}
+.fb b{display:block;margin-bottom:2px}
+.selfgrade{display:flex;gap:8px;flex-wrap:wrap}
+.symbol{color:var(--ink);background:var(--bg);border-radius:8px;padding:6px;width:120px}
+.symbol svg{display:block;width:100%;height:auto}
+
+/* Reiknivélar */
+.calc{display:grid;gap:14px}
+.calc h3{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.field{display:grid;gap:4px}
+.field label{font:600 13px/1.2 var(--f-mono);color:var(--muted)}
+.field input{width:100%}
+.field small{font:12px/1.3 var(--f-mono);color:var(--muted);min-height:1.3em}
+.field.out input{border-color:var(--board);background:var(--board-soft);color:var(--board);font-weight:600}
+.out-box{background:var(--sunk);border-radius:8px;padding:12px 14px;font-size:15px;display:grid;gap:4px}
+.big{font:600 26px/1.2 var(--f-mono);color:var(--board)}
+.swatches{display:flex;flex-wrap:wrap;gap:4px}
+.sw{width:30px;height:30px;border-radius:6px;border:2px solid var(--line);cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--surface) inset}
+.band-row{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center}
+.band-row .label{line-height:1.3}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 12px;cursor:pointer;font-weight:600;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.circuit{width:100%;max-width:420px;color:var(--wire)}
+
+/* Glósublað */
+.sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.sheet .panel{padding:16px;display:grid;gap:8px;align-content:start}
+.sheet h3{font-size:19px;color:var(--copper)}
+.sheet table{font-size:14px}
+.sheet th,.sheet td{padding:4px 6px}
+.symgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.symgrid figure{margin:0;display:grid;gap:2px;justify-items:center;text-align:center;font-size:12px}
+.symgrid svg{width:76px;height:38px;color:var(--ink)}
+.cc{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;border:1px solid var(--line);margin-right:6px}
+
+/* Próf */
+.scorebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:4;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.scorebar .big{font-size:22px}
+
+@media (max-width:560px){
+  body{font-size:16px}
+  .route a{grid-template-columns:44px 1fr}
+  .route a .tag{grid-column:2}
+  .band-row{grid-template-columns:1fr}
+  .scorebar{top:calc(env(safe-area-inset-top,0px) + 96px)}
+}
+@media (prefers-reduced-motion:no-preference){.q,.opt,.btn{transition:border-color .15s,background-color .15s}}
+@media print{
+  header.top,.no-print,.chips,.ch-foot{display:none!important}
+  body{background:#fff;color:#000;font-size:11pt}
+  main{padding:0}
+  .panel{break-inside:avoid;border-color:#bbb}
+  .sheet{grid-template-columns:1fr 1fr;gap:8px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><b>Rafmagnsfræði 1</b><span>RAFM1GA05AR</span></div>
+    <nav class="tabs" aria-label="Hlutar vefsins">
+      <a href="#yfirlit">Yfirlit</a>
+      <a href="#kafli-frumeind" data-tab="kafli">Kaflar</a>
+      <a href="#reiknivelar">Reiknivélar</a>
+      <a href="#glosur">Glósublað</a>
+      <a href="#profa">Æfingapróf</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="main" tabindex="-1"></main>
+
+<script>
+"use strict";
+/* ============ Hjálparföll ============ */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const STORE = "rafm1-upprifjun";
+let state = { done: {}, stats: {}, best: null };
+try { const s = JSON.parse(localStorage.getItem(STORE)); if (s) state = Object.assign(state, s); } catch (e) {}
+function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+/* Forskeyti */
+const PREFIX = [
+  { p: "T", n: "tera", e: 12 }, { p: "G", n: "gíga", e: 9 }, { p: "M", n: "mega", e: 6 }, { p: "k", n: "kíló", e: 3 },
+  { p: "", n: "(grunneining)", e: 0 }, { p: "m", n: "milli", e: -3 }, { p: "µ", n: "míkró", e: -6 }, { p: "n", n: "nanó", e: -9 }, { p: "p", n: "píkó", e: -12 }
+];
+const PMAP = { T: 12, G: 9, M: 6, k: 3, K: 3, m: -3, u: -6, "µ": -6, "μ": -6, n: -9, p: -12 };
+
+/* Talnalestur: tekur við "0,23", "1.200", "10 mA", "1,2k", "5x10^-6", "5·10-6 A", "3,3e3" */
+function toF(s) {
+  s = s.replace(/\s/g, "");
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  return parseFloat(s);
+}
+function parseQty(str) {
+  if (str == null) return NaN;
+  let s = String(str).trim().replace(/[−–]/g, "-").replace(/[×·•*]/g, "x").replace(/⁻/g, "-")
+    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, c => "⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(c));
+  if (!s) return NaN;
+  let num, rest, m = s.match(/^([-+]?[\d.,\s]*\d)\s*x\s*10\s*\^?\s*([-+]?\d+)\s*(.*)$/i);
+  if (m) { num = toF(m[1]) * Math.pow(10, parseInt(m[2], 10)); rest = m[3]; }
+  else {
+    m = s.match(/^([-+]?[\d.,]*\d(?:e[-+]?\d+)?)\s*(.*)$/i) || s.match(/^([-+]?\d[\d.,\s]*\d)\s*(.*)$/);
+    if (!m) return NaN;
+    num = /e/i.test(m[1]) ? parseFloat(m[1].replace(",", ".")) : toF(m[1]); rest = m[2];
+  }
+  rest = rest.trim().replace(/ohm|Ω|ω|V|A|W|Hz|s$/gi, "").trim();
+  if (rest) { if (rest.length === 1 && rest in PMAP) num *= Math.pow(10, PMAP[rest]); else return NaN; }
+  return num;
+}
+/* Íslensk talnaritun: komma sem tugabrot */
+function fnum(x, sig = 4) {
+  if (!isFinite(x)) return "–";
+  const v = Number(x.toPrecision(sig));
+  if (Math.abs(v) >= 1e4 && Math.abs(v) < 1e15) return v.toLocaleString("de-DE", { maximumFractionDigits: 6 });
+  const s = String(v);
+  if (/e/.test(s)) return sci(v);
+  return s.replace(".", ",");
+}
+function fbase(x) { /* venjulegt tugabrot án þúsundapunkta fyrir lítil gildi */
+  if (!isFinite(x)) return "–";
+  if (x !== 0 && Math.abs(x) < 1e-4) return sci(x);
+  return fnum(x, 6);
+}
+function eng(x, unit, sig = 4) {
+  if (!isFinite(x)) return "–";
+  if (x === 0) return "0 " + unit;
+  const e3 = Math.max(-12, Math.min(12, Math.floor(Math.log10(Math.abs(x)) / 3) * 3));
+  const pr = PREFIX.find(p => p.e === e3);
+  return fnum(x / Math.pow(10, e3), sig) + " " + pr.p + unit;
+}
+function sup(n) { return "<sup>" + String(n).replace("-", "−") + "</sup>"; }
+function sci(x) {
+  if (x === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(x)));
+  return String(Number((x / Math.pow(10, e)).toPrecision(4))).replace(".", ",") + "·10" + sup(e);
+}
+function engPow(x) {
+  if (x === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(x)) / 3) * 3;
+  return String(Number((x / Math.pow(10, e)).toPrecision(5))).replace(".", ",") + "·10" + sup(e);
+}
+const plain = x => String(Number(x.toPrecision(5))).replace(".", ",");
+const near = (a, b) => isFinite(a) && Math.abs(a - b) <= Math.max(Math.abs(b) * 0.011, 1e-15);
+
+/* ============ Teiknitákn (SVG) ============ */
+const S = (inner, vb = "0 0 80 40") => `<svg viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+const SYM = {
+  vidnam: { n: "Viðnám (mótstaða)", s: S('<path d="M4 20h18M58 20h18"/><rect x="22" y="12" width="36" height="16" rx="1"/>') },
+  breytivid: { n: "Breytilegt viðnám", s: S('<path d="M4 20h18M58 20h18"/><rect x="22" y="12" width="36" height="16" rx="1"/><path d="M26 34L56 6"/><path d="M50 6h6v6"/>') },
+  thettir: { n: "Þéttir", s: S('<path d="M4 20h31M45 20h31M35 6v28M45 6v28"/>') },
+  elthettir: { n: "Rafgreiningarþéttir (pólaður)", s: S('<path d="M4 20h31M45 20h31M35 6v28"/><rect x="43" y="6" width="4" height="28" fill="currentColor"/><path d="M26 8h6M29 5v6"/>') },
+  spola: { n: "Spóla", s: S('<path d="M4 22h12M64 22h12"/><path d="M16 22a6 6 0 0 1 12 0a6 6 0 0 1 12 0a6 6 0 0 1 12 0a6 6 0 0 1 12 0"/>') },
+  spennir: { n: "Spennir", s: S('<path d="M10 4v8a5 5 0 0 1 0 10a5 5 0 0 1 0 10v4M70 4v8a5 5 0 0 0 0 10a5 5 0 0 0 0 10v4M36 4v32M44 4v32"/>') },
+  dioda: { n: "Díóða", s: S('<path d="M4 20h26M50 20h26"/><path d="M30 8v24l20-12z" fill="currentColor"/><path d="M50 8v24"/>') },
+  led: { n: "Ljóstvistur (LED)", s: S('<path d="M4 24h22M46 24h30"/><path d="M26 12v24l20-12z" fill="currentColor"/><path d="M46 12v24M50 10l8-8M56 2h2v2M58 14l8-8M64 6h2v2"/>') },
+  smari: { n: "Smári (NPN)", s: S('<circle cx="44" cy="20" r="17"/><path d="M4 20h30M34 10v20M34 15l14-10v-3M34 25l14 10v3"/><path d="M41 33l7 2-3-6" fill="currentColor"/>') },
+  rafhlada: { n: "Rafhlaða / jafnspennugjafi", s: S('<path d="M4 20h30M46 20h30M34 6v28"/><path d="M46 13v14" stroke-width="5"/><path d="M22 6h6M25 3v6"/>') },
+  ridgjafi: { n: "Riðspennugjafi", s: S('<path d="M4 20h20M56 20h20"/><circle cx="40" cy="20" r="16"/><path d="M30 20c3-9 7-9 10 0s7 9 10 0"/>') },
+  pera: { n: "Ljósapera", s: S('<path d="M4 20h20M56 20h20"/><circle cx="40" cy="20" r="16"/><path d="M29 9l22 22M51 9L29 31"/>') },
+  rofi: { n: "Rofi (opinn)", s: S('<path d="M4 26h20M56 26h20"/><circle cx="24" cy="26" r="2" fill="currentColor"/><circle cx="56" cy="26" r="2" fill="currentColor"/><path d="M24 26L54 12"/>') },
+  oryggi: { n: "Öryggi (vartappi)", s: S('<path d="M4 20h76"/><rect x="22" y="12" width="36" height="16" rx="1"/>') },
+  jord: { n: "Jörð (jarðtenging)", s: S('<path d="M40 2v20M24 22h32M30 29h20M36 36h8"/>') },
+  amp: { n: "Straummælir (ampermælir)", s: S('<path d="M4 20h20M56 20h20"/><circle cx="40" cy="20" r="16"/><text x="40" y="27" font-size="20" text-anchor="middle" fill="currentColor" stroke="none" font-family="sans-serif">A</text>') },
+  volt: { n: "Spennumælir (voltmælir)", s: S('<path d="M4 20h20M56 20h20"/><circle cx="40" cy="20" r="16"/><text x="40" y="27" font-size="20" text-anchor="middle" fill="currentColor" stroke="none" font-family="sans-serif">V</text>') },
+  ohm: { n: "Viðnámsmælir (ohmmælir)", s: S('<path d="M4 20h20M56 20h20"/><circle cx="40" cy="20" r="16"/><text x="40" y="27" font-size="20" text-anchor="middle" fill="currentColor" stroke="none" font-family="sans-serif">Ω</text>') },
+  motor: { n: "Mótor", s: S('<path d="M4 20h20M56 20h20"/><circle cx="40" cy="20" r="16"/><text x="40" y="27" font-size="20" text-anchor="middle" fill="currentColor" stroke="none" font-family="sans-serif">M</text>') }
+};
+
+/* ============ Litakóði viðnáma ============ */
+const COLORS = [
+  { k: "svartur", hex: "#1a1a1a", d: 0, m: 0 }, { k: "brúnn", hex: "#7a4423", d: 1, m: 1, t: 1 },
+  { k: "rauður", hex: "#cc2a1e", d: 2, m: 2, t: 2 }, { k: "appelsínugulur", hex: "#ee7a1a", d: 3, m: 3 },
+  { k: "gulur", hex: "#f2cc1b", d: 4, m: 4 }, { k: "grænn", hex: "#2e8c3a", d: 5, m: 5, t: 0.5 },
+  { k: "blár", hex: "#2556c4", d: 6, m: 6, t: 0.25 }, { k: "fjólublár", hex: "#7b3fb0", d: 7, m: 7, t: 0.1 },
+  { k: "grár", hex: "#8a8a8a", d: 8, m: 8, t: 0.05 }, { k: "hvítur", hex: "#f5f5f5", d: 9, m: 9 },
+  { k: "gull", hex: "#c59a2c", m: -1, t: 5 }, { k: "silfur", hex: "#c0c4c8", m: -2, t: 10 }
+];
+const C = k => COLORS.find(c => c.k === k);
+function resistorSVG(bands) {
+  const xs = bands.length === 5 ? [62, 82, 102, 122, 156] : [66, 90, 114, 156];
+  const b = bands.map((k, i) => `<rect x="${xs[i]}" y="18" width="11" height="44" fill="${C(k).hex}" stroke="#0003" stroke-width="1"/>`).join("");
+  return `<svg viewBox="0 0 240 80" role="img" aria-label="Viðnám með röndunum ${bands.join(", ")}" style="width:100%;max-width:300px">
+    <path d="M4 40h46M190 40h46" stroke="#9aa3a8" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 22c0-8 22-8 26-4h88c4-4 26-4 26 4v36c0 8-22 8-26 4H76c-4 4-26 4-26-4z" fill="#d9c59b" stroke="#a8916a" stroke-width="1.5"/>${b}</svg>`;
+}
+function readBands(bands) {
+  const n = bands.length, digits = bands.slice(0, n - 2).map(k => C(k).d);
+  const mult = C(bands[n - 2]).m, tol = C(bands[n - 1]).t;
+  if (digits.some(d => d == null) || mult == null) return null;
+  const val = parseInt(digits.join(""), 10) * Math.pow(10, mult);
+  return { val, tol, digits, mult };
+}
+function bandsFor(val, five) {
+  if (!(val > 0)) return null;
+  const nd = five ? 3 : 2;
+  let e = Math.floor(Math.log10(val)) - (nd - 1);
+  let sig = Math.round(val / Math.pow(10, e));
+  if (sig >= Math.pow(10, nd)) { sig /= 10; e++; }
+  if (e < -2 || e > 9) return null;
+  const ds = String(sig).padStart(nd, "0").split("").map(Number);
+  const mult = COLORS.find(c => c.m === e);
+  return { bands: ds.map(d => COLORS.find(c => c.d === d).k).concat(mult.k), exact: sig * Math.pow(10, e) };
+}
+
+/* ============ Rafrás fyrir mælingar ============ */
+function circuitSVG(mode) {
+  const dot = (x, y) => `<circle cx="${x}" cy="${y}" r="3.5" fill="currentColor"/>`;
+  const meter = (x, y, t, col) => `<circle cx="${x}" cy="${y}" r="16" style="fill:var(--surface);stroke:${col}" stroke-width="2.6"/><text x="${x}" y="${y + 7}" font-size="19" text-anchor="middle" style="fill:${col}" stroke="none" font-family="sans-serif" font-weight="700">${t}</text>`;
+  const col = "var(--copper)";
+  let left = mode === "ohm"
+    ? `<path d="M40 40v40M40 120v40" stroke-dasharray="5 5"/><text x="50" y="104" font-size="12" style="fill:var(--muted)" stroke="none" font-family="sans-serif">spenna aftengd</text>`
+    : `<path d="M40 40v54M40 106v54M26 94h28"/><path d="M33 106h14" stroke-width="5"/><text x="58" y="92" font-size="13" fill="currentColor" stroke="none" font-family="sans-serif">+</text>`;
+  let top = mode === "amp" ? `<path d="M40 40h94M166 40h94"/>${meter(150, 40, "A", col)}` : `<path d="M40 40h220"/>`;
+  let side = mode === "volt" || mode === "ohm"
+    ? `<path d="M260 60h60v24M320 116v24h-60" style="stroke:${col}"/>${dot(260, 60)}${dot(260, 140)}${meter(320, 100, mode === "volt" ? "V" : "Ω", col)}` : "";
+  return `<svg class="circuit" viewBox="0 0 360 190" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" role="img" aria-label="Rafrás með rafhlöðu og peru">
+    ${left}${top}<path d="M40 160h220M260 40v46M260 114v46"/>
+    <circle cx="260" cy="100" r="14"/><path d="M250 90l20 20M270 90l-20 20"/>${side}</svg>`;
+}
+
+/* ============ Kaflar ============ */
+const CHAPTERS = [
+{ id: "frumeind", n: "1-2", t: "Frumeindin og rafmagnið", d: "Kjarni, rafeindir, hleðsla, jónir og leiðarar",
+  body: `
+  <div class="prose">
+    <p>Allt efni er gert úr <b>frumeindum</b>. Frumeind hefur tvo meginhluta:</p>
+    <ul>
+      <li><b>Kjarnann</b> í miðjunni, með <b>róteindum</b> (+) og <b>nifteindum</b> (engin hleðsla). Róteindir og nifteindir eru gerðar úr enn smærri eindum sem heita <b>kvarkar</b>.</li>
+      <li><b>Rafeindasvigrúmið</b> (hvolfin) utan um kjarnann, þar sem <b>rafeindir</b> (−) eru á hreyfingu.</li>
+    </ul>
+  </div>
+  <div class="tbl panel"><table>
+    <thead><tr><th>Eind</th><th>Enska</th><th>Hleðsla</th><th>Hvar?</th></tr></thead>
+    <tbody>
+      <tr><td><b>Róteind</b></td><td>proton</td><td class="mono">+ (jákvæð)</td><td>Í kjarnanum</td></tr>
+      <tr><td><b>Nifteind</b></td><td>neutron</td><td class="mono">0 (engin)</td><td>Í kjarnanum</td></tr>
+      <tr><td><b>Rafeind</b></td><td>electron</td><td class="mono">− (neikvæð)</td><td>Í hvolfunum</td></tr>
+    </tbody></table></div>
+  <div class="grid2">
+    <div class="key"><h3>Jónir</h3>
+      <p><b>Óhlaðin</b> frumeind: jafnmargar róteindir og rafeindir.</p>
+      <p><b>Jákvæð jón</b>: frumeindin hefur <i>misst</i> rafeindir, svo fleiri róteindir en rafeindir.</p>
+      <p><b>Neikvæð jón</b>: frumeindin hefur <i>fengið</i> auka rafeindir.</p></div>
+    <div class="key"><h3>Leiðarar</h3>
+      <p>Rafeindir í <b>ytri hvolfunum</b> eru lausast bundnar kjarnanum. Í góðum leiðurum eins og <b>kopar</b> geta þær skotist á milli frumeinda.</p>
+      <p><b>Spenna</b> (spennumunur milli + og − skauts) ýtir rafeindunum af stað. Þegar þær streyma myndast <b>rafsegulsvið</b> um leiðarann.</p></div>
+  </div>`,
+  examples: [
+    { t: "Koparfrumeind missir rafeind", steps: [
+      "Kopar hefur 29 róteindir. Óhlaðin koparfrumeind hefur því líka <b>29 rafeindir</b>.",
+      "Ein rafeind úr ytra hvolfinu losnar. Eftir eru <span class=\"mono\">29 róteindir (+)</span> og <span class=\"mono\">28 rafeindir (−)</span>.",
+      "Plúsarnir eru einum fleiri: frumeindin er orðin <b>jákvæð jón</b> með hleðsluna +1.",
+      "Takið eftir: það eru alltaf <b>rafeindirnar</b> sem færast. Róteindir sitja fastar í kjarnanum." ] }
+  ] },
+{ id: "hugtok", n: "1-3", t: "Raffræðihugtök", d: "Spenna, straumur, viðnám, afl og einingar þeirra",
+  body: `
+  <div class="prose"><p>Sjö hugtök sem tengjast rafmagni: <b>spenna, straumur, viðnám, afl, span, rýmd og segulsvið</b>. Fyrstu fjögur eru kjarninn í þessum hluta námsins.</p></div>
+  <div class="tbl panel"><table>
+    <thead><tr><th>Stærð</th><th>Tákn</th><th>Eining</th><th>Hvað er það?</th></tr></thead>
+    <tbody>
+      <tr><td><b>Spenna</b></td><td class="mono">U</td><td class="mono">volt (V)</td><td>Þrýstingurinn sem ýtir rafeindunum. Spennumunur milli tveggja punkta.</td></tr>
+      <tr><td><b>Straumur</b></td><td class="mono">I</td><td class="mono">amper (A)</td><td>Rafeindir á hreyfingu í ákveðna átt eftir efni sem leiðir. 1 A = 1 coulomb á sekúndu.</td></tr>
+      <tr><td><b>Viðnám</b></td><td class="mono">R</td><td class="mono">ohm (Ω)</td><td>Hindrunin í efninu sem straumurinn rennur í. Ω er gríski stafurinn omega.</td></tr>
+      <tr><td><b>Afl</b></td><td class="mono">P</td><td class="mono">watt (W)</td><td>Hve hratt orkan er notuð. Rafafl má umbreyta í mörg önnur form: ljós, hita, hreyfingu.</td></tr>
+    </tbody></table></div>
+  <div class="grid2">
+    <div class="key"><h3>Jafnspenna og riðspenna</h3>
+      <p><b>Jafnspenna (DC)</b> heldur alltaf sömu pólun, t.d. rafhlaða.</p>
+      <p><b>Riðspenna (AC)</b>: pólunin breytist í sífellu, t.d. 230 V í innstungunni.</p></div>
+    <div class="key"><h3>Hvernig verður spenna til?</h3>
+      <p><b>Rafhlaða</b>: með efnafræðilegum aðferðum. Spennan mælist þegar fjöldi hleðslna á skautunum er <b>ójafn</b>.</p>
+      <p><b>Rafall</b>: spóla á öxli snýst í segulsviði. Segulsviðið <b>spanar</b> upp spennu í spólunni, sem gefur straum þegar álag er tengt í gegnum vendihringina.</p></div>
+    <div class="key"><h3>Straumstefna</h3>
+      <p><b>Hefðbundin straumstefna</b> (e. conventional current) er eldri hugmyndin: straumurinn fer frá <b>+ til −</b>.</p>
+      <p>Rafeindirnar fara í raun frá <b>− til +</b>.</p></div>
+    <div class="key"><h3>Samhengið</h3>
+      <p>Spennan <b>hækkar</b> → straumurinn <b>eykst</b>.</p>
+      <p>Viðnámið <b>hækkar</b> → straumurinn <b>minnkar</b>.</p>
+      <p>Þetta er Ohms lögmál í orðum, sjá næsta kafla.</p></div>
+  </div>`,
+  examples: [
+    { t: "Hvað þýðir 2 A?", steps: [
+      "1 amper er skilgreint sem <b>1 coulomb af hleðslu á sekúndu</b> sem fer framhjá einum punkti í leiðaranum.",
+      "2 A þýðir því að 2 coulomb fara framhjá á hverri sekúndu.",
+      "Á 5 sekúndum fara <span class=\"mono\">2 · 5 = 10 coulomb</span> framhjá. (Q = I · t er dýpkun, en hjálpar að skilja hvað amper er.)" ] }
+  ] },
+{ id: "ohm", n: "1-4", t: "Ohms lögmál", d: "U = I · R og að umrita jöfnuna",
+  body: `
+  <div class="grid2">
+    <div class="prose">
+      <p>Ohms lögmál tengir saman spennu, straum og viðnám:</p>
+      <p><span class="formula">U = I · R</span></p>
+      <ul>
+        <li>Finna <b>spennu</b>: <span class="mono">U = I · R</span></li>
+        <li>Finna <b>straum</b>: <span class="mono">I = U / R</span></li>
+        <li>Finna <b>viðnám</b>: <span class="mono">R = U / I</span></li>
+      </ul>
+      <p class="note">Ohms-þríhyrningurinn: hyldu stærðina sem þú leitar að. Það sem eftir stendur sýnir reikninginn. Hlið við hlið þýðir margfalda, hvort yfir öðru þýðir deila.</p>
+    </div>
+    <div class="panel" style="display:grid;place-items:center">${ohmTriangle()}</div>
+  </div>
+  <div class="key"><h3>Gullna reglan</h3>
+    <p><b>Breyttu fyrst í grunneiningar</b> (V, A, Ω) áður en þú reiknar. 10 mA = 0,01 A og 1,2 kΩ = 1200 Ω.</p>
+    <p>Skrifaðu alltaf: jöfnuna, tölurnar inn í hana, og svarið <b>með einingu</b>.</p></div>
+  <div class="key"><h3>Afl (viðbót)</h3>
+    <p><span class="mono">P = U · I</span>. Ef þú þekkir tvær af U, I, R og P reiknar Ohm-reiknivélin hinar tvær.</p></div>`,
+  examples: [
+    { t: "Finna spennu (dæmi 2)", steps: [
+      "Gefið: <span class=\"mono\">I = 5 A</span>, <span class=\"mono\">R = 70 Ω</span>. Leitað: U.",
+      "Jafnan: <span class=\"mono\">U = I · R</span>",
+      "Setja inn: <span class=\"mono\">U = 5 · 70</span>",
+      "Svar: <b class=\"mono\">U = 350 V</b>" ] },
+    { t: "Finna viðnám með mA (dæmi 8)", steps: [
+      "Gefið: <span class=\"mono\">U = 230 V</span>, <span class=\"mono\">I = 230 mA</span>. Leitað: R.",
+      "Breyta í grunneiningu: <span class=\"mono\">230 mA = 230 / 1000 = 0,23 A</span>",
+      "Jafnan: <span class=\"mono\">R = U / I = 230 / 0,23</span>",
+      "Svar: <b class=\"mono\">R = 1000 Ω = 1 kΩ</b>" ] },
+    { t: "Tvö forskeyti í einu (dæmi 11)", steps: [
+      "Gefið: <span class=\"mono\">U = 0,11 kV</span>, <span class=\"mono\">R = 0,2 kΩ</span>. Leitað: I.",
+      "Breyta: <span class=\"mono\">0,11 kV = 110 V</span> og <span class=\"mono\">0,2 kΩ = 200 Ω</span>",
+      "Jafnan: <span class=\"mono\">I = U / R = 110 / 200</span>",
+      "Svar: <b class=\"mono\">I = 0,55 A = 550 mA</b>" ] }
+  ] },
+{ id: "einingar", n: "1-5", t: "Mælieiningar, forskeyti og veldisvísar", d: "kílo, milli, míkró og tugaveldi",
+  body: `
+  <div class="tbl panel"><table>
+    <thead><tr><th>Forskeyti</th><th>Tákn</th><th>Margfaldari</th><th>Tugaveldi</th><th>Dæmi</th></tr></thead>
+    <tbody>
+      <tr><td>gíga</td><td class="mono">G</td><td class="mono">1 000 000 000</td><td class="mono">10${sup(9)}</td><td>1 GW</td></tr>
+      <tr><td>mega</td><td class="mono">M</td><td class="mono">1 000 000</td><td class="mono">10${sup(6)}</td><td>8 MΩ = 8 000 000 Ω</td></tr>
+      <tr><td>kíló</td><td class="mono">k</td><td class="mono">1 000</td><td class="mono">10${sup(3)}</td><td>2 kV = 2000 V</td></tr>
+      <tr><td><i>grunneining</i></td><td class="mono">–</td><td class="mono">1</td><td class="mono">10${sup(0)}</td><td>V, A, Ω, W</td></tr>
+      <tr><td>milli</td><td class="mono">m</td><td class="mono">0,001</td><td class="mono">10${sup(-3)}</td><td>10 mA = 0,01 A</td></tr>
+      <tr><td>míkró</td><td class="mono">µ</td><td class="mono">0,000 001</td><td class="mono">10${sup(-6)}</td><td>5 µA = 5·10${sup(-6)} A</td></tr>
+      <tr><td>nanó</td><td class="mono">n</td><td class="mono">0,000 000 001</td><td class="mono">10${sup(-9)}</td><td>1 nF</td></tr>
+    </tbody></table></div>
+  <div class="grid2">
+    <div class="key"><h3>Að breyta á milli</h3>
+      <p>Hvert þrep í töflunni er <b>×1000</b>.</p>
+      <p><b>Niður</b> töfluna (í minni einingu, t.d. A → mA): tölurnar verða <b>stærri</b>, margfaldaðu með 1000.</p>
+      <p><b>Upp</b> töfluna (í stærri einingu, t.d. Ω → kΩ): tölurnar verða <b>minni</b>, deildu með 1000.</p></div>
+    <div class="key"><h3>Tugaveldi</h3>
+      <p>Talan 10${sup(3)} þýðir að kommunni er hliðrað <b>3 sæti til hægri</b>. 10${sup(-3)} þýðir 3 sæti til <b>vinstri</b>.</p>
+      <p>Í rafmagnsfræði notum við helst veldi sem ganga upp í 3 (10${sup(3)}, 10${sup(6)}, 10${sup(-3)}…) svo þau passi við forskeytin.</p></div>
+  </div>
+  <p class="note">Í reitum fyrir talnasvör máttu skrifa t.d. <span class="mono">12x10^-6</span>, <span class="mono">12e-6</span> eða <span class="mono">0,000012</span>.</p>`,
+  examples: [
+    { t: "33 260 Ω í kΩ (dæmi 21)", steps: [
+      "Ω → kΩ er eitt þrep <b>upp</b>: deila með 1000.",
+      "<span class=\"mono\">33260 / 1000 = 33,26</span>",
+      "Svar: <b class=\"mono\">33,260 kΩ</b>. Hinir kostirnir eru ýmist 10 sinnum of litlir eða of stórir." ] },
+    { t: "0,000012 í tugaveldi (dæmi 24b)", steps: [
+      "Færðu kommuna til hægri þar til þú færð þægilega tölu: 0,000012 → 12.",
+      "Kommunni var hliðrað <b>6 sæti til hægri</b>, svo veldisvísirinn er −6.",
+      "Svar: <b class=\"mono\">12·10<sup>−6</sup></b>, sem er líka 12 µ." ] },
+    { t: "3000·10⁻⁶ sem tugabrot (dæmi 25d)", steps: [
+      "10<sup>−6</sup> þýðir: hliðra kommunni 6 sæti til vinstri.",
+      "<span class=\"mono\">3000,0 → 0,003000</span>",
+      "Svar: <b class=\"mono\">0,003</b>" ] }
+  ] },
+{ id: "maelitaeki", n: "1-6", t: "Mælitæki", d: "Fjölsviðsmælir, spennugjafi, sveiflusjá og tíðnigjafi",
+  body: `
+  <div class="grid2">
+    <div class="prose">
+      <h3>Fjölsviðsmælirinn</h3>
+      <ul>
+        <li><b>Svarta</b> leiðslan fer alltaf í <b>COM</b>.</li>
+        <li><b>Rauða</b> leiðslan fer í <b>VΩmA</b>, nema þegar mældur er stór straumur: þá í <b>10A</b> tengið.</li>
+        <li>Veldu <b>DC</b> (V⎓) fyrir jafnspennu og <b>AC</b> (V~) fyrir riðspennu.</li>
+        <li>Veldu <b>minnsta svið sem er stærra</b> en gildið sem þú átt von á. 12 V → <b>20 V DC</b>. Veistu ekki? Byrjaðu á hæsta sviði.</li>
+      </ul>
+    </div>
+    <div class="panel" style="display:grid;gap:10px;justify-items:center">
+      <div class="seg" role="group" aria-label="Velja mælingu">
+        <button type="button" data-cm="volt" aria-pressed="true">Spenna</button>
+        <button type="button" data-cm="amp" aria-pressed="false">Straumur</button>
+        <button type="button" data-cm="ohm" aria-pressed="false">Viðnám</button>
+      </div>
+      <div id="circuitBox">${circuitSVG("volt")}</div>
+      <p id="circuitText" class="note" style="text-align:center"></p>
+    </div>
+  </div>
+  <div class="tbl panel"><table>
+    <thead><tr><th>Mæling</th><th>Tenging</th><th>Muna</th></tr></thead>
+    <tbody>
+      <tr><td><b>Spenna</b></td><td><b>Samsíða</b>: mælirinn yfir íhlutinn</td><td>Rásin er óbreytt, ekkert rofið.</td></tr>
+      <tr><td><b>Straumur</b></td><td><b>Raðtengt</b>: rjúfa rásina og setja mælinn inn í hana</td><td>Straumurinn verður að fara <i>í gegnum</i> mælinn.</td></tr>
+      <tr><td><b>Viðnám</b></td><td>Yfir íhlutinn, <b>án spennu</b></td><td>Aftengdu spennuna (eða taktu íhlutinn úr rásinni).</td></tr>
+    </tbody></table></div>
+  <div class="key"><h3>Aldrei mæla spennu á amper-sviði</h3>
+    <p>Á amper-sviði hefur mælirinn nær ekkert viðnám. Ef hann er settur yfir spennu verður <b>skammhlaup</b> sem getur eyðilagt bæði mælinn og rásina.</p></div>
+  <div class="grid2">
+    <div class="key"><h3>Spennugjafi</h3><p>Gefur stillanlega spennu. <b>Straumstillirinn</b> stillir af og takmarkar straumgetu spennugjafans, svo rásin skemmist ekki ef eitthvað er vitlaust tengt.</p></div>
+    <div class="key"><h3>Sveiflusjá</h3><p>Sýnir (sí)breytilega spennu sem <b>feril sem fall af tíma</b>. Lóðrétt: spenna (<b>VOLTS/DIV</b>). Lárétt: tími (<b>TIME/DIV</b>). Hæð ferilsins á skjánum er stillt með VOLTS/DIV og fínstillingu (VAR).</p></div>
+    <div class="key"><h3>Tíðnigjafi (sveiflugjafi)</h3><p>Býr til bylgjur (sínus, kassa, þríhyrning) með stillanlegri tíðni. Útgangsstyrkurinn er stilltur með <b>AMPLITUDE</b>-stillinum og <b>dempun</b> (ATTENUATOR, t.d. −20 dB / −40 dB).</p></div>
+  </div>
+  <p class="note">Nöfn stilla geta verið aðeins mismunandi eftir tækjum. Notaðu orðalagið sem kennarinn notar í tímum.</p>`,
+  examples: [
+    { t: "Mæla jafnstraum nálægt 10 A (dæmi 2)", steps: [
+      "Þetta er <b>jafnstraumur</b>, svo við veljum A DC.",
+      "Straumurinn er nálægt 10 A, sem er allt of mikið fyrir mA-sviðið. Veljum <b>10A</b> stillinguna.",
+      "Rauða leiðslan fer í <b>10A</b> tengið, svarta í <b>COM</b>.",
+      "Rjúfum rásina og tengjum mælinn <b>raðtengt</b> inn í hana." ] }
+  ] },
+{ id: "ihlutir", n: "1-7", t: "Íhlutir og teiknitákn", d: "Þekkja íhluti af útliti og tákni",
+  body: `
+  <div class="prose"><p>Á prófinu þarftu að þekkja íhluti af <b>mynd</b> og af <b>teiknitákni</b>. Hér eru táknin sem koma fyrir í verkefnunum, og nokkur í viðbót.</p></div>
+  <div class="panel"><div class="symgrid">${Object.values(SYM).map(s => `<figure>${s.s}<figcaption>${s.n}</figcaption></figure>`).join("")}</div></div>
+  <div class="tbl panel"><table>
+    <thead><tr><th>Íhlutur</th><th>Svona lítur hann út</th></tr></thead>
+    <tbody>
+      <tr><td><b>Viðnám</b></td><td>Lítill sívalningur með lituðum röndum og vír í hvorn enda.</td></tr>
+      <tr><td><b>Þéttir</b></td><td>Rafgreiningarþéttir: sívalningur (oft svartur/blár) merktur µF og V, með − rönd. Keramikþéttir: lítill flatur „linsubaunadiskur“.</td></tr>
+      <tr><td><b>Díóða</b></td><td>Lítið glerhylki eða svartur sívalningur með <b>rönd við annan endann</b> (bakskautið).</td></tr>
+      <tr><td><b>Ljóstvistur (LED)</b></td><td>Litaður plastkúpull með tveimur fótum. Lengri fóturinn er plús.</td></tr>
+      <tr><td><b>Afriðilsbrú</b></td><td>Flatur kubbur með <b>fjórum fótum</b>, merktur ~ ~ + − (t.d. RS207). Fjórar díóður í einu hylki.</td></tr>
+      <tr><td><b>Smári (transistor)</b></td><td>Þrír fætur. Lítill svartur hálfsívalningur (TO-92) eða málmhylki (TO-18/TO-39). Aflsmárar eru stærri með kæliplötu (TO-220, TO-3).</td></tr>
+      <tr><td><b>Samrás (IC)</b></td><td>Svartur flatur kubbur með mörgum fótum í tveimur röðum.</td></tr>
+      <tr><td><b>Kristall</b></td><td>Lítið glansandi málmhylki með tveimur fótum. Gefur nákvæma tíðni.</td></tr>
+      <tr><td><b>Liði (relay)</b></td><td>Lítill kassi merktur t.d. 12VDC. Segulrofi: lítill straumur í spólu stýrir rofa.</td></tr>
+      <tr><td><b>Öryggi (vartappi)</b></td><td>Gler- eða keramikhylki með málmhettum í báða enda.</td></tr>
+      <tr><td><b>Spennir</b></td><td>Járnkjarni með tveimur vafningum. Litlir: með vírum. Stórir aflspennar: grár kassi með kæliribbum og einangrurum.</td></tr>
+      <tr><td><b>Rafmótor</b></td><td>Hús með kæliraufum og öxli sem stendur út.</td></tr>
+      <tr><td><b>Rafeindalampi</b></td><td>Glerhylki með málmrafskautum inni og pinnum í botni (eldri tækni).</td></tr>
+    </tbody></table></div>`,
+  examples: [] },
+{ id: "litir", n: "1-8", t: "Litamerkingar viðnáma", d: "Að lesa gildið af röndunum",
+  body: `
+  <div class="grid2">
+    <div class="prose">
+      <p>Á viðnámum með <b>4 röndum</b>:</p>
+      <ol><li>1. rönd: fyrsti tölustafur</li><li>2. rönd: annar tölustafur</li><li>3. rönd: <b>margfaldari</b> (fjöldi núlla)</li><li>4. rönd: <b>vikmörk</b> (oft gull = ±5%)</li></ol>
+      <p>Á <b>5 randa</b> viðnámum eru þrír tölustafir, svo margfaldari og vikmörk.</p>
+      <p class="note">Byrjaðu að lesa frá þeim enda sem röndin er næst. Gull eða silfur er alltaf síðast.</p>
+    </div>
+    <div class="tbl panel"><table>
+      <thead><tr><th>Litur</th><th>Tala</th><th>Margf.</th><th>Vikm.</th></tr></thead>
+      <tbody>${COLORS.map(c => `<tr><td><span class="cc" style="background:${c.hex}"></span>${c.k}</td><td class="mono">${c.d ?? "–"}</td><td class="mono">×10${sup(c.m)}</td><td class="mono">${c.t != null ? "±" + String(c.t).replace(".", ",") + "%" : "–"}</td></tr>`).join("")}</tbody></table></div>
+  </div>
+  <div class="key"><h3>Minnisregla</h3><p>Fyrstu stafir litanna 0–9: <b>S B R A G G B F G H</b>.</p><p>„<b>S</b>vangur <b>B</b>jörn <b>R</b>ændi <b>A</b>llri <b>G</b>ulri <b>G</b>rænni <b>B</b>láberjasúpu <b>F</b>rá <b>G</b>ráum <b>H</b>val.“ Eða búðu til þína eigin.</p></div>`,
+  examples: [
+    { t: "Gulur, fjólublár, rauður, gull", html: () => resistorSVG(["gulur", "fjólublár", "rauður", "gull"]), steps: [
+      "Gulur = <b>4</b>, fjólublár = <b>7</b> → tölustafirnir <span class=\"mono\">47</span>",
+      "Rauður sem margfaldari = ×10<sup>2</sup> = ×100 (tvö núll) → <span class=\"mono\">4700 Ω</span>",
+      "Gull = ±5%",
+      "Svar: <b class=\"mono\">4,7 kΩ ±5%</b>, raungildið er á bilinu 4465 Ω til 4935 Ω." ] }
+  ] }
+];
+
+function ohmTriangle() {
+  return `<svg viewBox="0 0 200 170" style="width:100%;max-width:240px" role="img" aria-label="Ohms-þríhyrningur: U efst, I og R neðst">
+    <path d="M100 8L192 162H8z" style="fill:var(--board-soft);stroke:var(--board)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M48 96h104M100 96v66" style="stroke:var(--board)" stroke-width="3"/>
+    <g font-family="JetBrains Mono,monospace" font-weight="600" style="fill:var(--board)" text-anchor="middle">
+    <text x="100" y="78" font-size="34">U</text><text x="66" y="146" font-size="32">I</text><text x="134" y="146" font-size="32">R</text><text x="100" y="140" font-size="22">·</text></g></svg>`;
+}
+
+/* ============ Spurningabanki ============ */
+const OHMS = (id, q, ans, unit, steps) => ({ id, ch: "ohm", type: "num", q, a: ans, unit, exp: steps });
+const BANK = [
+  // 1-2 Frumeindin
+  { id: "f1", ch: "frumeind", type: "open", q: "Hverjir eru tveir meginhlutar frumeindar?", a: "Kjarninn (róteindir og nifteindir) og rafeindasvigrúmið (rafeindir)." },
+  { id: "f2", ch: "frumeind", type: "mc", q: "Hvað nefnast smærri eindirnar sem róteindir og nifteindir eru gerðar úr?", o: ["Kvarkar", "Jónir", "Rafeindir", "Sameindir"], a: 0 },
+  { id: "f3", ch: "frumeind", type: "mc", q: "Hvernig rafhleðslu hefur róteind (proton)?", o: ["Jákvæða (+)", "Neikvæða (−)", "Enga"], a: 0 },
+  { id: "f4", ch: "frumeind", type: "mc", q: "Hvernig rafhleðslu hefur rafeind (electron)?", o: ["Jákvæða (+)", "Neikvæða (−)", "Enga"], a: 1 },
+  { id: "f5", ch: "frumeind", type: "mc", q: "Hvernig rafhleðslu hefur nifteind (neutron)?", o: ["Jákvæða (+)", "Neikvæða (−)", "Enga"], a: 2 },
+  { id: "f6", ch: "frumeind", type: "mc", q: "Hvenær telst frumeind vera jákvætt hlaðin jón?", o: ["Þegar hún hefur fleiri róteindir en rafeindir", "Þegar hún hefur fleiri rafeindir en róteindir", "Þegar róteindir og rafeindir eru jafnmargar", "Þegar hún hefur engar nifteindir"], a: 0 },
+  { id: "f7", ch: "frumeind", type: "mc", q: "Hvenær telst frumeind vera óhlaðin?", o: ["Þegar fjöldi róteinda og rafeinda er jafn", "Þegar fjöldi róteinda og nifteinda er jafn", "Þegar hún hefur engar rafeindir"], a: 0 },
+  { id: "f8", ch: "frumeind", type: "mc", q: "Hvaða efni er eitt algengasta efnið í rafleiðara?", o: ["Kopar", "Gúmmí", "Gler", "Plast"], a: 0 },
+  { id: "f9", ch: "frumeind", type: "open", q: "Hvenær myndast rafsegulsvið um rafleiðara?", a: "Þegar rafeindir streyma eftir honum, þ.e. þegar straumur fer um hann." },
+  { id: "f10", ch: "frumeind", type: "mc", q: "Hvað veldur því að rafeindir streyma í vír?", o: ["Spenna (spennumunur milli plús- og mínusskauts)", "Viðnám vírsins", "Nifteindirnar í kjarnanum", "Litur einangrunarinnar"], a: 0 },
+  { id: "f27", ch: "frumeind", type: "open", q: "Hvað gerist í frumeind sem missir eina eða fleiri rafeindir, svo þær verða færri en róteindirnar?", a: "Hún missir neikvæða hleðslu og verður jákvæð jón." },
+  { id: "f28", ch: "frumeind", type: "mc", q: "Hvort eru rafeindir í ytri eða innri hvolfum frumeinda laust bundnari kjarnanum?", o: ["Í ytri hvolfunum", "Í innri hvolfunum"], a: 0 },
+  { id: "f30", ch: "frumeind", type: "mc", q: "„Róteindir eru plús (jákvætt) hlaðnar.“", o: ["Rétt", "Rangt"], a: 0 },
+  // 1-3 Hugtök
+  { id: "h11", ch: "hugtok", type: "open", q: "Hvað er rafstraumur?", a: "Rafeindir á hreyfingu í ákveðna átt eftir efni sem leiðir." },
+  { id: "h12", ch: "hugtok", type: "open", q: "Nefndu a.m.k. sjö hugtök sem tengjast rafmagni.", a: "Spenna, straumur, viðnám, afl, span, rýmd og segulsvið." },
+  { id: "h13", ch: "hugtok", type: "mc", q: "Hverjar eru tvær birtingarmyndir spennu?", o: ["Jafnspenna og riðspenna", "Háspenna og lágspenna", "Plússpenna og mínusspenna", "Rafspenna og segulspenna"], a: 0 },
+  { id: "h14", ch: "hugtok", type: "mc", q: "Hver er mælieiningin fyrir spennu?", o: ["Volt (V)", "Amper (A)", "Ohm (Ω)", "Watt (W)"], a: 0 },
+  { id: "h15", ch: "hugtok", type: "open", q: "Hver er munurinn á jafnspennu og riðspennu?", a: "Pólun riðspennunnar breytist í sífellu. Jafnspenna heldur alltaf sömu pólun." },
+  { id: "h16", ch: "hugtok", type: "mc", q: "Hvernig er spennan búin til í rafhlöðum?", o: ["Með efnafræðilegum aðferðum", "Með segli sem snýst", "Með núningi", "Með ljósi"], a: 0 },
+  { id: "h17", ch: "hugtok", type: "mc", q: "Hvort mælist hærri spenna yfir rafhlöðu þegar fjöldi rafhleðslnanna er jafn eða ójafn?", o: ["Þegar fjöldinn er ójafn", "Þegar fjöldinn er jafn"], a: 0 },
+  { id: "h18", ch: "hugtok", type: "open", q: "Hvað gerist í rafal þegar öxull með spólu snýst í segulsviði tveggja eða fleiri segla?", a: "Segulsviðið frá seglunum spanar upp spennu í spólunni. Hún veldur rafstraumi þegar álag er tengt við í gegnum vendihringina." },
+  { id: "h19", ch: "hugtok", type: "mc", q: "Hver er mælieining rafstraums og skammstöfun hennar?", o: ["Amper, A", "Volt, V", "Watt, W", "Coulomb, C"], a: 0 },
+  { id: "h20", ch: "hugtok", type: "open", q: "Í hvað er vísað þegar talað er um hefðbundna straumstefnu (conventional current)?", a: "Í eldri hugmyndina um straumstefnuna: að straumurinn fari frá plús til mínus. (Rafeindirnar fara í raun frá mínus til plús.)" },
+  { id: "h21", ch: "hugtok", type: "open", q: "Í hvað er vísað þegar talað er um viðnám í vír?", a: "Hindrunina í efninu sem straumurinn rennur í." },
+  { id: "h22", ch: "hugtok", type: "mc", q: "Hver er mælieiningin fyrir viðnám og hvernig er hún skammstöfuð?", o: ["Ohm, Ω (gríski stafurinn omega)", "Ohm, O", "Volt, V", "Amper, Ω"], a: 0 },
+  { id: "h23", ch: "hugtok", type: "mc", q: "Hvernig breytist straumurinn ef spennan hækkar (og viðnámið er óbreytt)?", o: ["Straumurinn eykst", "Straumurinn minnkar", "Hann breytist ekki"], a: 0 },
+  { id: "h24", ch: "hugtok", type: "mc", q: "Hvernig breytist straumurinn þegar viðnámið hækkar (og spennan er óbreytt)?", o: ["Straumurinn eykst", "Straumurinn minnkar", "Hann breytist ekki"], a: 1 },
+  { id: "h25", ch: "hugtok", type: "mc", q: "Með hvaða bókstaf er rafafl táknað?", o: ["P", "W", "A", "E"], a: 0, exp: "P er táknið fyrir stærðina. W (watt) er einingin." },
+  { id: "h26", ch: "hugtok", type: "open", q: "Hvers vegna er mögulegt að nýta rafmagnið?", a: "Það er hægt að umbreyta afli þess í mörg önnur form, t.d. ljós, hita og hreyfingu." },
+  { id: "h29", ch: "hugtok", type: "mc", q: "Hvernig er 1 amper rafstraumur skilgreindur?", o: ["1 coulomb á sekúndu", "1 rafeind á sekúndu", "1 volt á sekúndu", "1000 mA á klukkustund"], a: 0 },
+  // 1-4 Ohm
+  { id: "o1", ch: "ohm", type: "mc", q: "Hver er jafna Ohms lögmálsins?", o: ["U = I · R", "U = I / R", "I = U · R", "R = U · I"], a: 0 },
+  OHMS("o2", "Hve háa spennu þarf til að knýja 5 A í gegnum 70 Ω viðnám?", 350, "V", "U = I · R = 5 · 70 = 350 V"),
+  OHMS("o3", "Ljósapera tekur 0,23 A við 230 V spennu. Hvert er viðnám hennar?", 1000, "Ω", "R = U / I = 230 / 0,23 = 1000 Ω"),
+  OHMS("o4", "Hve mikill straumur fer um 6 Ω mótstöðu ef spennan yfir hana er 12 V?", 2, "A", "I = U / R = 12 / 6 = 2 A"),
+  OHMS("o5", "Hve mikill straumur fer í gegnum 470 Ω viðnám þegar spennan yfir það er 94 V?", 0.2, "A", "I = U / R = 94 / 470 = 0,2 A"),
+  OHMS("o6", "Hve mikill straumur fer um leiðara með viðnámið 2,3 Ω ef 23 V spenna er milli enda?", 10, "A", "I = U / R = 23 / 2,3 = 10 A"),
+  OHMS("o7", "Hversu há er spennan yfir 1 kΩ viðnám ef straumurinn er 10 mA?", 10, "V", "Breyta: 10 mA = 0,01 A og 1 kΩ = 1000 Ω. U = I · R = 0,01 · 1000 = 10 V"),
+  OHMS("o8", "Hve stórt viðnám hefur pera sem er framleidd fyrir 230 V og notar 230 mA?", 1000, "Ω", "Breyta: 230 mA = 0,23 A. R = U / I = 230 / 0,23 = 1000 Ω"),
+  OHMS("o9", "Hve stórt viðnám hefur eldunarhella sem tekur 5,75 A við 230 V?", 40, "Ω", "R = U / I = 230 / 5,75 = 40 Ω"),
+  OHMS("o10", "Mótstaða er 1,2 kΩ og um hana fer 20 mA straumur. Hve há er spennan yfir hana?", 24, "V", "Breyta: 20 mA = 0,02 A og 1,2 kΩ = 1200 Ω. U = 0,02 · 1200 = 24 V"),
+  OHMS("o11", "Spenna yfir straumrás er 0,11 kV og viðnám hennar 0,2 kΩ. Hve mikill straumur fer um rásina?", 0.55, "A", "Breyta: 0,11 kV = 110 V og 0,2 kΩ = 200 Ω. I = 110 / 200 = 0,55 A"),
+  OHMS("o12", "300 mA straumur fer í gegnum mótstöðu sem tengd er 36 V spennu. Hve stórt er viðnámið?", 120, "Ω", "Breyta: 300 mA = 0,3 A. R = 36 / 0,3 = 120 Ω"),
+  OHMS("o13", "U = 40 V og I = 20 A. Hvað er R?", 2, "Ω", "R = U / I = 40 / 20 = 2 Ω"),
+  OHMS("o14", "U = 0,5 V og I = 20 A. Hvað er R?", 0.025, "Ω", "R = U / I = 0,5 / 20 = 0,025 Ω (= 25 mΩ)"),
+  OHMS("o15", "U = 20 V og I = 40 A. Hvað er R?", 0.5, "Ω", "R = U / I = 20 / 40 = 0,5 Ω"),
+  // 1-5 Einingar
+  { id: "e16", ch: "einingar", type: "mc", q: "5 míkróamper (µA) er jafnt og:", o: ["5·10<sup>−6</sup> A", "500.000 A", "0,005 A", "5·10<sup>6</sup> A"], a: 0 },
+  { id: "e17", ch: "einingar", type: "mc", q: "2000 volt (V) er jafnt og:", o: ["2 kV", "0,002 V", "2·10<sup>−3</sup> V", "20 MV"], a: 0 },
+  { id: "e18", ch: "einingar", type: "mc", q: "8 megaohm (MΩ) er jafnt og:", o: ["8000 Ω", "8·10<sup>−6</sup> Ω", "8000 kΩ", "80·10<sup>6</sup> Ω"], a: 2 },
+  { id: "e19", ch: "einingar", type: "mc", q: "100 kílóvolt (kV) er jafnt og:", o: ["100.000 V", "1 MV", "100.000 mV", "10·10<sup>3</sup> V"], a: 0 },
+  { id: "e20", ch: "einingar", type: "mc", q: "10 milliamper (mA) er jafnt og:", o: ["10.000 A", "10.000 µA", "10·10<sup>6</sup> µA", "10·10<sup>3</sup> A"], a: 1 },
+  { id: "e21", ch: "einingar", type: "mc", q: "33 260 ohm (Ω) er jafnt og:", o: ["0,33260 kΩ", "33,260·10<sup>3</sup> kΩ", "33,260 kΩ", "3326 mΩ"], a: 2 },
+  { id: "e22", ch: "einingar", type: "mc", q: "25 milliamper (mA) er jafnt og:", o: ["25.000 A", "2500 µA", "25·10<sup>−3</sup> A", "25.000 nA"], a: 2 },
+  { id: "e23", ch: "einingar", type: "mc", q: "0,5 ohm (Ω) er jafnt og:", o: ["0,5·10<sup>3</sup> kΩ", "50 mΩ", "5000 µΩ", "500 mΩ"], a: 3 },
+  { id: "e24a", ch: "einingar", type: "num", q: "Skrifaðu 10.000 í tugaveldi (t.d. 10x10^3).", a: 1e4, unit: "", exp: "10.000 = 10·10<sup>3</sup> (eða 1·10<sup>4</sup>)" },
+  { id: "e24b", ch: "einingar", type: "num", q: "Skrifaðu 0,000012 í tugaveldi.", a: 12e-6, unit: "", exp: "0,000012 = 12·10<sup>−6</sup>" },
+  { id: "e24c", ch: "einingar", type: "num", q: "Skrifaðu 12.000.000 í tugaveldi.", a: 12e6, unit: "", exp: "12.000.000 = 12·10<sup>6</sup>" },
+  { id: "e24d", ch: "einingar", type: "num", q: "Skrifaðu 0,018 í tugaveldi.", a: 0.018, unit: "", exp: "0,018 = 18·10<sup>−3</sup>" },
+  { id: "e25a", ch: "einingar", type: "num", q: "Skrifaðu 10·10<sup>6</sup> sem tugabrot (venjulega tölu).", a: 1e7, unit: "", exp: "10·10<sup>6</sup> = 10.000.000" },
+  { id: "e25b", ch: "einingar", type: "num", q: "Skrifaðu 0,120·10<sup>3</sup> sem tugabrot.", a: 120, unit: "", exp: "0,120·10<sup>3</sup> = 120" },
+  { id: "e25c", ch: "einingar", type: "num", q: "Skrifaðu 18·10<sup>−3</sup> sem tugabrot.", a: 0.018, unit: "", exp: "18·10<sup>−3</sup> = 0,018" },
+  { id: "e25d", ch: "einingar", type: "num", q: "Skrifaðu 3000·10<sup>−6</sup> sem tugabrot.", a: 0.003, unit: "", exp: "3000·10<sup>−6</sup> = 0,003" },
+  // 1-6 Mælitæki
+  { id: "m1", ch: "maelitaeki", type: "mc", q: "Þú ætlar að mæla jafnspennu sem ætti að vera u.þ.b. 12 V. Á hvað stillir þú valhnappinn?", o: ["20 kΩ", "200 V DC", "200 V AC", "20 V DC"], a: 3, exp: "Jafnspenna = DC. Minnsta svið sem er stærra en 12 V er 20 V. Á 200 V sviðinu sést minna af aukastöfum." },
+  { id: "m2a", ch: "maelitaeki", type: "mc", q: "Þú ætlar að mæla jafnstraum sem er líklega rétt innan við 10 A. Hvaða stillingu velur þú?", o: ["20 V DC", "10 mA", "10 A"], a: 2 },
+  { id: "m2b", ch: "maelitaeki", type: "mc", q: "Í hvaða tengi setur þú rauðu leiðsluna þegar þú mælir nálægt 10 A?", o: ["10A", "COM", "mAVΩ"], a: 0 },
+  { id: "m2c", ch: "maelitaeki", type: "mc", q: "Í hvaða tengi setur þú svörtu leiðsluna?", o: ["10A", "COM", "mAVΩ"], a: 1 },
+  { id: "m3", ch: "maelitaeki", type: "mc", q: "Hvaða litur mælisnúru er notaður í COM tengið?", o: ["Rauður", "Svartur"], a: 1 },
+  { id: "m4", ch: "maelitaeki", type: "mc", q: "Hvers vegna má aldrei mæla spennu með fjölsviðsmælinn stilltan á amper-svið?", o: ["Það skiptir ekki máli hvernig mælirinn er tengdur", "Spennumælingin sýnir strauminn í rásinni", "Þannig tenging veldur skammhlaupi og getur eyðilagt bæði mælinn og rásina"], a: 2 },
+  { id: "m5a", ch: "maelitaeki", type: "mc", q: "Hvernig tengir þú mæli til að mæla spennu yfir peru?", o: ["Samsíða: yfir peruna, rásin óbreytt", "Raðtengt: rjúfa rásina og setja mælinn inn í hana", "Taka spennuna af og mæla yfir peruna"], a: 0 },
+  { id: "m5b", ch: "maelitaeki", type: "mc", q: "Hvernig tengir þú mæli til að mæla strauminn í rásinni?", o: ["Samsíða: yfir peruna", "Raðtengt: rjúfa rásina og setja mælinn inn í hana", "Yfir rafhlöðuna"], a: 1 },
+  { id: "m5c", ch: "maelitaeki", type: "mc", q: "Hvernig mælir þú viðnámið í perunni?", o: ["Yfir peruna á meðan straumur er á", "Raðtengt inn í rásina", "Aftengja spennuna og mæla yfir peruna"], a: 2 },
+  { id: "m6", ch: "maelitaeki", type: "mc", q: "Mælitæki eru tæki notuð til þess að mæla…", o: ["…hraða ökutækis á ferð", "…einhverja tilgreinda og raunverulega virkni", "…spennu, straum, viðnám og margt fleira", "Allt hér að ofan er rétt"], a: 3 },
+  { id: "m7", ch: "maelitaeki", type: "mc", q: "Spennugjafar eru með straumstilli til þess að…", o: ["Stilla af óróleg tæknimenn", "Takmarka aðgang notenda undir 16 ára", "Stilla af og takmarka straumgetu spennugjafans", "Stilla hraða gagnaflutnings"], a: 2 },
+  { id: "m8", ch: "maelitaeki", type: "mc", q: "Sveiflusjáin er notuð til þess að…", o: ["…fylgjast með (sí)breytilegri spennu í tvívíðum ferli sem fall af tíma", "…skoða hve hratt við getum sveiflað höndunum", "…sjá sveiflur á fjármálamarkaði", "…senda frá sér tiltekinn fjölda sveiflna á sekúndu"], a: 0 },
+  { id: "m9", ch: "maelitaeki", type: "open", q: "Hvaða tvö stilli eru notuð til að stilla útgangsstyrk bylgju í tíðnigjafa (sveiflugjafa)?", a: "AMPLITUDE-stillirinn (styrkur) og dempunin (ATTENUATOR, t.d. −20 dB / −40 dB)." },
+  { id: "m10", ch: "maelitaeki", type: "open", q: "Hvaða tvö stilli eru notuð til að stilla sýnilegan styrk bylgju á sveiflusjánni?", a: "VOLTS/DIV (gróf stilling á lóðréttri næmni) og VAR (fínstilling). Notaðu orðalag kennarans ef það er annað." },
+  // 1-7 Íhlutir
+  ...[
+    ["a", "Litlir sívalir íhlutir með lituðum röndum og vír í hvorn enda.", "Viðnám"],
+    ["b", "Járnkjarni með tveimur vafningum og rauðum og bláum vírum, merktur 230V / 12V.", "Spennir"],
+    ["c", "Blátt málmhús með kæliraufum og öxli sem stendur út.", "Rafmótor"],
+    ["d", "Svartir flatir kubbar með mörgum fótum í tveimur röðum.", "Samrás (IC)"],
+    ["e", "Svartur sívalningur með tveimur vírum, merktur µF og V.", "Þéttir"],
+    ["f", "Lítið keramikhylki með málmhettum í báða enda.", "Öryggi (vartappi)"],
+    ["g", "Flatur svartur kubbur með fjórum fótum, merktur RS207.", "Afriðilsbrú"],
+    ["h", "Lítið glerhylki á vír, með rönd við annan endann.", "Díóða"],
+    ["i", "Lítið glansandi málmhylki með tveimur fótum.", "Kristall"],
+    ["j", "Lítill svartur hálfsívalur kubbur með þremur fótum.", "Smári (transistor)"],
+    ["k", "Lítið málmhylki með þremur fótum.", "Smári (transistor)"],
+    ["l", "Rauður glær plastkúpull með tveimur fótum.", "Ljóstvistur (LED)"],
+    ["m", "Svartur kassi merktur 12VDC, með fótum. Smellur heyrist þegar spenna fer á.", "Liði (relay)"],
+    ["n", "Glerhylki með málmrafskautum inni og pinnum í botninum.", "Rafeindalampar"],
+    ["o", "Málmhylki og kubbar með kæliplötu og 2–3 fótum.", "Aflsmárar og spennustillar"],
+    ["p", "Stór grár kassi með kæliribbum og einangrurum ofan á.", "Aflspennir"]
+  ].map(([l, d, a]) => ({ id: "i" + l, ch: "ihlutir", type: "pick", q: `Mynd ${l}) Hvaða íhlut sýnir myndin? <i>${d}</i>`, a })),
+  ...[["q", "thettir"], ["r", "ridgjafi"], ["s", "rofi"], ["t", "vidnam"], ["u", "jord"], ["v", "amp"], ["w", "volt"], ["x", "dioda"], ["y", "led"], ["z", "rafhlada"]]
+    .map(([l, k]) => ({ id: "i" + l, ch: "ihlutir", type: "pick", sym: k, q: `Tákn ${l}) Hvað táknar þetta teiknitákn?`, a: SYM[k].n })),
+  // 1-8 Litir
+  ...[
+    ["l1", ["gulur", "fjólublár", "rauður", "gull"]], ["l2", ["brúnn", "svartur", "appelsínugulur", "gull"]],
+    ["l3", ["rauður", "rauður", "brúnn", "gull"]], ["l4", ["brúnn", "svartur", "svartur", "gull"]],
+    ["l5", ["grænn", "blár", "gull", "gull"]], ["l8", ["brúnn", "svartur", "svartur", "rauður", "brúnn"]],
+    ["l10", ["appelsínugulur", "appelsínugulur", "rauður", "silfur"]]
+  ].map(([id, b]) => colorQ(id, b)),
+  { id: "l6", ch: "litir", type: "mc", q: "Hvað þýðir gullrönd sem síðasta rönd á viðnámi?", o: ["Vikmörk ±5%", "Vikmörk ±10%", "Margfaldari ×10", "Tölustafurinn 5"], a: 0 },
+  { id: "l7", ch: "litir", type: "mc", q: "Hvaða litur stendur fyrir tölustafinn 0?", o: ["Svartur", "Hvítur", "Brúnn", "Grár"], a: 0 },
+  { id: "l9", ch: "litir", type: "mc", q: "Hvaða rendur hefur 330 Ω viðnám (4 rendur, fyrstu þrjár)?", o: ["appelsínugulur, appelsínugulur, brúnn", "appelsínugulur, appelsínugulur, svartur", "appelsínugulur, appelsínugulur, rauður", "rauður, rauður, brúnn"], a: 0, exp: "3 og 3 → 33, og brúnn margfaldari = eitt núll → 330 Ω." }
+];
+function colorQ(id, b) {
+  const r = readBands(b);
+  return { id, ch: "litir", type: "num", bands: b, q: "Hvert er gildi viðnámsins? (t.d. 4,7k eða 4700)", a: r.val, unit: "Ω",
+    exp: `${b.slice(0, b.length - 2).map(k => `${k} = ${C(k).d}`).join(", ")} → ${r.digits.join("")}. Margfaldari ${b[b.length - 2]} = ×10${sup(r.mult)}. Gildið er <b>${eng(r.val, "Ω")}</b> ±${String(r.tol).replace(".", ",")}%.` };
+}
+const PICK_GROUPS = [/smár/i, /spennir/i, /þéttir/i, /viðnám/i, /mótor/i, /spennugjafi/i];
+const sameGroup = (a, b) => a === b || PICK_GROUPS.some(r => r.test(a) && r.test(b));
+const PICK_POOL = [...new Set(BANK.filter(q => q.type === "pick").map(q => q.a).concat(Object.values(SYM).map(s => s.n)))];
+
+/* ============ Spurningaspjöld ============ */
+let qSeq = 0;
+function renderQ(q, num, onScore) {
+  const el = document.createElement("div");
+  el.className = "q";
+  const uid = "q" + (++qSeq);
+  let html = `<p class="qt"><span class="qn">${num}</span>${q.q}</p>`;
+  if (q.sym) html += `<div class="symbol">${SYM[q.sym].s}</div>`;
+  if (q.bands) html += resistorSVG(q.bands);
+  let opts = null;
+  if (q.type === "mc") opts = q.o.map((t, i) => ({ t, ok: i === q.a }));
+  if (q.type === "pick") {
+    const wrong = shuffle(PICK_POOL.filter(n => !sameGroup(n, q.a))).slice(0, 3);
+    opts = shuffle([q.a, ...wrong]).map(t => ({ t: esc(t), ok: t === q.a }));
+  }
+  if (opts) html += `<div class="opts">${opts.map((o, i) => `<button type="button" class="opt" data-i="${i}">${o.t}</button>`).join("")}</div>`;
+  if (q.type === "num") html += `<div class="numrow"><input type="text" id="${uid}" inputmode="text" autocomplete="off" aria-label="Svar" placeholder="Svar${q.unit ? " í " + q.unit : ""}"><span class="mono">${q.unit || ""}</span><button type="button" class="btn small" data-check>Athuga</button><button type="button" class="btn small" data-show>Sýna lausn</button></div>`;
+  if (q.type === "open") html += `<div class="selfgrade"><button type="button" class="btn small" data-reveal>Sýna svar</button></div>`;
+  html += `<div class="fb" hidden></div>`;
+  el.innerHTML = html;
+  const fb = $(".fb", el);
+  let scored = false;
+  const finish = (ok, msg) => {
+    fb.hidden = false;
+    fb.className = "fb " + (ok ? "ok" : "bad");
+    fb.innerHTML = msg;
+    el.classList.toggle("right", ok); el.classList.toggle("wrong", !ok);
+    state.stats[q.id] = ok; save();
+    if (!scored) { scored = true; onScore && onScore(ok); }
+  };
+  if (opts) el.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => {
+    const o = opts[+b.dataset.i];
+    el.querySelectorAll(".opt").forEach((x, i) => { x.disabled = true; if (opts[i].ok) x.classList.add("is-right"); });
+    if (!o.ok) b.classList.add("is-wrong");
+    finish(o.ok, `<b>${o.ok ? "Rétt!" : "Ekki alveg."}</b>${q.exp || (o.ok ? "" : "Rétta svarið er merkt með grænu.")}`);
+  }));
+  if (q.type === "num") {
+    const inp = $("input", el);
+    const check = () => {
+      const v = parseQty(inp.value);
+      if (!isFinite(v)) { fb.hidden = false; fb.className = "fb"; fb.innerHTML = "Ég skil ekki þetta svar. Skrifaðu tölu, t.d. <span class=\"mono\">0,55</span>, <span class=\"mono\">4,7k</span> eða <span class=\"mono\">12x10^-6</span>."; return; }
+      const ok = near(v, q.a);
+      finish(ok, `<b>${ok ? "Rétt!" : "Ekki rétt. Þú svaraðir " + esc(q.unit ? eng(v, q.unit) : fbase(v)) + "."}</b>Svar: <span class="mono">${q.unit ? eng(q.a, q.unit) : fbase(q.a)}</span>. ${q.exp || ""}`);
+    };
+    $("[data-check]", el).addEventListener("click", check);
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") check(); });
+    $("[data-show]", el).addEventListener("click", () => finish(false, `<b>Lausn</b><span class="mono">${q.unit ? eng(q.a, q.unit) : fbase(q.a)}</span>. ${q.exp || ""}`));
+  }
+  if (q.type === "open") {
+    const sg = $(".selfgrade", el);
+    $("[data-reveal]", el).addEventListener("click", () => {
+      fb.hidden = false; fb.className = "fb"; fb.innerHTML = `<b>Svar</b>${q.a}`;
+      sg.innerHTML = `<span class="note" style="align-self:center">Kunnirðu þetta?</span><button type="button" class="btn small" data-g="1">Já, ég kunni þetta</button><button type="button" class="btn small" data-g="0">Nei, þarf að æfa</button>`;
+      sg.querySelectorAll("[data-g]").forEach(b => b.addEventListener("click", () => {
+        sg.querySelectorAll("button").forEach(x => x.disabled = true);
+        finish(b.dataset.g === "1", `<b>Svar</b>${q.a}`);
+      }));
+    });
+  }
+  return el;
+}
+
+/* ============ Síður ============ */
+const main = $("#main");
+function chapterScore(id) {
+  const qs = BANK.filter(q => q.ch === id);
+  return { right: qs.filter(q => state.stats[q.id] === true).length, total: qs.length };
+}
+function viewHome() {
+  const doneN = CHAPTERS.filter(c => state.done[c.id]).length;
+  return `<section class="view">
+    <div class="hero">
+      <span class="label">Kaflar 1-2 til 1-8 · Steingrímur B. Gunnarsson</span>
+      <h1>Upprifjun fyrir prófið</h1>
+      <p class="lead">Farðu í gegnum kaflana í röð. Í hverjum kafla eru lykilatriði, sýnidæmi skref fyrir skref og æfingaspurningar úr verkefnunum. Endaðu á æfingaprófinu.</p>
+      <div class="chips"><span class="tag ${doneN === CHAPTERS.length ? "ok" : ""}">${doneN} af ${CHAPTERS.length} köflum lokið</span>${state.best != null ? `<span class="tag">Besta próf: ${state.best}%</span>` : ""}</div>
+    </div>
+    <div class="route">${CHAPTERS.map(c => { const s = chapterScore(c.id); return `
+      <a href="#kafli-${c.id}"><span class="num">${c.n}</span><span><span class="t">${c.t}</span><br><span class="d">${c.d}</span>
+      <span class="meter" aria-hidden="true"><i style="width:${s.total ? Math.round(100 * s.right / s.total) : 0}%"></i></span></span>
+      <span class="tag ${state.done[c.id] ? "ok" : ""}">${state.done[c.id] ? "Lokið" : s.right + "/" + s.total + " rétt"}</span></a>`; }).join("")}</div>
+    <h2>Svona lærirðu fyrir prófið</h2>
+    <div class="steps">
+      <div><span class="label">Skref 1</span><b>Lestu kaflann</b>Lykilatriðin efst í hverjum kafla.</div>
+      <div><span class="label">Skref 2</span><b>Fylgdu sýnidæmum</b>Reyndu sjálf/ur áður en þú smellir á næsta skref.</div>
+      <div><span class="label">Skref 3</span><b>Æfðu þig</b>Svaraðu spurningunum. Grænt mælist á framvindunni.</div>
+      <div><span class="label">Skref 4</span><b>Glósublaðið</b>Allar jöfnur og töflur á einum stað til upprifjunar.</div>
+      <div><span class="label">Skref 5</span><b>Æfingapróf</b>Blandaðar spurningar með nýjum tölum í hvert skipti.</div>
+    </div>
+    <div class="grid2">
+      <a class="panel" href="#reiknivelar" style="text-decoration:none;color:inherit;display:grid;gap:6px"><span class="label">Verkfæri</span><h3>Reiknivélar</h3><p class="note">Ohms lögmál og afl, forskeyti og tugaveldi, litakóði viðnáma og stilling fjölsviðsmælis.</p></a>
+      <a class="panel" href="#glosur" style="text-decoration:none;color:inherit;display:grid;gap:6px"><span class="label">Upprifjun</span><h3>Glósublað</h3><p class="note">Jöfnur, einingar, forskeyti, mælireglur, teiknitákn og litakóði á einni síðu.</p></a>
+    </div>
+  </section>`;
+}
+function viewChapter(id) {
+  const i = CHAPTERS.findIndex(c => c.id === id), c = CHAPTERS[i], next = CHAPTERS[i + 1];
+  const qs = BANK.filter(q => q.ch === id);
+  const s = document.createElement("section");
+  s.className = "view";
+  s.innerHTML = `
+    <div class="chips" aria-label="Kaflar">${CHAPTERS.map(x => `<a href="#kafli-${x.id}" class="${state.done[x.id] ? "done" : ""}" ${x.id === id ? 'aria-current="page"' : ""}>${x.n}</a>`).join("")}</div>
+    <div class="ch-head"><span class="label">Kafli ${c.n}</span><h1>${c.t}</h1></div>
+    <h2>Lykilatriði</h2>
+    ${c.body}
+    ${c.examples.length ? `<h2>Sýnidæmi</h2><div class="grid2" id="examples"></div>` : ""}
+    <h2>Æfðu þig <span class="note" style="font-family:var(--f-body);font-size:15px">· ${qs.length} spurningar</span></h2>
+    <div class="qlist" id="qlist"></div>
+    <div class="ch-foot">
+      <button type="button" class="btn ${state.done[id] ? "" : "primary"}" id="markDone">${state.done[id] ? "Lokið ✓ (smelltu til að afmerkja)" : "Merkja kaflann lokið"}</button>
+      ${next ? `<a class="btn" href="#kafli-${next.id}" style="text-decoration:none">Næsti kafli: ${next.t} →</a>` : `<a class="btn primary" href="#profa" style="text-decoration:none">Taka æfingapróf →</a>`}
+    </div>`;
+  const ex = $("#examples", s);
+  c.examples.forEach(e => {
+    const box = document.createElement("div");
+    box.className = "example";
+    box.innerHTML = `<h3>${e.t}</h3>${e.html ? e.html() : ""}<ol></ol><div><button type="button" class="btn small">Sýna fyrsta skref</button></div>`;
+    const ol = $("ol", box), b = $("button", box);
+    let k = 0;
+    b.addEventListener("click", () => {
+      if (k >= e.steps.length) { ol.innerHTML = ""; k = 0; b.textContent = "Sýna fyrsta skref"; return; }
+      const li = document.createElement("li"); li.innerHTML = e.steps[k++]; ol.appendChild(li);
+      b.textContent = k >= e.steps.length ? "Byrja aftur" : "Næsta skref";
+    });
+    ex.appendChild(box);
+  });
+  const ql = $("#qlist", s);
+  qs.forEach((q, n) => ql.appendChild(renderQ(q, n + 1 + ".")));
+  $("#markDone", s).addEventListener("click", () => { state.done[id] = !state.done[id]; save(); route(); });
+  if (id === "maelitaeki") {
+    const texts = { volt: "Spennumælirinn er tengdur samsíða perunni. Ekkert er rofið.", amp: "Rásin er rofin og straummælirinn settur inn í hana (raðtengt).", ohm: "Spennan er aftengd. Viðnámsmælirinn er settur yfir peruna." };
+    const setM = m => { $("#circuitBox", s).innerHTML = circuitSVG(m); $("#circuitText", s).textContent = texts[m]; s.querySelectorAll("[data-cm]").forEach(b => b.setAttribute("aria-pressed", b.dataset.cm === m)); };
+    s.querySelectorAll("[data-cm]").forEach(b => b.addEventListener("click", () => setM(b.dataset.cm)));
+    setM("volt");
+  }
+  return s;
+}
+
+/* ---------- Reiknivélar ---------- */
+function viewCalc() {
+  const s = document.createElement("section");
+  s.className = "view";
+  s.innerHTML = `
+    <div class="hero"><span class="label">Verkfæri</span><h1>Reiknivélar</h1>
+      <p class="lead">Notaðu reiknivélarnar til að <b>athuga</b> svörin þín, ekki í staðinn fyrir að reikna sjálf/ur. Þær sýna reikninginn skref fyrir skref. Forskeyti má skrifa beint: <span class="mono">10 mA</span>, <span class="mono">1,2k</span>, <span class="mono">4,7 kΩ</span>.</p></div>
+
+    <div class="panel calc" id="c-ohm">
+      <h3>Ohms lögmál og afl <span class="tag">U = I · R · P = U · I</span></h3>
+      <p class="note">Fylltu inn <b>tvær</b> stærðir. Hinar tvær reiknast.</p>
+      <div class="fields">
+        ${[["U", "Spenna", "V"], ["I", "Straumur", "A"], ["R", "Viðnám", "Ω"], ["P", "Afl", "W"]].map(([k, n, u]) => `
+        <div class="field" data-k="${k}"><label for="o${k}">${k} · ${n} (${u})</label><input type="text" id="o${k}" autocomplete="off" placeholder="t.d. ${{ U: "230", I: "0,23", R: "1k", P: "60" }[k]}"><small></small></div>`).join("")}
+      </div>
+      <div class="out-box" id="ohmOut"></div>
+      <div><button type="button" class="btn small" id="ohmClear">Hreinsa</button></div>
+    </div>
+
+    <div class="panel calc" id="c-pre">
+      <h3>Forskeyti og tugaveldi</h3>
+      <div class="fields">
+        <div class="field"><label for="pIn">Gildi</label><input type="text" id="pIn" autocomplete="off" value="33260"><small></small></div>
+        <div class="field"><label for="pUnit">Eining</label><select id="pUnit"><option>Ω</option><option>V</option><option>A</option><option>W</option><option value="">(engin)</option></select><small></small></div>
+      </div>
+      <div class="out-box" id="preOut"></div>
+      <div class="tbl"><table id="preTbl"></table></div>
+    </div>
+
+    <div class="panel calc" id="c-col">
+      <h3>Litakóði viðnáma</h3>
+      <div class="seg" role="group" aria-label="Fjöldi randa"><button type="button" data-n="4" aria-pressed="true">4 rendur</button><button type="button" data-n="5" aria-pressed="false">5 rendur</button></div>
+      <div id="colSvg"></div>
+      <div id="bandPick" style="display:grid;gap:10px"></div>
+      <div class="out-box" id="colOut"></div>
+      <h3 style="font-size:18px">Öfugt: frá gildi í liti</h3>
+      <div class="fields"><div class="field"><label for="revIn">Gildi (Ω)</label><input type="text" id="revIn" autocomplete="off" value="220"><small></small></div></div>
+      <div class="out-box" id="revOut"></div>
+    </div>
+
+    <div class="panel calc" id="c-mm">
+      <h3>Stilling fjölsviðsmælis</h3>
+      <div class="fields">
+        <div class="field"><label for="mmType">Hvað viltu mæla?</label><select id="mmType">
+          <option value="dcv">Jafnspennu (DC V)</option><option value="acv">Riðspennu (AC V)</option><option value="dca">Jafnstraum (DC A)</option><option value="ohm">Viðnám (Ω)</option></select><small></small></div>
+        <div class="field"><label for="mmVal">Gildi sem þú átt von á</label><input type="text" id="mmVal" autocomplete="off" value="12"><small></small></div>
+      </div>
+      <div class="out-box" id="mmOut"></div>
+      <p class="note">Sviðin miðast við algengan fjölsviðsmæli (t.d. DT-830). Þinn mælir getur haft önnur svið, en reglan er sú sama.</p>
+    </div>`;
+
+  /* Ohm */
+  const F = ["U", "I", "R", "P"], unit = { U: "V", I: "A", R: "Ω", P: "W" };
+  const inp = k => $("#o" + k, s);
+  let computed = new Set();
+  function ohm() {
+    const v = {}, given = [];
+    F.forEach(k => {
+      const f = inp(k), small = f.nextElementSibling;
+      if (computed.has(k)) return;
+      const x = parseQty(f.value);
+      if (f.value.trim() && isFinite(x)) { v[k] = x; given.push(k); small.textContent = "= " + fbase(x) + " " + unit[k]; }
+      else small.textContent = f.value.trim() ? "Ólæsilegt gildi" : "";
+    });
+    const out = $("#ohmOut", s);
+    F.forEach(k => { if (computed.has(k)) { inp(k).value = ""; inp(k).parentElement.classList.remove("out"); inp(k).nextElementSibling.textContent = ""; } });
+    computed = new Set();
+    if (given.length !== 2) { out.innerHTML = given.length < 2 ? "Fylltu inn tvær stærðir." : "Of margar stærðir. Hreinsaðu þannig að aðeins tvær séu eftir."; return; }
+    const { U, I, R, P } = v, g = given.join(""), st = [];
+    let r = {};
+    const f = (k, x) => fbase(x) + " " + unit[k];
+    if (g === "UI") { r.R = U / I; r.P = U * I; st.push(`R = U / I = ${f("U", U)} / ${f("I", I)}`, `P = U · I = ${f("U", U)} · ${f("I", I)}`); }
+    if (g === "UR") { r.I = U / R; r.P = U * U / R; st.push(`I = U / R = ${f("U", U)} / ${f("R", R)}`, `P = U² / R`); }
+    if (g === "UP") { r.I = P / U; r.R = U * U / P; st.push(`I = P / U = ${f("P", P)} / ${f("U", U)}`, `R = U² / P`); }
+    if (g === "IR") { r.U = I * R; r.P = I * I * R; st.push(`U = I · R = ${f("I", I)} · ${f("R", R)}`, `P = I² · R`); }
+    if (g === "IP") { r.U = P / I; r.R = P / (I * I); st.push(`U = P / I = ${f("P", P)} / ${f("I", I)}`, `R = P / I²`); }
+    if (g === "RP") { r.U = Math.sqrt(P * R); r.I = Math.sqrt(P / R); st.push(`U = √(P · R)`, `I = √(P / R)`); }
+    Object.entries(r).forEach(([k, x]) => { inp(k).value = plain(x); inp(k).parentElement.classList.add("out"); inp(k).nextElementSibling.textContent = "= " + eng(x, unit[k]); computed.add(k); });
+    out.innerHTML = st.map((t, i) => { const k = Object.keys(r)[i]; return `<span class="mono">${t} = <b>${eng(r[k], unit[k])}</b></span>`; }).join("") + `<span class="note">Grunneiningar: ${F.map(k => `${k} = ${fbase(v[k] ?? r[k])} ${unit[k]}`).join(" · ")}</span>`;
+  }
+  F.forEach(k => inp(k).addEventListener("input", () => { if (computed.has(k)) { computed.delete(k); inp(k).parentElement.classList.remove("out"); } ohm(); }));
+  $("#ohmClear", s).addEventListener("click", () => { F.forEach(k => { inp(k).value = ""; inp(k).parentElement.classList.remove("out"); }); computed = new Set(); ohm(); });
+  inp("U").value = "230"; inp("I").value = "230 mA"; ohm();
+
+  /* Forskeyti */
+  function pre() {
+    const raw = $("#pIn", s).value, u = $("#pUnit", s).value, x = parseQty(raw), sm = $("#pIn", s).nextElementSibling;
+    if (!isFinite(x)) { sm.textContent = raw.trim() ? "Ólæsilegt gildi" : ""; $("#preOut", s).innerHTML = "Skrifaðu gildi, t.d. 33260, 25m eða 5x10^-6."; $("#preTbl", s).innerHTML = ""; return; }
+    sm.textContent = "= " + fbase(x) + " " + u;
+    $("#preOut", s).innerHTML = `<span class="big">${eng(x, u)}</span><span class="mono">Tugabrot: ${fbase(x)} ${u}</span><span class="mono">Vísindalegur ritháttur: ${sci(x)} ${u}</span><span class="mono">Verkfræðilegur (veldi í 3-um): ${engPow(x)} ${u}</span>`;
+    $("#preTbl", s).innerHTML = `<thead><tr><th>Forskeyti</th><th>Gildi</th><th>Reikningur</th></tr></thead><tbody>${PREFIX.filter(p => p.e <= 9 && p.e >= -9).map(p => {
+      const y = x / Math.pow(10, p.e); return `<tr${eng(x, u) === fnum(y) + " " + p.p + u ? ' style="background:var(--board-soft)"' : ""}><td>${p.n}</td><td class="mono">${fnum(y, 6)} ${p.p}${u}</td><td class="mono note">${p.e === 0 ? "–" : (p.e > 0 ? "÷ " : "× ") + fnum(Math.pow(10, Math.abs(p.e)))}</td></tr>`; }).join("")}</tbody>`;
+  }
+  $("#pIn", s).addEventListener("input", pre); $("#pUnit", s).addEventListener("change", pre); pre();
+
+  /* Litakóði */
+  let bands = ["gulur", "fjólublár", "rauður", "gull"];
+  function bandOpts(i, n) {
+    const isTol = i === n - 1, isMul = i === n - 2;
+    return COLORS.filter(c => isTol ? c.t != null : isMul ? c.m != null : c.d != null && !(i === 0 && c.d === 0));
+  }
+  function colDraw() {
+    const n = bands.length;
+    $("#colSvg", s).innerHTML = resistorSVG(bands);
+    $("#bandPick", s).innerHTML = bands.map((b, i) => `<div class="band-row"><span class="label">${i === n - 1 ? "Vikmörk" : i === n - 2 ? "Margfaldari" : (i + 1) + ". tölustafur"}<br><span style="text-transform:none;letter-spacing:0;font-weight:400">${b}</span></span><div class="swatches">${bandOpts(i, n).map(c => `<button type="button" class="sw" style="background:${c.hex}" title="${c.k}" aria-label="${c.k}" aria-pressed="${c.k === b}" data-b="${i}" data-c="${c.k}"></button>`).join("")}</div></div>`).join("");
+    const r = readBands(bands);
+    $("#colOut", s).innerHTML = `<span class="big">${eng(r.val, "Ω")} ±${String(r.tol).replace(".", ",")}%</span>
+      <span class="mono">${r.digits.join("")} × 10${sup(r.mult)} = ${fbase(r.val)} Ω</span>
+      <span class="note">Raungildið er á bilinu ${eng(r.val * (1 - r.tol / 100), "Ω")} til ${eng(r.val * (1 + r.tol / 100), "Ω")}.</span>`;
+    s.querySelectorAll(".sw").forEach(b => b.addEventListener("click", () => { bands[+b.dataset.b] = b.dataset.c; colDraw(); }));
+  }
+  s.querySelectorAll("[data-n]").forEach(b => b.addEventListener("click", () => {
+    const n = +b.dataset.n;
+    s.querySelectorAll("[data-n]").forEach(x => x.setAttribute("aria-pressed", x === b));
+    if (n === 5 && bands.length === 4) bands = [bands[0], bands[1], "svartur", COLORS.find(c => c.m === C(bands[2]).m - 1)?.k || "svartur", "brúnn"];
+    if (n === 4 && bands.length === 5) bands = ["gulur", "fjólublár", "rauður", "gull"];
+    colDraw();
+  }));
+  colDraw();
+  function rev() {
+    const x = parseQty($("#revIn", s).value), out = $("#revOut", s);
+    const b4 = bandsFor(x, false), b5 = bandsFor(x, true);
+    if (!b4) { out.innerHTML = "Skrifaðu gildi milli 0,1 Ω og 99 GΩ, t.d. 220, 4,7k eða 1M."; return; }
+    out.innerHTML = `<span class="label">4 rendur (±5%)</span>${resistorSVG(b4.bands.concat("gull"))}<span>${b4.bands.join(", ")}, gull${near(b4.exact, x) ? "" : ` <span class="note">(næsta gildi: ${eng(b4.exact, "Ω")})</span>`}</span>
+      <span class="label" style="margin-top:8px">5 rendur (±1%)</span>${resistorSVG(b5.bands.concat("brúnn"))}<span>${b5.bands.join(", ")}, brúnn</span>`;
+  }
+  $("#revIn", s).addEventListener("input", rev); rev();
+
+  /* Fjölsviðsmælir */
+  const RANGES = {
+    dcv: { u: "V", r: [[0.2, "200 mV"], [2, "2 V"], [20, "20 V"], [200, "200 V"], [1000, "1000 V"]], sym: "V⎓ (DCV)", con: "<b>samsíða</b>: yfir íhlutinn, rásin óbreytt" },
+    acv: { u: "V", r: [[200, "200 V"], [750, "750 V"]], sym: "V~ (ACV)", con: "<b>samsíða</b>: yfir íhlutinn. Farðu varlega við 230 V!" },
+    dca: { u: "A", r: [[200e-6, "200 µA"], [2e-3, "2 mA"], [20e-3, "20 mA"], [0.2, "200 mA"], [10, "10 A"]], sym: "A⎓ (DCA)", con: "<b>raðtengt</b>: rjúfðu rásina og settu mælinn inn í hana" },
+    ohm: { u: "Ω", r: [[200, "200 Ω"], [2e3, "2 kΩ"], [20e3, "20 kΩ"], [200e3, "200 kΩ"], [2e6, "2 MΩ"]], sym: "Ω", con: "yfir íhlutinn, <b>án spennu</b>: aftengdu spennugjafann fyrst" }
+  };
+  function mm() {
+    const t = $("#mmType", s).value, R = RANGES[t], x = Math.abs(parseQty($("#mmVal", s).value)), out = $("#mmOut", s);
+    $("#mmVal", s).nextElementSibling.textContent = isFinite(x) ? "= " + eng(x, R.u) : "";
+    if (!isFinite(x)) { out.innerHTML = "Skrifaðu gildið sem þú átt von á, t.d. 12, 300m eða 4,7k."; return; }
+    const hit = R.r.find(([lim]) => x < lim);
+    const red = t === "dca" && hit && hit[0] === 10 ? "10A" : "VΩmA";
+    out.innerHTML = hit
+      ? `<span class="big">${hit[1]} · ${R.sym}</span>
+         <span>Rauð leiðsla í <b class="mono">${red}</b>, svört í <b class="mono">COM</b>.</span>
+         <span>Tenging: ${R.con}.</span>
+         <span class="note">Þetta er minnsta sviðið sem er stærra en ${eng(x, R.u)}. Ef skjárinn sýnir „1“ lengst til vinstri er gildið of stórt fyrir sviðið: veldu næsta svið fyrir ofan.</span>
+         ${t === "dca" ? `<span class="note"><b>Aldrei</b> setja mælinn yfir spennu á meðan hann er á amper-sviði: það veldur skammhlaupi.</span>` : ""}`
+      : `<span class="big">Of stórt gildi</span><span>Mælirinn ræður ekki við ${eng(x, R.u)} á þessu sviði. Ekki mæla, fáðu aðstoð kennara.</span>`;
+  }
+  $("#mmType", s).addEventListener("change", mm); $("#mmVal", s).addEventListener("input", mm); mm();
+  return s;
+}
+
+/* ---------- Glósublað ---------- */
+function viewSheet() {
+  const inFrame = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+  return `<section class="view">
+    <div class="hero"><span class="label">Á einni síðu</span><h1>Glósublað</h1>
+      <p class="lead">Allt það mikilvægasta úr köflum 1-2 til 1-8. Farðu yfir það kvöldið fyrir prófið og aftur um morguninn.</p>
+      ${inFrame ? "" : `<div class="no-print"><button type="button" class="btn" onclick="window.print()">Prenta glósublaðið</button></div>`}</div>
+    <div class="sheet">
+      <div class="panel"><h3>Frumeindin</h3>
+        <p><b>Kjarni</b>: róteindir (+) og nifteindir (0), gerðar úr kvörkum.<br><b>Rafeindasvigrúm</b>: rafeindir (−).</p>
+        <p>Jafnmargar + og − → <b>óhlaðin</b>.<br>Missir rafeindir → <b>jákvæð jón</b>.<br>Fær rafeindir → neikvæð jón.</p>
+        <p>Ytri rafeindir eru lausast bundnar. Kopar er algengasti leiðarinn. Straumur → rafsegulsvið.</p></div>
+      <div class="panel"><h3>Stærðir og einingar</h3><div class="tbl"><table>
+        <thead><tr><th>Stærð</th><th>Tákn</th><th>Eining</th></tr></thead><tbody>
+        <tr><td>Spenna</td><td class="mono">U</td><td class="mono">volt, V</td></tr>
+        <tr><td>Straumur</td><td class="mono">I</td><td class="mono">amper, A</td></tr>
+        <tr><td>Viðnám</td><td class="mono">R</td><td class="mono">ohm, Ω</td></tr>
+        <tr><td>Afl</td><td class="mono">P</td><td class="mono">watt, W</td></tr>
+        <tr><td>Hleðsla</td><td class="mono">Q</td><td class="mono">coulomb, C</td></tr></tbody></table></div>
+        <p class="note">1 A = 1 C/s. Hefðbundin straumstefna: + → −. Rafeindir: − → +.</p></div>
+      <div class="panel"><h3>Ohms lögmál</h3>
+        <div style="display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center">${ohmTriangle()}
+        <div class="mono" style="display:grid;gap:4px;font-size:16px"><b>U = I · R</b><span>I = U / R</span><span>R = U / I</span><span>P = U · I</span></div></div>
+        <p class="note">U ↑ → I ↑. R ↑ → I ↓. Breyttu í V, A og Ω áður en þú reiknar.</p></div>
+      <div class="panel"><h3>Forskeyti</h3><div class="tbl"><table><tbody>
+        ${[["M", "mega", 6, "1 000 000"], ["k", "kíló", 3, "1 000"], ["–", "grunnur", 0, "1"], ["m", "milli", -3, "0,001"], ["µ", "míkró", -6, "0,000 001"], ["n", "nanó", -9, "0,000 000 001"]].map(r => `<tr><td class="mono"><b>${r[0]}</b></td><td>${r[1]}</td><td class="mono">10${sup(r[2])}</td><td class="mono">${r[3]}</td></tr>`).join("")}
+        </tbody></table></div>
+        <p class="note">Hvert þrep = ×1000. Í minni einingu → stærri tala. 10${sup(3)}: komman 3 sæti til hægri.</p></div>
+      <div class="panel"><h3>Fjölsviðsmælir</h3>
+        <p>Svört → <b>COM</b>. Rauð → <b>VΩmA</b> (eða <b>10A</b> fyrir stóran straum).</p>
+        <p><b>Spenna</b>: samsíða. <b>Straumur</b>: raðtengt, rjúfa rásina. <b>Viðnám</b>: án spennu.</p>
+        <p>Veldu minnsta svið sem er stærra en gildið (12 V → 20 V DC).</p>
+        <p><b>Aldrei</b> spennu á amper-sviði: skammhlaup.</p></div>
+      <div class="panel"><h3>Önnur tæki</h3>
+        <p><b>Spennugjafi</b>: straumstillir takmarkar straumgetuna.</p>
+        <p><b>Sveiflusjá</b>: spenna sem fall af tíma. VOLTS/DIV + VAR stilla hæðina, TIME/DIV tímann.</p>
+        <p><b>Tíðnigjafi</b>: AMPLITUDE + dempun (ATTENUATOR) stilla útgangsstyrkinn.</p></div>
+      <div class="panel" style="grid-column:1/-1"><h3>Teiknitákn</h3><div class="symgrid">${Object.values(SYM).map(x => `<figure>${x.s}<figcaption>${x.n}</figcaption></figure>`).join("")}</div></div>
+      <div class="panel"><h3>Litakóði</h3><div class="tbl"><table><tbody>
+        ${COLORS.map(c => `<tr><td><span class="cc" style="background:${c.hex}"></span>${c.k}</td><td class="mono">${c.d ?? ""}</td><td class="mono">×10${sup(c.m)}</td><td class="mono">${c.t != null ? "±" + String(c.t).replace(".", ",") + "%" : ""}</td></tr>`).join("")}
+        </tbody></table></div></div>
+      <div class="panel"><h3>Að lesa viðnám</h3>
+        ${resistorSVG(["gulur", "fjólublár", "rauður", "gull"])}
+        <p>4 | 7 | ×100 | ±5% → <b class="mono">4,7 kΩ</b></p>
+        <p class="note">Rendur 1–2 (eða 1–3): tölustafir. Næstsíðasta: fjöldi núlla. Síðasta: vikmörk. Minnisregla: S B R A G G B F G H.</p></div>
+    </div>
+  </section>`;
+}
+
+/* ---------- Æfingapróf ---------- */
+const E12 = [1, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2];
+function genOhm() {
+  const R = pick(E12) * pick([10, 100, 1000]), I = pick([2, 5, 10, 20, 25, 50, 100]) / 1000, U = R * I;
+  const t = pick(["U", "I", "R"]), rs = eng(R, "Ω"), is = eng(I, "A"), us = eng(U, "V", 3);
+  if (t === "U") return { id: "g", ch: "ohm", type: "num", q: `Straumurinn ${is} fer um ${rs} viðnám. Hve há er spennan yfir það?`, a: U, unit: "V", exp: `Breyta: ${is} = ${fbase(I)} A og ${rs} = ${fbase(R)} Ω. U = I · R = ${fbase(I)} · ${fbase(R)} = ${fbase(U)} V` };
+  if (t === "I") return { id: "g", ch: "ohm", type: "num", q: `Spennan ${us} er yfir ${rs} viðnámi. Hve mikill straumur fer um það?`, a: U / R, unit: "A", exp: `Breyta: ${rs} = ${fbase(R)} Ω. I = U / R = ${fbase(U)} / ${fbase(R)} = ${fbase(U / R)} A = ${eng(U / R, "A")}` };
+  return { id: "g", ch: "ohm", type: "num", q: `${us} spenna gefur ${is} straum. Hve stórt er viðnámið?`, a: R, unit: "Ω", exp: `Breyta: ${is} = ${fbase(I)} A. R = U / I = ${fbase(U)} / ${fbase(I)} = ${fbase(R)} Ω = ${eng(R, "Ω")}` };
+}
+function genPrefix() {
+  const u = pick(["V", "A", "Ω"]), from = pick([{ p: "m", e: -3 }, { p: "k", e: 3 }, { p: "µ", e: -6 }, { p: "M", e: 6 }]);
+  const v = pick([2, 5, 12, 25, 47, 100, 330, 0.5, 1.5]), base = v * Math.pow(10, from.e);
+  return { id: "g", ch: "einingar", type: "num", q: `Hvað er ${fnum(v)} ${from.p}${u} í grunneiningunni ${u}?`, a: base, unit: u,
+    exp: `${from.p} = 10${sup(from.e)}, svo ${fnum(v)} ${from.p}${u} = ${fnum(v)}·10${sup(from.e)} ${u} = ${fbase(base)} ${u}. Þú mátt skrifa t.d. ${fnum(v)}x10^${from.e}.` };
+}
+function genColor() {
+  const d1 = 1 + Math.floor(Math.random() * 9), d2 = Math.floor(Math.random() * 10), m = Math.floor(Math.random() * 5);
+  const b = [COLORS.find(c => c.d === d1).k, COLORS.find(c => c.d === d2).k, COLORS.find(c => c.m === m).k, "gull"];
+  const q = colorQ("g", b); return q;
+}
+function viewExam() {
+  const s = document.createElement("section");
+  s.className = "view";
+  s.innerHTML = `
+    <div class="hero"><span class="label">Blandað úr öllum köflum</span><h1>Æfingapróf</h1>
+      <p class="lead">20 spurningar: 14 úr verkefnunum og 6 nýjar reikningsspurningar með handahófstölum. Hafðu glósublaðið lokað og reiknaðu á blað.</p></div>
+    <div class="scorebar"><span class="big mono" id="sc">0 / 0</span><span class="note" id="scText">Svaraðu spurningunum. Staðan uppfærist jafnóðum.</span><button type="button" class="btn small" id="newExam" style="margin-left:auto">Nýtt próf</button></div>
+    <div class="qlist" id="examList"></div>
+    <div class="panel" id="examEnd" hidden></div>`;
+  let right = 0, answered = 0, total = 0;
+  function build() {
+    right = answered = 0;
+    const byCh = CHAPTERS.map(c => shuffle(BANK.filter(q => q.ch === c.id)).slice(0, 2));
+    let qs = shuffle(byCh.flat()).slice(0, 14);
+    qs = shuffle(qs.concat([genOhm(), genOhm(), genOhm(), genPrefix(), genPrefix(), genColor()]));
+    total = qs.length;
+    const list = $("#examList", s); list.innerHTML = "";
+    qs.forEach((q, i) => list.appendChild(renderQ(q, (i + 1) + ".", ok => { answered++; if (ok) right++; upd(); })));
+    $("#examEnd", s).hidden = true; upd();
+  }
+  function upd() {
+    $("#sc", s).textContent = `${right} / ${answered}`;
+    $("#scText", s).textContent = `${answered} af ${total} svarað`;
+    if (answered === total) {
+      const pct = Math.round(100 * right / total);
+      if (state.best == null || pct > state.best) { state.best = pct; save(); }
+      const weak = CHAPTERS.filter(c => BANK.some(q => q.ch === c.id && state.stats[q.id] === false));
+      const end = $("#examEnd", s); end.hidden = false;
+      end.innerHTML = `<h2>Niðurstaða: ${right} af ${total} (${pct}%)</h2>
+        <p>${pct >= 90 ? "Frábært! Þú ert vel undirbúin/n." : pct >= 70 ? "Gott! Farðu yfir það sem fór úrskeiðis og taktu annað próf." : "Farðu aftur í kaflana og sýnidæmin, og taktu svo nýtt próf."}</p>
+        ${weak.length ? `<p class="note" style="margin-top:8px">Kaflar með spurningum sem þú hefur svarað vitlaust: ${weak.map(c => `<a href="#kafli-${c.id}">${c.n} ${c.t}</a>`).join(", ")}</p>` : ""}`;
+    }
+  }
+  $("#newExam", s).addEventListener("click", () => { build(); window.scrollTo(0, 0); });
+  build();
+  return s;
+}
+
+/* ============ Leiðsögn ============ */
+function route() {
+  let h = (location.hash || "#yfirlit").slice(1);
+  let node;
+  if (h.startsWith("kafli-") && CHAPTERS.some(c => "kafli-" + c.id === h)) node = viewChapter(h.slice(6));
+  else if (h === "reiknivelar") node = viewCalc();
+  else if (h === "glosur") node = viewSheet();
+  else if (h === "profa") node = viewExam();
+  else { h = "yfirlit"; node = viewHome(); }
+  main.innerHTML = "";
+  if (typeof node === "string") main.innerHTML = node; else main.appendChild(node);
+  document.querySelectorAll("nav.tabs a").forEach(a => {
+    const cur = a.dataset.tab === "kafli" ? h.startsWith("kafli-") : a.getAttribute("href") === "#" + h;
+    if (cur) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+  });
+  const kt = $('nav.tabs a[data-tab="kafli"]');
+  const firstOpen = CHAPTERS.find(c => !state.done[c.id]) || CHAPTERS[0];
+  if (!h.startsWith("kafli-")) kt.setAttribute("href", "#kafli-" + firstOpen.id);
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>

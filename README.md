@@ -45,3 +45,13 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Upprifjun í Rafmagnsfræði 1
+
+`rafmagn/index.html` er sjálfstæður námsvefur til að undirbúa próf í Rafmagnsfræði 1 (RAFM1GA05AR, kaflar 1-2 til 1-8): frumeindin, raffræðihugtök, Ohms lögmál, forskeyti og tugaveldi, mælitæki, íhlutir og teiknitákn, og litamerkingar viðnáma.
+
+- **Kaflar:** lykilatriði, sýnidæmi sem birtast skref fyrir skref og æfingaspurningar úr æfingaverkefnunum (krossar, talnasvör og opnar spurningar með sjálfsmati).
+- **Reiknivélar:** Ohms lögmál og afl (tvær af U, I, R, P), forskeyti og tugaveldi, litakóði viðnáma (í báðar áttir) og stilling fjölsviðsmælis.
+- **Glósublað:** jöfnur, einingar, forskeyti, mælireglur, teiknitákn og litakóði á einni síðu sem má prenta.
+- **Æfingapróf:** 20 blandaðar spurningar, þar af 6 með nýjum handahófstölum í hvert skipti.
+- Talnareitir skilja forskeyti og tugaveldi, t.d. `10 mA`, `4,7k` og `12x10^-6`. Framvinda vistast í vafranum (`localStorage`).
