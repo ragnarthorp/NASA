@@ -42,7 +42,9 @@
       kodaSvorun
     ]);
 
+    // Kóðakassinn er efst svo nemendur missi ekki af honum
     kassi.appendChild(el('div', { 'class': 'enigma' }, [
+      kodaKassi,
       el('div', { 'class': 'enigma-vel' }, [
         el('div', { 'class': 'enigma-haus' }, [
           el('b', { text: 'ENIGMA' }),
@@ -55,7 +57,7 @@
         inn,
         el('div', { 'class': 'takkar' }, [takki])
       ]),
-      ut, svorun, kodaKassi
+      ut, svorun
     ]));
 
     function afkoda(e) {
@@ -133,8 +135,8 @@
 
     function synaKoda() {
       kodaKassi.hidden = false;
-      kodaKassi.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      kodi.focus();
+      kodi.focus({ preventScroll: true });
+      kodaKassi.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     api.dialog.addEventListener('close', function () { if (keyrsla) clearInterval(keyrsla); }, { once: true });
