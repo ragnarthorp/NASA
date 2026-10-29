@@ -30,7 +30,6 @@
 
     var hjolin = el('div', { 'class': 'hjolin', role: 'group', 'aria-label': 'Talnahjól lássins' });
     var lasEl = el('div', { 'class': 'las' + (opinn ? ' opinn' : '') }, [
-      el('div', { 'class': 'las-bogi' }),
       el('div', { 'class': 'las-bolur' }, [
         el('span', { 'class': 'las-nagli n1' }), el('span', { 'class': 'las-nagli n2' }),
         el('span', { 'class': 'las-nagli n3' }), el('span', { 'class': 'las-nagli n4' }),
