@@ -32,6 +32,7 @@
 //   eftirKoda: málsgreinar sem birtast þegar kóðinn er sleginn inn.
 // - "tonar": nótnaborð með hreinum tónum (sjá tonar.js). notur: nóturnar á borðinu
 //   (íslensk heiti, H = B), lag: tónarnir sem á að leika í réttri röð.
+// - "ferja": úlfurinn, lambið og heyið (sjá ferja.js).
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -205,11 +206,8 @@ window.HUS = {
           id: 'kyndiklefinn', heiti: 'Kyndiklefinn', krefst: ['gangurinn'],
           svaedi: [[15, 165], [400, 165], [400, 615], [15, 615]],
           thraut: {
-            tegund: 'val',
-            spurning: 'Kyndillinn brennir kolum. Úr hverju mynduðust kolin?',
-            valkostir: ['Eldfjallaösku', 'Fornum plöntum', 'Bráðnu bergi', 'Saltvatni'],
-            rett: 1,
-            visbending: 'Þau eru jarðefnaeldsneyti, leifar af lífverum sem uxu í mýrum fyrir milljónum ára.'
+            tegund: 'ferja',
+            spurning: 'Neðanjarðará rennur í gegnum kyndiklefann. Draugurinn þarf að ferja úlf, lamb og hey yfir, en báturinn ber aðeins drauginn og eitt annað. Ef úlfurinn er skilinn eftir einn með lambinu étur hann það, og lambið étur heyið. Komið öllu yfir án þess að neitt verði étið.'
           }
         },
         {

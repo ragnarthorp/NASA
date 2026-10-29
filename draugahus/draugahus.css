@@ -344,5 +344,29 @@ dialog.tegund-sjoorrusta{width:min(760px,calc(100vw - 32px))}
 .tonn.hljomar{background:linear-gradient(90deg,#fff,var(--litur) 45%,color-mix(in srgb,var(--litur) 60%,#000));box-shadow:0 0 26px var(--litur),0 0 60px color-mix(in srgb,var(--litur) 50%,transparent)}
 .tonn.hljomar span{color:#120e09}
 
+/* Ferjuþrautin í Kyndiklefanum */
+.ferja{display:flex;flex-direction:column;gap:12px}
+.ferja-svid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);min-height:250px;border-radius:12px;overflow:hidden;box-shadow:inset 0 2px 12px #000,0 8px 24px rgba(0,0,0,.5)}
+.ferja-bakki{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px 6px;background:radial-gradient(circle at 50% 120%,rgba(255,130,40,.25),transparent 60%),linear-gradient(#2b2219,#1a140e);border:0}
+.ferja-bakki.vinstri{box-shadow:inset -6px 0 10px rgba(0,0,0,.6)}
+.ferja-bakki.haegri{box-shadow:inset 6px 0 10px rgba(0,0,0,.6)}
+.ferja-a{--batur:clamp(84px,22vw,140px);position:relative;background:repeating-linear-gradient(170deg,rgba(120,170,200,.10) 0 6px,transparent 6px 18px),linear-gradient(#0e2433,#071520);animation:straumur 3s linear infinite;background-size:auto,auto}
+@keyframes straumur{to{background-position:0 36px,0 0}}
+.bat{position:absolute;top:50%;left:6px;width:var(--batur);transform:translateY(-50%);display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 6px 14px;border-radius:8px 8px 40px 40px;background:linear-gradient(#8a5a2b,#4e2f13);box-shadow:inset 0 3px 0 rgba(255,220,170,.3),0 6px 14px rgba(0,0,0,.6);transition:left .9s ease-in-out}
+.ferja-a.haegri .bat{left:calc(100% - var(--batur) - 6px)}
+.ferjumadur{font-size:clamp(22px,5vw,30px);filter:drop-shadow(0 0 6px rgba(200,220,255,.6))}
+.bat-saeti{min-width:clamp(36px,9vw,56px);min-height:clamp(36px,9vw,56px);display:grid;place-items:center;border-radius:8px;background:rgba(0,0,0,.25)}
+.ferja-hlutur{display:flex;flex-direction:column;align-items:center;gap:2px;width:clamp(64px,16vw,96px);padding:6px 4px;border-radius:10px;background:rgba(255,240,220,.06);border:1px solid rgba(255,220,170,.18);transition:transform .15s,background .15s,opacity .3s}
+.ferja-hlutur .merki{font-size:clamp(24px,6vw,34px);line-height:1}
+.ferja-hlutur small{font-size:11px;color:var(--muted)}
+.ferja-hlutur:not(:disabled):hover{background:rgba(242,165,65,.18);border-color:var(--amber);transform:translateY(-2px)}
+.ferja-hlutur:disabled{opacity:.55;cursor:default}
+.ferja-hlutur.ibat{width:auto;padding:2px 4px;background:transparent;border:0}
+.ferja-hlutur.ibat small{display:none}
+.ferja-hlutur.etid{opacity:1;animation:etid 1.2s forwards}
+@keyframes etid{30%{transform:scale(1.15);background:rgba(226,114,91,.5)}100%{transform:scale(.3) rotate(-30deg);opacity:0}}
+.ferja-stjorn{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.ferja-ferdir{color:var(--muted);font-variant-numeric:tabular-nums}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
