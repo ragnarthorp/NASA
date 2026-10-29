@@ -36,6 +36,7 @@
 // - "litur": endurskapa slembilit með RGB-sleðum (sjá litur.js). skekkja: leyfileg fjarlægð.
 // - "hnit": lesa gráður, mínútur og sekúndur af loftmynd (sjá hnit.js). Hver reitur er ein
 //   bogamínúta; heildarlengd lína í umferdir punktum þarf að vera undir hamark (reitarhliðar).
+// - "lok": lokaherbergi með skilaboðum, skírteini og fagnaðarlátum (sjá lok.js).
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -239,11 +240,14 @@ window.HUS = {
           id: 'smidaskemman', heiti: 'Smíðaskemman', krefst: ['rafmagnstaflan', 'geymsludot'],
           svaedi: [[1295, 165], [1605, 165], [1605, 645], [1295, 645]],
           thraut: {
-            tegund: 'val',
-            spurning: 'Þú dregur nagla út með klónni á hamrinum. Hvaða einföldu vél ertu að nota?',
-            valkostir: ['Vogarstöng', 'Skrúfu', 'Hjól og ás', 'Trissu'],
-            rett: 0,
-            visbending: 'Hamarinn snýst um vendipunkt á spýtunni.'
+            tegund: 'lok',
+            spurning: 'Frábært! Virkilega vel gert.',
+            malsgreinar: [
+              'Lokaverkefnið ykkar getur ekki verið einfaldara. Allir nemendur í hópnum sem komust á þennan stað saman eiga að nota tímann sem eftir er til að skemmta sér vel. Þið getið til dæmis spilað saman.',
+              'Fáið einhvern til að taka hópmynd af hópnum og skilið henni í Classroom. Þar má líka setja myndir af herbergjunum sem þið opnuðuð.',
+              'Mesta gleðin → besti hópurinn.',
+              'Sýnið nú kennaranum að þið gátuð klárað!'
+            ]
           }
         }
       ]
