@@ -104,7 +104,7 @@ window.HUS = {
             spurning: 'Á borðinu fyrir framan töfluna stendur gömul dulmálsvél. Hún er þegar rétt stillt. Límið dulmálið sem þið fenguð inn í vélina og hún skilar textanum.',
             stilling: { snudar: ['I', 'II', 'III'], endurkastari: 'B', hringir: 'AAA', stada: 'AAA', tengibord: '' },
             lausn: '3f4c268b',  // fingrafar rétta textans (sjá hengilas.js)
-            eftir: 'Leyfið kennara að heyra söguna. Hann gefur ykkur kóða til að opna kjallarann.',
+            eftir: 'Ef þú átt réttan kóða getur þú fengið aukastig.',
             kodi: '1ffe1810',  // fingrafar kóðans frá kennaranum
             eftirKoda: [
               'Aukastig ef orðin „Nolló“, „skólastjórinn“ og „blóð“ heyrast í leikritinu.',
