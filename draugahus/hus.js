@@ -35,6 +35,9 @@
 
 window.HUS = {
   heiti: 'Draugahúsið',
+  // Kennaralykill (fingrafar, sjá hengilas.js). Fimm hröð smell á heiti herbergis opna reit
+  // fyrir lykilinn og leysa herbergið. Fimm smell á titilinn „Draugahúsið“ opna kennaraspjald.
+  kennaralykill: '695aced7',
   haedir: [
     {
       id: 'efri',

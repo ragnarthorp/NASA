@@ -303,5 +303,23 @@ dialog.tegund-sjoorrusta{width:min(760px,calc(100vw - 32px))}
 .dulmal-ut:empty{display:none}
 .dulmal-ut.rett{box-shadow:0 0 0 2px var(--ok),0 0 24px rgba(127,209,139,.4)}
 
+/* Kennaralykill og kennaraspjald */
+.kennari-gat{user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.kennari{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:rgba(127,160,209,.08);border:1px dashed rgba(160,190,230,.45)}
+.kennari b{font-size:13px;letter-spacing:.06em;color:#b9cbe6}
+.kennari .svorun:empty{display:none}
+.spjald-listi{display:flex;flex-direction:column;gap:14px}
+.spjald-listi>.adal{align-self:flex-start}
+.spjald-haed{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.2)}
+.spjald-haus{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.spjald-haus h3{font-size:18px}
+.spjald-haed ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.spjald-haed li{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:10px}
+.spjald-stada{font-size:12px;font-weight:700;text-align:center;padding:3px 0;border-radius:999px}
+.spjald-stada.leyst{background:rgba(127,209,139,.18);color:var(--ok)}
+.spjald-stada.opid{background:rgba(242,165,65,.18);color:var(--amber)}
+.spjald-listi button:disabled{opacity:.35;cursor:default}
+.spjald-stada.laest{background:rgba(255,255,255,.06);color:var(--muted)}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}

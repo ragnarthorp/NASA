@@ -130,7 +130,15 @@
 
     var kassi = el('div', { 'class': 'efni' });
     efni.appendChild(kassi);
-    kassi.appendChild(el('h2', { text: r.heiti }));
+    var fyrirsogn = el('h2', { 'class': 'kennari-gat', text: r.heiti });
+    kassi.appendChild(fyrirsogn);
+    // Kennaralykill: fimm hröð smell á heiti herbergisins
+    fimmSmellir(fyrirsogn, function () {
+      if (leyst[r.id] || kassi.querySelector('.kennari')) return;
+      var k = lykilform('Leysa herbergið', function () { leysa(r, kassi); });
+      fyrirsogn.after(k.kassi);
+      k.fokus();
+    });
     kassi.appendChild(el('p', { 'class': 'spurning', text: r.thraut.spurning }));
 
     if (serthraut) {
@@ -214,7 +222,7 @@
       if (!adurHaed[h.id] && haedOpin(h)) { nyopnud[h.id] = true; nyHaed = h; }
     });
 
-    kassi.querySelectorAll('form,.valkostir,.visbending,.svorun,.thraut-svaedi').forEach(function (e) { e.remove(); });
+    kassi.querySelectorAll('form,.valkostir,.visbending,.svorun,.thraut-svaedi,.kennari').forEach(function (e) { e.remove(); });
     var lokid = oll.every(function (x) { return leyst[x.id]; });
     var texti = lokid ? '🎃 Þið leystuð öll herbergin og sluppuð úr draugahúsinu!'
       : nyHaed ? '✓ Rétt! Brak heyrist í stiganum… ' + nyHaed.heiti + ' hefur opnast.'
@@ -230,6 +238,100 @@
       }, { once: true });
     }
   }
+
+  // Kennaralykill og kennaraspjald
+  var kennari = false;  // lykillinn hefur verið sleginn inn í þessari heimsókn
+
+  function fimmSmellir(stak, adgerd) {
+    var fjoldi = 0, sidast = 0;
+    stak.addEventListener('click', function () {
+      var nu = Date.now();
+      fjoldi = nu - sidast < 700 ? fjoldi + 1 : 1;
+      sidast = nu;
+      if (fjoldi >= 5) { fjoldi = 0; adgerd(); }
+    });
+  }
+
+  function lykilform(takkatexti, adgerd) {
+    var inn = el('input', { type: 'password', inputmode: 'numeric', autocomplete: 'off', 'aria-label': 'Kennaralykill', placeholder: 'Kennaralykill', hidden: kennari ? '' : null });
+    var svar = el('p', { 'class': 'svorun', 'aria-live': 'polite' });
+    var form = el('form', { 'class': 'svar', onsubmit: function (e) {
+      e.preventDefault();
+      if (kennari || window.THRAUTIR.hengilas.fingrafar(inn.value.trim()) === HUS.kennaralykill) {
+        kennari = true;
+        return adgerd();
+      }
+      svar.className = 'svorun rangt';
+      svar.textContent = 'Rangur lykill.';
+      inn.select();
+    } }, [inn, el('button', { type: 'submit', 'class': 'adal', text: takkatexti })]);
+    var kassi = el('div', { 'class': 'kennari' }, [el('b', { text: '🔑 Kennari' }), form, svar]);
+    return { kassi: kassi, fokus: function () { (kennari ? form.querySelector('button') : inn).focus(); } };
+  }
+
+  // Leysir herbergi beint (án þrautar) og teiknar húsið með nýopnuðum herbergjum
+  function leysaBeint(ids) {
+    var adurHerb = {}, adurHaed = {}, nyopnud = {};
+    oll.forEach(function (x) { adurHerb[x.id] = stada(x); });
+    HUS.haedir.forEach(function (h) { adurHaed[h.id] = haedOpin(h); });
+    ids.forEach(function (id) { leyst[id] = true; });
+    vista();
+    oll.forEach(function (x) { if (adurHerb[x.id] === 'laest' && stada(x) === 'opid') nyopnud[x.id] = true; });
+    HUS.haedir.forEach(function (h) { if (!adurHaed[h.id] && haedOpin(h)) nyopnud[h.id] = true; });
+    teikna(nyopnud);
+  }
+
+  function opnaSpjald() {
+    var dlg = document.getElementById('herbergi');
+    var efni = document.getElementById('herbergiEfni');
+    efni.textContent = '';
+    dlg.className = 'tegund-kennari';
+    var kassi = el('div', { 'class': 'efni' }, [el('h2', { text: 'Kennaraspjald' })]);
+    efni.appendChild(kassi);
+    var listi = el('div', { 'class': 'spjald-listi' });
+
+    function teiknaSpjald() {
+      listi.textContent = '';
+      listi.appendChild(el('button', { type: 'button', 'class': 'adal', text: 'Leysa allt húsið', onclick: function () {
+        leysaBeint(oll.map(function (x) { return x.id; })); teiknaSpjald();
+      } }));
+      // Hæðirnar í þeirri röð sem þær eru leystar: jarðhæð, efri hæð, kjallari
+      HUS.haedir.slice().sort(function (a, b) { return (a.krefst ? 1 : 0) - (b.krefst ? 1 : 0); }).forEach(function (h) {
+        var oleyst = h.herbergi.filter(function (x) { return !leyst[x.id]; });
+        listi.appendChild(el('div', { 'class': 'spjald-haed' }, [
+          el('div', { 'class': 'spjald-haus' }, [
+            el('h3', { text: h.heiti }),
+            el('button', { type: 'button', 'class': 'litill', text: 'Leysa alla hæðina', disabled: oleyst.length ? null : '', onclick: function () {
+              leysaBeint(h.herbergi.map(function (x) { return x.id; })); teiknaSpjald();
+            } })
+          ]),
+          el('ul', {}, h.herbergi.map(function (x) {
+            var s = stada(x);
+            return el('li', {}, [
+              el('span', { 'class': 'spjald-stada ' + s, text: s === 'leyst' ? 'Leyst' : s === 'opid' ? 'Opið' : 'Læst' }),
+              el('span', { 'class': 'spjald-heiti', text: x.heiti }),
+              el('button', { type: 'button', 'class': 'litill', text: 'Leysa', disabled: s === 'leyst' ? '' : null, onclick: function () { leysaBeint([x.id]); teiknaSpjald(); } })
+            ]);
+          }))
+        ]));
+      });
+    }
+
+    if (kennari) {
+      kassi.appendChild(listi);
+      teiknaSpjald();
+    } else {
+      var k = lykilform('Opna spjaldið', function () { k.kassi.remove(); kassi.appendChild(listi); teiknaSpjald(); });
+      kassi.appendChild(k.kassi);
+      dlg.showModal();
+      k.fokus();
+      return;
+    }
+    dlg.showModal();
+  }
+  var titill = document.querySelector('.top h1');
+  titill.classList.add('kennari-gat');
+  fimmSmellir(titill, opnaSpjald);
 
   // Atburðir
   husEl.addEventListener('click', function (e) {
