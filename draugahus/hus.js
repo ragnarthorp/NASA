@@ -10,6 +10,8 @@
 // - "ord":  svarað með orði. svor: listi af réttum svörum (hástafir og bil skipta ekki máli).
 // - "tala": svarað með tölu. svar: rétta talan, skekkja: leyfilegt frávik (sjálfgefið 0).
 // - "val":  fjölval. valkostir: listi, rett: númer rétta valkostarins (byrjar á 0).
+// - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
+//   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
 
 window.HUS = {
@@ -83,10 +85,16 @@ window.HUS = {
           id: 'eldhus', heiti: 'Eldhúsið',
           svaedi: [[140, 610], [560, 475], [905, 465], [905, 885], [140, 885]],
           thraut: {
-            tegund: 'tala',
-            spurning: 'Það kraumar í pottinum. Við hve margar gráður (°C) sýður vatn við sjávarmál?',
-            svar: 100,
-            visbending: 'Það er stór og hringlaga tala.'
+            tegund: 'utvarp',
+            mynd: 'myndir/utvarp.jpg',
+            spurning: 'Gamla útvarpið í eldhúsinu hrekkur í gang og draugurinn skiptir um stöð. Hlustið á lagbútinn og raðið stafaflísunum í heiti lagsins. Þegar öll fimm lögin eru fundin opnast næsta herbergi.',
+            log: [
+              { heiti: 'Blinding Lights', flytjandi: 'The Weeknd', hljod: 'hljod/lag1.mp3' },
+              { heiti: 'As It Was', flytjandi: 'Harry Styles', hljod: 'hljod/lag2.mp3' },
+              { heiti: 'Flowers', flytjandi: 'Miley Cyrus', hljod: 'hljod/lag3.mp3' },
+              { heiti: 'Espresso', flytjandi: 'Sabrina Carpenter', hljod: 'hljod/lag4.mp3' },
+              { heiti: 'Not Like Us', flytjandi: 'Kendrick Lamar', hljod: 'hljod/lag5.mp3' }
+            ]
           }
         },
         {

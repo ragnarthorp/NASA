@@ -40,6 +40,7 @@
   function el(tag, attr, born) {
     var e = document.createElement(tag);
     for (var k in attr || {}) {
+      if (attr[k] == null) continue;
       if (k === 'text') e.textContent = attr[k];
       else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), attr[k]);
       else e.setAttribute(k, attr[k]);
@@ -116,25 +117,41 @@
     var dlg = document.getElementById('herbergi');
     var efni = document.getElementById('herbergiEfni');
     efni.textContent = '';
+    var serthraut = window.THRAUTIR && window.THRAUTIR[r.thraut.tegund];
+    dlg.className = 'tegund-' + r.thraut.tegund;
 
-    // Nærmynd af herberginu úr hæðarmyndinni
-    var b = rammi(r.svaedi);
-    var skurdur = svg('svg', { viewBox: [b.x, b.y, b.w, b.h].join(' '), 'class': 'skurdur', preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' });
-    skurdur.appendChild(svg('image', { href: r.haed.mynd, width: r.haed.breidd, height: r.haed.haed }));
-    efni.appendChild(skurdur);
+    // Nærmynd af herberginu úr hæðarmyndinni (sérþrautir sýna sína eigin mynd)
+    if (!serthraut) {
+      var b = rammi(r.svaedi);
+      var skurdur = svg('svg', { viewBox: [b.x, b.y, b.w, b.h].join(' '), 'class': 'skurdur', preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' });
+      skurdur.appendChild(svg('image', { href: r.haed.mynd, width: r.haed.breidd, height: r.haed.haed }));
+      efni.appendChild(skurdur);
+    }
 
     var kassi = el('div', { 'class': 'efni' });
     efni.appendChild(kassi);
     kassi.appendChild(el('h2', { text: r.heiti }));
     kassi.appendChild(el('p', { 'class': 'spurning', text: r.thraut.spurning }));
 
-    if (leyst[r.id]) {
+    if (serthraut) {
+      // Sérþraut fær hjálparföll og vistar eigin framvindu (t.d. hve mörg lög eru fundin)
+      var lykill = r.id + '#framvinda';
+      serthraut(r, kassi, {
+        el: el,
+        dialog: dlg,
+        efni: efni,
+        leyst: !!leyst[r.id],
+        framvinda: function () { return leyst[lykill] || 0; },
+        vistaFramvindu: function (n) { leyst[lykill] = n; vista(); },
+        leysa: function () { leysa(r, kassi); }
+      });
+    } else if (leyst[r.id]) {
       kassi.appendChild(el('p', { 'class': 'svorun rett', text: '✓ Þið hafið þegar leyst þetta herbergi.' }));
     } else {
       kassi.appendChild(thrautarform(r, kassi));
     }
     dlg.showModal();
-    var fyrsta = kassi.querySelector('input,.valkostir button');
+    var fyrsta = kassi.querySelector('[data-fokus],input,.valkostir button');
     if (fyrsta) fyrsta.focus();
   }
 
@@ -197,7 +214,7 @@
       if (!adurHaed[h.id] && haedOpin(h)) { nyopnud[h.id] = true; nyHaed = h; }
     });
 
-    kassi.querySelectorAll('form,.valkostir,.visbending,.svorun').forEach(function (e) { e.remove(); });
+    kassi.querySelectorAll('form,.valkostir,.visbending,.svorun,.thraut-svaedi').forEach(function (e) { e.remove(); });
     var lokid = oll.every(function (x) { return leyst[x.id]; });
     var texti = lokid ? '🎃 Þið leystuð öll herbergin og sluppuð úr draugahúsinu!'
       : nyHaed ? '✓ Rétt! Brak heyrist í stiganum… ' + nyHaed.heiti + ' hefur opnast.'

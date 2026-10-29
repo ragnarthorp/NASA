@@ -51,5 +51,6 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 `draugahus/index.html` er gagnvirkt draugahús á þremur hæðum (efri hæð, jarðhæð, kjallari). Í byrjun er aðeins jarðhæðin opin, og þar aðeins eldhúsið. Hvert herbergi hefur þraut og þegar hún er leyst opnast næstu herbergi og að lokum næsta hæð. Læstar hæðir eru daufar og óskýrar.
 
 - `draugahus/hus.js`: hæðir, herbergi (marghyrningar í pixlum myndanna), reglur um hvað opnar hvað (`krefst`) og þrautirnar (orð, tala eða fjölval, með vísbendingu).
+- `draugahus/utvarp.js`: útvarpsþrautin í eldhúsinu. Fimm lagbútar (`draugahus/hljod/`) opnast einn af öðrum og nemendur raða heiti hvers lags úr stafaflísum. Hægt er að spila bútinn aftur eða láta hann endurtaka sig, og eftir rangt svar verða flísar á réttum stað grænar. Eftir tvær rangar tilraunir birtist flytjandinn.
 - `draugahus/draugahus.js`: vélin sem teiknar, læsir og opnar. Framvinda vistast í vafranum (`localStorage`).
 - `draugahus/index.html?allt` opnar öll herbergi til að prófa.

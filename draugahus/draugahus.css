@@ -1,5 +1,6 @@
 :root{--bg:#0d0f14;--ink:#efe3c8;--muted:#a59a83;--amber:#f2a541;--ok:#7fd18b;--bad:#e2725b;--card:#1a1712;--line:#3a3226;color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:radial-gradient(ellipse at top,#1b2130,var(--bg) 60%) fixed;color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;margin:0}
 button,input{font:inherit;color:inherit}
@@ -64,6 +65,39 @@ dialog .loka button{background:rgba(0,0,0,.6);border:0;border-radius:50%;width:3
 .visbending{color:var(--muted);border-left:3px solid var(--amber);padding-left:10px}
 .hristast{animation:hrista .4s}
 @keyframes hrista{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+/* Útvarpsþrautin */
+dialog.tegund-utvarp{width:min(820px,calc(100vw - 32px))}
+.utvarp-haus{background:#000}
+.utvarp-mynd{position:relative;width:min(100%,500px);margin-inline:auto}
+.utvarp-mynd img{display:block;width:100%;max-width:100%;height:auto}
+.skifa{position:absolute;left:41.2%;top:54.4%;width:30.3%;height:18.9%;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .6s;background:radial-gradient(ellipse,rgba(255,170,70,.45),transparent 70%);mix-blend-mode:screen}
+.skifa.lysir{opacity:1;animation:flokt 2.4s ease-in-out infinite}
+@keyframes flokt{0%,100%{opacity:.75}45%{opacity:1}55%{opacity:.6}}
+.utvarp{display:flex;flex-direction:column;gap:14px}
+.stodvar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.stod{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:12px;background:linear-gradient(#3b2a1a,#22180f);border-color:#5a4127;box-shadow:inset 0 1px 0 rgba(255,220,170,.15),0 3px 0 #120c06}
+.stod .numer{font:700 22px Georgia,serif}
+.stod .merki{font-size:13px;color:var(--muted)}
+.stod.fundin .merki{color:var(--ok)}
+.stod.valin{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber),0 0 18px rgba(242,165,65,.45)}
+.stod:disabled{opacity:.45}
+.spilari{display:flex;gap:8px;flex-wrap:wrap}
+.lykkja[aria-pressed="true"]{border-color:var(--amber);color:var(--amber)}
+.radari{display:flex;flex-direction:column;gap:14px;padding:16px;border-radius:14px;background:linear-gradient(#2b1f14,#1c140c);border:1px solid #4a3622;box-shadow:inset 0 2px 10px rgba(0,0,0,.6)}
+.bord{display:flex;flex-wrap:wrap;gap:10px 22px;justify-content:center}
+.ord{display:flex;gap:4px}
+.reitur{width:var(--flis);height:var(--flis);border-radius:7px;background:rgba(0,0,0,.45);border:1px dashed #6b5236;display:grid;place-items:center}
+.reitur.rettur .flis{background:linear-gradient(#cfe9c6,#9cc98d);box-shadow:0 0 12px rgba(127,209,139,.6),0 3px 0 #4f7a44}
+.radari{--flis:clamp(30px,8.4vw,44px)}
+.rekki{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:12px 10px 16px;border-radius:10px;background:linear-gradient(#5a3d22,#3a2614);box-shadow:inset 0 -6px 0 #2a1a0d,0 4px 10px rgba(0,0,0,.5)}
+.flis{position:relative;width:var(--flis);height:var(--flis);padding:0;border-radius:6px;border:0;display:grid;place-items:center;transform:rotate(var(--halli,0deg));background:linear-gradient(160deg,#f6e7c4,#d9bf8b 70%,#c4a46c);color:#2a1a0b;box-shadow:inset 0 1px 0 #fff6dc,0 3px 0 #7b5a31,0 5px 8px rgba(0,0,0,.5);transition:transform .15s}
+.flis:hover{background:linear-gradient(160deg,#fff1cf,#e6cd98 70%,#cfae74);transform:rotate(0) translateY(-2px)}
+.flis span{font:700 calc(var(--flis) * .52)/1 Georgia,serif}
+.flis small{position:absolute;right:3px;bottom:2px;font:600 calc(var(--flis) * .22)/1 system-ui,sans-serif;opacity:.75}
+.flis.tom{background:rgba(0,0,0,.25);box-shadow:inset 0 2px 4px rgba(0,0,0,.5);transform:none}
+.reitur .flis{transform:none}
+.takkar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
