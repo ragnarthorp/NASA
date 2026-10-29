@@ -28,6 +28,7 @@
 //   Ef tíminn rennur út kemur önnur mynd. Hástafir, broddar og bil skipta ekki máli í svörum.
 // - "enigma": Enigma I dulmálsvél (sjá enigma.js og enigmathraut.js). stilling: snúðar,
 //   endurkastari, hringstillingar, upphafsstaða og tengiborð. lausn: fingrafar rétta textans.
+//   eftir: skilaboð þegar textinn er fundinn, kodi: fingrafar kóðans sem opnar herbergið.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -98,7 +99,9 @@ window.HUS = {
             tegund: 'enigma',
             spurning: 'Á borðinu fyrir framan töfluna stendur gömul dulmálsvél. Hún er þegar rétt stillt. Límið dulmálið sem þið fenguð inn í vélina og hún skilar textanum.',
             stilling: { snudar: ['I', 'II', 'III'], endurkastari: 'B', hringir: 'AAA', stada: 'AAA', tengibord: '' },
-            lausn: '3f4c268b'  // fingrafar rétta textans (sjá hengilas.js)
+            lausn: '3f4c268b',  // fingrafar rétta textans (sjá hengilas.js)
+            eftir: 'Leyfið kennara að heyra söguna. Hann gefur ykkur kóða til að opna kjallarann.',
+            kodi: '1ffe1810'  // fingrafar kóðans frá kennaranum
           }
         }
       ]

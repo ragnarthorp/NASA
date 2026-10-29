@@ -22,6 +22,26 @@
     var ut = el('output', { 'class': 'dulmal-ut', 'aria-live': 'off' });
     var svorun = el('p', { 'class': 'svorun', 'aria-live': 'polite' });
 
+    // Eftir að textinn er fundinn: skilaboð og reitur fyrir kóðann frá kennaranum
+    var kodi = el('input', { type: 'text', inputmode: 'numeric', autocomplete: 'off', 'aria-label': 'Kóði frá kennara', placeholder: 'Kóði' });
+    var kodaSvorun = el('p', { 'class': 'svorun', 'aria-live': 'polite' });
+    var kodaKassi = el('div', { 'class': 'svindl thraut-svaedi', hidden: '' }, [
+      el('p', { 'class': 'aminning', text: th.eftir || '' }),
+      el('form', { 'class': 'svar', onsubmit: function (e) {
+        e.preventDefault();
+        var reyna = kodi.value.trim().toUpperCase();
+        if (reyna && window.THRAUTIR.hengilas.fingrafar(reyna) === th.kodi) {
+          kodaSvorun.className = 'svorun rett';
+          kodaSvorun.textContent = 'Kóðinn passar!';
+          if (!api.leyst) setTimeout(api.leysa, 900);
+        } else {
+          kodaSvorun.className = 'svorun rangt';
+          kodaSvorun.textContent = 'Þessi kóði opnar ekki kjallarann.';
+        }
+      } }, [kodi, el('button', { type: 'submit', 'class': 'adal', text: 'Opna' })]),
+      kodaSvorun
+    ]);
+
     kassi.appendChild(el('div', { 'class': 'enigma' }, [
       el('div', { 'class': 'enigma-vel' }, [
         el('div', { 'class': 'enigma-haus' }, [
@@ -35,7 +55,7 @@
         inn,
         el('div', { 'class': 'takkar' }, [takki])
       ]),
-      ut, svorun
+      ut, svorun, kodaKassi
     ]));
 
     function afkoda(e) {
@@ -101,14 +121,29 @@
         svorun.className = 'svorun rett';
         svorun.textContent = 'Dulmálið er leyst!';
         ut.classList.add('rett');
-        if (!api.leyst) setTimeout(api.leysa, 1200);
+        if (th.kodi) {
+          api.vistaFramvindu(1);
+          if (!api.leyst) synaKoda();
+        } else if (!api.leyst) setTimeout(api.leysa, 1200);
       } else {
         svorun.className = 'svorun rangt';
         svorun.textContent = 'Þetta lítur ekki út eins og rétti textinn. Athugið hvort dulmálið sé rétt inn slegið.';
       }
     }
 
+    function synaKoda() {
+      kodaKassi.hidden = false;
+      kodaKassi.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      kodi.focus();
+    }
+
     api.dialog.addEventListener('close', function () { if (keyrsla) clearInterval(keyrsla); }, { once: true });
+    // Textinn var fundinn í fyrri heimsókn: sýna kóðareitinn strax
+    if (!api.leyst && th.kodi && api.framvinda() >= 1) {
+      svorun.className = 'svorun rett';
+      svorun.textContent = 'Þið hafið þegar afkóðað söguna.';
+      synaKoda();
+    }
     if (api.leyst) {
       svorun.className = 'svorun rett';
       svorun.textContent = '✓ Hátún er leyst. Vélin virkar áfram, bæði til að dulkóða og afkóða.';
