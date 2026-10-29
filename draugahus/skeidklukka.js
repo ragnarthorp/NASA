@@ -40,12 +40,13 @@
       }
     } }, [kodi, el('button', { type: 'submit', text: 'Nota kóða' })]);
 
+    // Skilaboðin um kennarann og kóðareiturinn birtast fyrir ofan klukkuna eftir fyrstu misheppnuðu tilraun
+    var svindl = el('div', { 'class': 'svindl thraut-svaedi', hidden: '' }, [
+      th.aminning ? el('p', { 'class': 'aminning', text: th.aminning }) : null,
+      kodaForm, kodaSvorun
+    ]);
     kassi.appendChild(el('div', { 'class': 'skeidklukka' }, [
-      klukka, nidurstada, bestaEl,
-      el('div', { 'class': 'svindl thraut-svaedi' }, [
-        th.aminning ? el('p', { 'class': 'aminning', text: th.aminning }) : null,
-        kodaForm, kodaSvorun
-      ])
+      svindl, klukka, nidurstada, bestaEl
     ]));
 
     function klara() {
@@ -84,6 +85,7 @@
       }
       nidurstada.className = 'svorun rangt';
       nidurstada.textContent = snid(t) + ' sekúndur, ' + snid(fra) + ' s of ' + (t < MARKMID ? 'stutt' : 'langt') + '.';
+      if (!api.leyst) svindl.hidden = false;
     });
 
     if (api.leyst) {
