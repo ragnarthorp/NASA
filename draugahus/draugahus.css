@@ -10,13 +10,13 @@ button.adal:hover{background:#ffbb5c}
 button.litill{padding:6px 12px;font-size:13px}
 :focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 
-.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 20px;background:rgba(13,15,20,.88);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:rgba(13,15,20,.88);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
 .top h1{font-size:24px;letter-spacing:.5px}
 .framvinda{flex:1;display:flex;align-items:center;gap:10px;min-width:180px;color:var(--muted);font-size:14px}
 .stika{flex:1;height:8px;border-radius:8px;background:#2a241b;overflow:hidden}
 .stika span{display:block;height:100%;width:0;background:linear-gradient(90deg,#b36b1c,var(--amber));transition:width .6s}
 
-main{max-width:1200px;margin:0 auto;padding:20px 16px 80px;display:flex;flex-direction:column;gap:28px}
+main{max-width:1200px;margin:0 auto;padding-block:20px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
 .haed{scroll-margin-top:70px}
 .haed h2{font-size:20px;margin:0 0 8px;display:flex;gap:10px;align-items:baseline}
 .haed h2 small{font:14px system-ui,sans-serif;color:var(--muted)}
@@ -66,3 +66,4 @@ dialog .loka button{background:rgba(0,0,0,.6);border:0;border-radius:50%;width:3
 @keyframes hrista{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}

@@ -223,8 +223,18 @@
     var g = e.target.closest && e.target.closest('.herb');
     if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); opnaHerbergi(g.getAttribute('data-id')); }
   });
-  document.getElementById('byrjaUpp').addEventListener('click', function () {
-    if (!confirm('Eyða allri framvindu og byrja aftur á jarðhæðinni?')) return;
+  // Tveggja smella staðfesting (confirm() virkar ekki alls staðar)
+  var byrjaUpp = document.getElementById('byrjaUpp');
+  var stadfestaTimi = null;
+  byrjaUpp.addEventListener('click', function () {
+    if (!stadfestaTimi) {
+      byrjaUpp.textContent = 'Smelltu aftur til að eyða framvindu';
+      stadfestaTimi = setTimeout(function () { stadfestaTimi = null; byrjaUpp.textContent = 'Byrja upp á nýtt'; }, 4000);
+      return;
+    }
+    clearTimeout(stadfestaTimi);
+    stadfestaTimi = null;
+    byrjaUpp.textContent = 'Byrja upp á nýtt';
     leyst = {};
     vista();
     teikna();
