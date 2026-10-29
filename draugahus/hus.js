@@ -30,6 +30,8 @@
 //   endurkastari, hringstillingar, upphafsstaða og tengiborð. lausn: fingrafar rétta textans.
 //   eftir: skilaboð þegar textinn er fundinn, kodi: fingrafar kóðans sem opnar herbergið,
 //   eftirKoda: málsgreinar sem birtast þegar kóðinn er sleginn inn.
+// - "tonar": nótnaborð með hreinum tónum (sjá tonar.js). notur: nóturnar á borðinu
+//   (íslensk heiti, H = B), lag: tónarnir sem á að leika í réttri röð.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -193,10 +195,10 @@ window.HUS = {
           id: 'gangurinn', heiti: 'Langi gangurinn',
           svaedi: [[655, 165], [915, 165], [915, 645], [655, 645]],
           thraut: {
-            tegund: 'ord',
-            spurning: 'Því meira sem þú tekur af mér, því meira skilur þú eftir þig. Hvað er ég?',
-            svor: ['spor', 'fótspor', 'skref'],
-            visbending: 'Líttu niður á gólfið þegar þú gengur ganginn.'
+            tegund: 'tonar',
+            spurning: 'Innst í ganginum blikka ljós og draugarnir senda skilaboð með fimm tónum, eins og geimverurnar í Close Encounters of the Third Kind. Hlustið og leikið tónana eftir í réttri röð.',
+            notur: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'H4', 'C5', 'D5', 'E5'],
+            lag: ['D5', 'E5', 'C5', 'C4', 'G4']
           }
         },
         {
