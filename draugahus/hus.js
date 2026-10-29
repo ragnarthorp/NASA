@@ -22,6 +22,8 @@
 //   { titill, fra, til, rod } þar sem rod er rétta röðin.
 // - "skeidklukka": stöðva klukku eftir markmid sekúndur (sjá skeidklukka.js).
 //   svindlkodi: fingrafar kóða sem leysir þrautina líka.
+// - "sjoorrusta": sjóorrusta við tölvuna (sjá sjoorrusta.js). staerd: borð staerd x staerd,
+//   skip: lengdir skipanna. Skip mega ekki snertast, ekki heldur á horn.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -64,10 +66,10 @@ window.HUS = {
           id: 'svalir', heiti: 'Svalir', krefst: ['moar'],
           svaedi: [[980, 225], [1165, 225], [1165, 670], [980, 670]],
           thraut: {
-            tegund: 'tala',
-            spurning: 'Fullt tungl lýsir yfir svölunum. Um það bil hve marga daga tekur tunglið að fara einn hring um jörðina?',
-            svar: 28, skekkja: 1.5,
-            visbending: 'Það er nálægt fjórum vikum.'
+            tegund: 'sjoorrusta',
+            spurning: 'Draugaskip sigla í tunglskininu fyrir neðan svalirnar. Feldu skipin þín og sökktu skipum tölvunnar áður en hún sekkur þínum!',
+            staerd: 5,
+            skip: [2, 1]
           }
         },
         {
