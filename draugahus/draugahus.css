@@ -121,5 +121,28 @@ dialog.tegund-skotleikur{width:min(900px,calc(100vw - 32px))}
 .hula>div{max-width:440px;display:flex;flex-direction:column;align-items:center;gap:10px}
 .hula h3{font:700 clamp(22px,4vw,32px)/1.15 Cinzel,Georgia,serif;color:var(--amber);letter-spacing:.04em;text-wrap:balance}
 
+/* Orðla (Wordle) í Sandvík */
+.ordla{display:flex;flex-direction:column;gap:14px;align-items:center}
+.ordla .leidbeining,.ordla>.thraut-svaedi{align-self:stretch}
+.ordla-bord:focus{outline:none}
+.ordla-bord{--reitur:clamp(36px,10vw,52px);display:flex;flex-direction:column;gap:6px}
+.ordla-rod{display:grid;grid-template-columns:repeat(var(--lengd),var(--reitur));gap:6px}
+.ordla-reitur{width:var(--reitur);height:var(--reitur);display:grid;place-items:center;border-radius:6px;border:2px solid #3a3226;background:rgba(0,0,0,.35);font:700 calc(var(--reitur) * .5)/1 Georgia,serif;color:var(--ink);text-transform:uppercase}
+.ordla-rod.virk .ordla-reitur{border-color:#5a4a33}
+.ordla-reitur.fylltur{border-color:#8a7350;animation:pop .12s}
+.ordla-reitur.rett,.ordla-reitur.til,.ordla-reitur.ekki{animation:snua .5s ease both;border-color:transparent}
+.ordla-reitur.rett{background:linear-gradient(#5aa868,#3c7d4a);color:#f2fbef;box-shadow:0 0 14px rgba(127,209,139,.35)}
+.ordla-reitur.til{background:linear-gradient(#e6b04f,#b97f22);color:#1f1404}
+.ordla-reitur.ekki{background:#2a241c;color:#8c8270}
+@keyframes pop{50%{transform:scale(1.1)}}
+@keyframes snua{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+.ordla-lyklar{display:flex;flex-direction:column;gap:6px;align-items:center;width:100%}
+.ordla-lyklarod{display:flex;gap:4px;justify-content:center;width:100%}
+.lykill{flex:0 1 38px;min-width:0;height:44px;padding:0;border-radius:6px;font:600 16px/1 system-ui,sans-serif;background:#3a3125;border-color:#4d4132}
+.lykill.breidur{flex-basis:64px;font-size:13px}
+.lykill.rett{background:#3c7d4a;border-color:#3c7d4a;color:#fff}
+.lykill.til{background:#b97f22;border-color:#b97f22;color:#1f1404}
+.lykill.ekki{background:#17130e;border-color:#17130e;color:#5f5546}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}

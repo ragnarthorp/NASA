@@ -15,6 +15,7 @@
 // - "skotleikur": nöfn falla og skotið er á þau með boga (sjá skotleikur.js).
 //   rett: nöfn sem á að hitta, rong: nöfn sem á ekki að hitta. teljari lækkar um
 //   einn við rétt nafn og hækkar um einn við rangt. lif: rangir smellir áður en byrjað er aftur.
+// - "ordla": Wordle (sjá ordla.js). Slembiorð úr ord; ef tilraunirnar klárast kemur nýtt orð.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -130,11 +131,10 @@ window.HUS = {
           id: 'sandvik', heiti: 'Sandvík', krefst: ['bordstofa'],
           svaedi: [[600, 60], [930, 60], [930, 455], [600, 455]],
           thraut: {
-            tegund: 'val',
-            spurning: 'Hnötturinn í Sandvík snýst hægt. Hvert er lengsta fljót Íslands?',
-            valkostir: ['Ölfusá', 'Þjórsá', 'Jökulsá á Fjöllum', 'Lagarfljót'],
-            rett: 1,
-            visbending: 'Hún rennur úr Hofsjökli til sjávar á Suðurlandi.'
+            tegund: 'ordla',
+            spurning: 'Bækurnar í Sandvík geyma leyniorð. Finnið það í sex tilraunum!',
+            tilraunir: 6,
+            ord: ['Heilt', 'Varla', 'Hérna', 'Refum', 'Skora', 'Lofti', 'Selur', 'Mogga', 'Teygja', 'Presti', 'Neyða']
           }
         },
         {
