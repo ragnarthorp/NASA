@@ -358,6 +358,7 @@
     vista();
     teikna();
     skrunaAdVirkri();
+    inngangur();
   });
 
   // Skruna að fyrstu hæð þar sem eitthvað er óleyst
@@ -368,6 +369,88 @@
     if (h) document.getElementById('haed-' + h.id).scrollIntoView({ block: 'start' });
   }
 
+  // Upphafsskjár: hljóð og stafareitir sem þarf að fylla rétt áður en húsið opnast
+  function inngangur() {
+    var inng = HUS.inngangur;
+    if (!inng || leyst['#inngangur'] || alltOpid) return;
+    var hljod = new Audio(inng.hljod);
+    var spila = el('button', { type: 'button', 'class': 'inngangur-spila', text: '▶ Hlusta' });
+    var reitir = inng.reitir.map(function (fast) {
+      return el('input', {
+        type: 'text', maxlength: '1', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false',
+        'class': 'inngangur-reitur' + (fast ? ' fastur' : ''), value: fast || null, readonly: fast ? '' : null,
+        tabindex: fast ? '-1' : null, 'aria-label': fast ? 'Gefinn stafur ' + fast : 'Stafur'
+      });
+    });
+    var svar = el('p', { 'class': 'inngangur-svar', 'aria-live': 'polite' });
+    var titill = el('h2', { 'class': 'kennari-gat', text: HUS.heiti || 'Draugahúsið' });
+    var form = el('form', { 'class': 'inngangur-form' }, [
+      el('div', { 'class': 'inngangur-reitir' }, reitir),
+      el('button', { type: 'submit', 'class': 'adal', text: 'Ganga inn' })
+    ]);
+    var kort = el('div', { 'class': 'inngangur-kort' }, [
+      titill,
+      el('p', { text: 'Hlustið vel. Hvað þarf að segja til að komast inn?' }),
+      spila, form, svar
+    ]);
+    var hula = el('div', { 'class': 'inngangur', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Inngangur' }, [kort]);
+    document.body.appendChild(hula);
+    document.documentElement.classList.add('laest-skrun');
+
+    function uppfaeraSpila() { spila.textContent = hljod.paused ? '▶ Hlusta' : '❚❚ Stöðva'; spila.classList.toggle('spilar', !hljod.paused); }
+    ['play', 'pause', 'ended'].forEach(function (a) { hljod.addEventListener(a, uppfaeraSpila); });
+    spila.addEventListener('click', function () {
+      if (hljod.paused) { hljod.currentTime = 0; hljod.play().catch(uppfaeraSpila); } else hljod.pause();
+    });
+    // Reyna að spila strax; vafrar leyfa það oft ekki fyrr en smellt hefur verið
+    hljod.play().catch(function () { spila.classList.add('kalla'); });
+
+    var opnir = reitir.filter(function (r) { return !r.readOnly; });
+    opnir.forEach(function (r, k) {
+      r.addEventListener('input', function () {
+        r.value = r.value.slice(-1).toUpperCase();
+        if (r.value && opnir[k + 1]) opnir[k + 1].focus();
+      });
+      r.addEventListener('keydown', function (e) {
+        if (e.key === 'Backspace' && !r.value && opnir[k - 1]) { e.preventDefault(); opnir[k - 1].focus(); opnir[k - 1].value = ''; }
+      });
+    });
+
+    function opna() {
+      leyst['#inngangur'] = true;
+      vista();
+      hljod.pause();
+      hula.classList.add('opnast');
+      document.documentElement.classList.remove('laest-skrun');
+      setTimeout(function () { hula.remove(); skrunaAdVirkri(); }, 900);
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var ord = reitir.map(function (r) { return r.value.trim().toUpperCase(); }).join('');
+      if (window.THRAUTIR.hengilas.fingrafar(ord) === inng.lausn) {
+        svar.className = 'inngangur-svar rett';
+        svar.textContent = 'Dyrnar opnast með ískri…';
+        return opna();
+      }
+      svar.className = 'inngangur-svar rangt';
+      svar.textContent = 'Dyrnar haggast ekki. Hlustið aftur.';
+      form.classList.remove('hristast');
+      void form.offsetWidth;
+      form.classList.add('hristast');
+    });
+
+    // Kennaralykill: fimm smell á titilinn
+    fimmSmellir(titill, function () {
+      if (kort.querySelector('.kennari')) return;
+      var k = lykilform('Opna húsið', opna);
+      kort.appendChild(k.kassi);
+      k.fokus();
+    });
+    opnir[0].focus();
+  }
+
   teikna();
   skrunaAdVirkri();
+  inngangur();
 })();

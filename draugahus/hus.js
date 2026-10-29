@@ -46,6 +46,13 @@ window.HUS = {
   // Kennaralykill (fingrafar, sjá hengilas.js). Fimm hröð smell á heiti herbergis opna reit
   // fyrir lykilinn og leysa herbergið. Fimm smell á titilinn „Draugahúsið“ opna kennaraspjald.
   kennaralykill: '695aced7',
+  // Upphafsskjár: hljóð og reitir sem þarf að fylla áður en húsið opnast.
+  // reitir: einn stafur í hvern; fastir reitir eru gefnir. lausn: fingrafar allra stafanna saman.
+  inngangur: {
+    hljod: 'hljod/start.mp3',
+    reitir: ['', '', '!', ''],
+    lausn: 'e26c03c9'
+  },
   haedir: [
     {
       id: 'efri',
