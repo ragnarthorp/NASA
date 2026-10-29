@@ -1,0 +1,68 @@
+:root{--bg:#0d0f14;--ink:#efe3c8;--muted:#a59a83;--amber:#f2a541;--ok:#7fd18b;--bad:#e2725b;--card:#1a1712;--line:#3a3226;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#1b2130,var(--bg) 60%) fixed;color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;margin:0}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#2a241b;border-radius:10px;padding:9px 16px;font-weight:600}
+button:hover{background:#3a3125}
+button.adal{background:var(--amber);color:#1a1206;border-color:var(--amber)}
+button.adal:hover{background:#ffbb5c}
+button.litill{padding:6px 12px;font-size:13px}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 20px;background:rgba(13,15,20,.88);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top h1{font-size:24px;letter-spacing:.5px}
+.framvinda{flex:1;display:flex;align-items:center;gap:10px;min-width:180px;color:var(--muted);font-size:14px}
+.stika{flex:1;height:8px;border-radius:8px;background:#2a241b;overflow:hidden}
+.stika span{display:block;height:100%;width:0;background:linear-gradient(90deg,#b36b1c,var(--amber));transition:width .6s}
+
+main{max-width:1200px;margin:0 auto;padding:20px 16px 80px;display:flex;flex-direction:column;gap:28px}
+.haed{scroll-margin-top:70px}
+.haed h2{font-size:20px;margin:0 0 8px;display:flex;gap:10px;align-items:baseline}
+.haed h2 small{font:14px system-ui,sans-serif;color:var(--muted)}
+.mynd{position:relative;border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+.mynd svg{display:block;width:100%;height:auto;transition:filter 1.2s}
+
+/* Læst hæð: dauf og óskýr */
+.haed.laest .mynd svg{filter:grayscale(1) brightness(.22) blur(3px)}
+.haed.laest .mynd::after{content:attr(data-skilabod);position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;font:600 clamp(16px,2.4vw,24px) Georgia,serif;color:var(--muted)}
+.haed.laest .herb{pointer-events:none}
+.haed.nyopin .mynd{animation:birtast 1.6s ease-out}
+@keyframes birtast{from{filter:brightness(3) blur(6px)}to{filter:none}}
+
+/* Herbergi */
+.herb{cursor:pointer;outline:none}
+.herb polygon{transition:fill .4s,stroke .4s}
+.herb.laest{cursor:not-allowed}
+.herb.laest polygon{fill:rgba(4,5,9,.8);stroke:none}
+.herb.opid polygon{fill:rgba(242,165,65,0);stroke:var(--amber);stroke-width:4;stroke-dasharray:18 10;animation:ganga 1.5s linear infinite}
+.herb.opid:hover polygon,.herb.opid:focus-visible polygon{fill:rgba(242,165,65,.18)}
+.herb.leyst polygon{fill:transparent;stroke:transparent}
+.herb.leyst:hover polygon,.herb.leyst:focus-visible polygon{stroke:rgba(127,209,139,.6);stroke-width:3}
+.herb.nyopid polygon{animation:ganga 1.5s linear infinite,blikka 1s ease-in-out 3}
+@keyframes ganga{to{stroke-dashoffset:-56}}
+@keyframes blikka{50%{fill:rgba(242,165,65,.45)}}
+.herb text{font:600 34px Georgia,serif;fill:var(--ink);text-anchor:middle;dominant-baseline:middle;pointer-events:none;paint-order:stroke;stroke:#000;stroke-width:6px}
+.herb .merki{font-size:46px}
+
+/* Gluggi herbergis */
+dialog{width:min(640px,calc(100vw - 32px));max-height:calc(100vh - 32px);padding:0;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);box-shadow:0 20px 80px #000}
+dialog::backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(2px)}
+dialog .loka{position:absolute;top:8px;right:8px;z-index:1}
+dialog .loka button{background:rgba(0,0,0,.6);border:0;border-radius:50%;width:36px;height:36px;padding:0}
+.skurdur{display:block;width:100%;height:auto;max-height:260px;object-fit:cover;background:#000}
+.efni{padding:18px 22px 22px;display:flex;flex-direction:column;gap:14px}
+.efni h2{font-size:24px}
+.spurning{font-size:18px}
+.svar{display:flex;gap:8px}
+.svar input{flex:1;border:1px solid var(--line);background:#100e0a;border-radius:10px;padding:10px 12px;min-width:0}
+.valkostir{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.valkostir button{text-align:left}
+.svorun{min-height:1.5em;font-weight:600}
+.svorun.rangt{color:var(--bad)}
+.svorun.rett{color:var(--ok)}
+.visbending{color:var(--muted);border-left:3px solid var(--amber);padding-left:10px}
+.hristast{animation:hrista .4s}
+@keyframes hrista{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

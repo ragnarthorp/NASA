@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d0f14">
+<title>Draugahúsið</title>
+<link rel="stylesheet" href="draugahus.css">
+</head>
+<body>
+<header class="top">
+  <h1>Draugahúsið</h1>
+  <div class="framvinda" aria-live="polite">
+    <div class="stika"><span id="stika"></span></div>
+    <span id="talning"></span>
+  </div>
+  <button id="byrjaUpp" class="litill" title="Eyða framvindu og byrja aftur">Byrja upp á nýtt</button>
+</header>
+<main id="hus"></main>
+
+<dialog id="herbergi">
+  <form method="dialog" class="loka"><button aria-label="Loka">✕</button></form>
+  <div id="herbergiEfni"></div>
+</dialog>
+
+<script src="hus.js"></script>
+<script src="draugahus.js"></script>
+</body>
+</html>

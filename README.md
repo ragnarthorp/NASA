@@ -45,3 +45,11 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Draugahúsið
+
+`draugahus/index.html` er gagnvirkt draugahús á þremur hæðum (efri hæð, jarðhæð, kjallari). Í byrjun er aðeins jarðhæðin opin, og þar aðeins eldhúsið. Hvert herbergi hefur þraut og þegar hún er leyst opnast næstu herbergi og að lokum næsta hæð. Læstar hæðir eru daufar og óskýrar.
+
+- `draugahus/hus.js`: hæðir, herbergi (marghyrningar í pixlum myndanna), reglur um hvað opnar hvað (`krefst`) og þrautirnar (orð, tala eða fjölval, með vísbendingu).
+- `draugahus/draugahus.js`: vélin sem teiknar, læsir og opnar. Framvinda vistast í vafranum (`localStorage`).
+- `draugahus/index.html?allt` opnar öll herbergi til að prófa.
