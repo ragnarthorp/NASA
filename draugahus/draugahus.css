@@ -99,5 +99,11 @@ dialog.tegund-utvarp{width:min(820px,calc(100vw - 32px))}
 .reitur .flis{transform:none}
 .takkar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 
+/* Stafaröð */
+.stafarod{display:flex;flex-direction:column;gap:14px}
+.leidbeining{color:var(--muted)}
+.flis.rong{background:linear-gradient(160deg,#f3b3a3,#d0705c);box-shadow:0 0 14px rgba(226,114,91,.7),0 3px 0 #7a3424}
+.flis:disabled{cursor:default}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}

@@ -10,6 +10,8 @@
 // - "ord":  svarað með orði. svor: listi af réttum svörum (hástafir og bil skipta ekki máli).
 // - "tala": svarað með tölu. svar: rétta talan, skekkja: leyfilegt frávik (sjálfgefið 0).
 // - "val":  fjölval. valkostir: listi, rett: númer rétta valkostarins (byrjar á 0).
+// - "stafarod": hljóð og spurning, smellt á stafina í svarinu í réttri röð
+//   (sjá stafarod.js). Rangur stafur og byrjað er upp á nýtt. aukastafir: villustafir.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -101,11 +103,11 @@ window.HUS = {
           id: 'bordstofa', heiti: 'Borðstofan', krefst: ['eldhus'],
           svaedi: [[905, 465], [1575, 465], [1575, 885], [905, 885]],
           thraut: {
-            tegund: 'val',
-            spurning: 'Kertin á borðinu loga. Hvaða lofttegund þurfa þau úr loftinu til að geta brunnið?',
-            valkostir: ['Köfnunarefni', 'Súrefni', 'Koltvísýringur', 'Helíum'],
-            rett: 1,
-            visbending: 'Við öndum henni líka að okkur.'
+            tegund: 'stafarod',
+            hljod: 'hljod/hrafninn.mp3',
+            spurning: 'Það heyrist bank á dyrnar… Hver bankar á dyrnar?',
+            svar: 'The Raven',
+            aukastafir: 'BCKLOSW'
           }
         },
         {

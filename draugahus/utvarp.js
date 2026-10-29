@@ -16,6 +16,9 @@
     return a;
   }
 
+  // Aðrar flísaþrautir nota sömu hjálparföll
+  window.THRAUTIR.flisar = { STIG: STIG, stokka: stokka };
+
   window.THRAUTIR.utvarp = function (r, kassi, api) {
     var el = api.el;
     var log = r.thraut.log;
@@ -195,8 +198,8 @@
     });
 
     // Lyklaborð: stafur setur flís, Backspace tekur þá síðustu
-    api.dialog.addEventListener('keydown', function (e) {
-      if (radari.hidden || !reitir || e.ctrlKey || e.metaKey || e.altKey) return;
+    function aLyklabord(e) {
+      if (!kassi.isConnected || radari.hidden || !reitir || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'Backspace') {
         for (var i = reitir.length - 1; i >= 0; i--) if (reitir[i]) { e.preventDefault(); return taka(i); }
         return;
@@ -207,7 +210,10 @@
         return x.stafur === s && !reitir.some(function (y) { return y && y.flis === x; });
       })[0];
       if (f) { e.preventDefault(); setja(f); }
-    });
+    }
+    // Hlustað á allt skjalið því fókus tapast þegar flísar eru teiknaðar upp á nýtt
+    document.addEventListener('keydown', aLyklabord);
+    api.dialog.addEventListener('close', function () { document.removeEventListener('keydown', aLyklabord); }, { once: true });
 
     if (api.leyst) {
       // Allt fundið: hægt að hlusta aftur á hvaða stöð sem er
