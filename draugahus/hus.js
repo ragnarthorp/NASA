@@ -20,6 +20,8 @@
 //   tengill: { texti, slod } að verkefni utan vefsins.
 // - "rodun": þrjár röðunarþrautir í röð með hjólum (sjá rodun.js). thrautir: listi af
 //   { titill, fra, til, rod } þar sem rod er rétta röðin.
+// - "skeidklukka": stöðva klukku eftir markmid sekúndur (sjá skeidklukka.js).
+//   svindlkodi: fingrafar kóða sem leysir þrautina líka.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -50,11 +52,12 @@ window.HUS = {
           id: 'melar', heiti: 'Melar', krefst: ['moar'],
           svaedi: [[355, 225], [690, 225], [690, 655], [355, 655]],
           thraut: {
-            tegund: 'val',
-            spurning: 'Þú situr við arininn án þess að snerta hann en finnur samt hitann. Hvers konar varmaflutningur er það?',
-            valkostir: ['Varmaleiðni', 'Varmaburður', 'Varmageislun', 'Núningur'],
-            rett: 2,
-            visbending: 'Hitinn frá sólinni berst til okkar á sama hátt, í gegnum tómarúm.'
+            tegund: 'skeidklukka',
+            spurning: 'Á arinhillunni liggur gömul skeiðklukka. Ýttu á hnappinn til að ræsa hana og aftur til að stöðva hana eftir nákvæmlega 10 sekúndur. Þú sérð ekki tímann á meðan hann líður!',
+            markmid: 10,
+            skekkja: 0.005,  // 10,00 á klukkunni (tveir aukastafir)
+            aminning: 'Tekst það ekki? Finndu kennara og reyndu að komast nær 10 sekúndum en hann. Takist það færð þú svindlkóða.',
+            svindlkodi: '9cf048e7'  // fingrafar svindlkóðans, sjá hengilas.js
           }
         },
         {
