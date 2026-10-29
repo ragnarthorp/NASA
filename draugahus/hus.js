@@ -34,6 +34,8 @@
 //   (íslensk heiti, H = B), lag: tónarnir sem á að leika í réttri röð.
 // - "ferja": úlfurinn, lambið og heyið (sjá ferja.js).
 // - "litur": endurskapa slembilit með RGB-sleðum (sjá litur.js). skekkja: leyfileg fjarlægð.
+// - "hnit": lesa gráður, mínútur og sekúndur af loftmynd (sjá hnit.js). Hver reitur er ein
+//   bogamínúta; heildarlengd lína í umferdir punktum þarf að vera undir hamark (reitarhliðar).
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -224,10 +226,13 @@ window.HUS = {
           id: 'geymsludot', heiti: 'Geymsludót', krefst: ['gangurinn'],
           svaedi: [[1010, 165], [1295, 165], [1295, 635], [1010, 635]],
           thraut: {
-            tegund: 'ord',
-            spurning: 'Ég hef lykla en opna engar dyr. Hvað er ég?',
-            svor: ['píanó', 'pianó', 'lyklaborð', 'hljómborð', 'flygill'],
-            visbending: 'Það má spila á mig.'
+            tegund: 'hnit',
+            mynd: 'myndir/loftmynd.jpg',
+            spurning: 'Í kistu í geymslunni liggur gömul loftmynd. Draugurinn merkir staði á hana. Lesið hnitin af kortinu og skrifið þau í gráðum, mínútum og sekúndum. Lína teiknast frá ykkar punkti að punkti draugsins.',
+            nordur: [64, 5, 64, 15],   // breidd: frá 64°05' (neðst) til 64°15' (efst)
+            vestur: [21, 35, 21, 45],  // lengd: frá 21°35' V (hægra megin) til 21°45' V (vinstra megin)
+            umferdir: 5,
+            hamark: 5                  // heildarlengd lína má vera minni en þetta (í hliðum reits)
           }
         },
         {

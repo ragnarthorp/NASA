@@ -395,5 +395,39 @@ dialog.tegund-sjoorrusta{width:min(760px,calc(100vw - 32px))}
 .lita-sledi input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#f3ecdc;border:3px solid var(--rasarlitur);box-shadow:0 2px 6px rgba(0,0,0,.6);cursor:grab}
 .lita-tala{font:600 14px/1 ui-monospace,Menlo,Consolas,monospace;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
 
+/* Hnitaþraut í Geymsludóti */
+dialog.tegund-hnit{width:min(980px,calc(100vw - 32px))}
+.hnit{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:760px){.hnit{grid-template-columns:minmax(0,1fr)}}
+.hnit-kort-kassi{padding:8px;border-radius:10px;background:linear-gradient(#e9dfc6,#d6c8a6);box-shadow:0 8px 24px rgba(0,0,0,.55)}
+.hnit-kort{display:block;width:100%;height:auto}
+.hnit-net line{stroke:rgba(255,255,255,.55);stroke-width:1.5}
+.hnit-net line.strik{stroke:#1d1a14;stroke-width:2}
+.hnit-net .rammi{fill:none;stroke:#1d1a14;stroke-width:4}
+.hnit-net .merking{font:600 36px/1 Georgia,serif;fill:#2a1a08}
+.mark circle{fill:#e5484d;stroke:#fff;stroke-width:3}
+.mark .bylgja{fill:none;stroke:#e5484d;stroke-width:3;opacity:0}
+.mark.nytt .bylgja{animation:bylgja 1.6s ease-out infinite}
+.mark:not(.nytt){opacity:.55}
+@keyframes bylgja{from{r:11;opacity:.9}to{r:40;opacity:0}}
+.giskun line{stroke:#ffd166;stroke-width:4;stroke-dasharray:10 7}
+.giskun circle{fill:#3e63dd;stroke:#fff;stroke-width:3}
+.giskun text{font:700 30px/1 system-ui,sans-serif;fill:#fff;paint-order:stroke;stroke:#000;stroke-width:6px}
+.hnit-hlid{display:flex;flex-direction:column;gap:12px}
+.hnit-stada{font-weight:600;font-variant-numeric:tabular-nums}
+.hnit-stika{height:10px;border-radius:999px;background:#2a241b;overflow:hidden}
+.hnit-stika span{display:block;height:100%;width:0;background:linear-gradient(90deg,#3fae5a,#e9a23b);transition:width .5s}
+.hnit-stika.haetta span{background:linear-gradient(90deg,#e9a23b,#d9433b)}
+.hnit-form{display:flex;flex-direction:column;gap:10px}
+.hnit-lina{display:flex;align-items:center;gap:6px}
+.hnit-lina>b{width:20px;font:700 18px/1 Georgia,serif;color:var(--amber)}
+.hnit-reitur{display:flex;align-items:flex-start;gap:2px}
+.hnit-reitur input{width:clamp(52px,14vw,64px);padding:9px 6px;text-align:center;border:1px solid var(--line);background:#100e0a;color:var(--ink);border-radius:8px;font:600 18px/1 ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.hnit-reitur span{font:700 20px/1 Georgia,serif;color:var(--muted)}
+.hnit-form .adal{align-self:flex-start}
+.hnit-saga{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.hnit-saga li{display:flex;justify-content:space-between;gap:10px}
+.hnit-saga b{color:var(--ink);font-variant-numeric:tabular-nums}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
