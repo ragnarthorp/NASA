@@ -31,9 +31,14 @@
         e.preventDefault();
         var reyna = kodi.value.trim().toUpperCase();
         if (reyna && window.THRAUTIR.hengilas.fingrafar(reyna) === th.kodi) {
-          kodaSvorun.className = 'svorun rett';
-          kodaSvorun.textContent = api.leyst ? 'Kóðinn passar! Kjallarinn er þegar opinn.' : 'Kóðinn passar!';
-          if (!api.leyst) setTimeout(api.leysa, 900);
+          if (!api.leyst) {
+            api.leysa();
+            synaTilkynningu(kassi.querySelector('.svorun.rett'));
+          } else {
+            kodaSvorun.className = 'svorun rett';
+            kodaSvorun.textContent = 'Kóðinn passar! Kjallarinn er þegar opinn.';
+            synaTilkynningu(kodaKassi);
+          }
         } else {
           kodaSvorun.className = 'svorun rangt';
           kodaSvorun.textContent = 'Þessi kóði opnar ekki kjallarann.';
@@ -131,6 +136,15 @@
         svorun.className = 'svorun rangt';
         svorun.textContent = 'Þetta lítur ekki út eins og rétti textinn. Athugið hvort dulmálið sé rétt inn slegið.';
       }
+    }
+
+    // Skilaboð kennarans eftir að kóðinn er sleginn inn (t.d. um aukastig og kjallarann)
+    function synaTilkynningu(eftir) {
+      if (!th.eftirKoda || kassi.querySelector('.tilkynning')) return;
+      var malsgreinar = [].concat(th.eftirKoda);
+      var t = el('div', { 'class': 'tilkynning', role: 'status' }, malsgreinar.map(function (m) { return el('p', { text: m }); }));
+      if (eftir) eftir.after(t); else kassi.appendChild(t);
+      t.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function synaKoda() {

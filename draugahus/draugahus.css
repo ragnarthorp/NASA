@@ -321,5 +321,9 @@ dialog.tegund-sjoorrusta{width:min(760px,calc(100vw - 32px))}
 .spjald-listi button:disabled{opacity:.35;cursor:default}
 .spjald-stada.laest{background:rgba(255,255,255,.06);color:var(--muted)}
 
+.tilkynning{display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:12px;background:linear-gradient(160deg,rgba(242,165,65,.16),rgba(242,165,65,.06));border:1px solid rgba(242,165,65,.55);box-shadow:0 0 24px rgba(242,165,65,.15);animation:birtaSvindl .5s ease-out}
+.tilkynning p{margin:0;font-size:17px;line-height:1.5;color:var(--ink)}
+.tilkynning p:first-child{font-weight:700;color:var(--amber)}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
