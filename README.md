@@ -53,5 +53,6 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - `draugahus/hus.js`: hæðir, herbergi (marghyrningar í pixlum myndanna), reglur um hvað opnar hvað (`krefst`) og þrautirnar (orð, tala eða fjölval, með vísbendingu).
 - `draugahus/utvarp.js`: útvarpsþrautin í eldhúsinu. Fimm lagbútar (`draugahus/hljod/`) opnast einn af öðrum og nemendur raða heiti hvers lags úr stafaflísum. Hægt er að spila bútinn aftur eða láta hann endurtaka sig, og eftir rangt svar verða flísar á réttum stað grænar. Eftir tvær rangar tilraunir birtist flytjandinn.
 - `draugahus/stafarod.js`: þrautin í borðstofunni. Hljóð spilast og nemendur smella á stafina í svarinu í réttri röð. Réttur stafur verður grænn, en rangur stafur þýðir að byrja upp á nýtt.
+- `draugahus/skotleikur.js`: „Skjóttu Trójumenn!“ í Salnum. Nöfn falla niður og bogmaður skýtur örvum þvert á fallið. Teljarinn byrjar í 10, lækkar um einn fyrir hvern Trójumann og hækkar um einn fyrir Grikki og guði. Eftir þrjú röng skot byrjar leikurinn upp á nýtt.
 - `draugahus/draugahus.js`: vélin sem teiknar, læsir og opnar. Framvinda vistast í vafranum (`localStorage`).
 - `draugahus/index.html?allt` opnar öll herbergi til að prófa.

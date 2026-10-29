@@ -120,8 +120,8 @@
     var serthraut = window.THRAUTIR && window.THRAUTIR[r.thraut.tegund];
     dlg.className = 'tegund-' + r.thraut.tegund;
 
-    // Nærmynd af herberginu úr hæðarmyndinni, nema þrautin hafi sína eigin mynd
-    if (!r.thraut.mynd) {
+    // Nærmynd af herberginu úr hæðarmyndinni, nema þrautin hafi sína eigin mynd eða afþakki hana
+    if (!r.thraut.mynd && r.thraut.naermynd !== false) {
       var b = rammi(r.svaedi);
       var skurdur = svg('svg', { viewBox: [b.x, b.y, b.w, b.h].join(' '), 'class': 'skurdur', preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' });
       skurdur.appendChild(svg('image', { href: r.haed.mynd, width: r.haed.breidd, height: r.haed.haed }));

@@ -12,6 +12,9 @@
 // - "val":  fjölval. valkostir: listi, rett: númer rétta valkostarins (byrjar á 0).
 // - "stafarod": hljóð og spurning, smellt á stafina í svarinu í réttri röð
 //   (sjá stafarod.js). Rangur stafur og byrjað er upp á nýtt. aukastafir: villustafir.
+// - "skotleikur": nöfn falla og skotið er á þau með boga (sjá skotleikur.js).
+//   rett: nöfn sem á að hitta, rong: nöfn sem á ekki að hitta. teljari lækkar um
+//   einn við rétt nafn og hækkar um einn við rangt. lif: rangir smellir áður en byrjað er aftur.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -114,10 +117,13 @@ window.HUS = {
           id: 'salurinn', heiti: 'Salurinn', krefst: ['bordstofa'],
           svaedi: [[45, 100], [600, 60], [600, 440], [545, 470], [150, 590], [45, 570]],
           thraut: {
-            tegund: 'tala',
-            spurning: 'Draugurinn hleypur 100 metra eftir salnum á 20 sekúndum. Hver er meðalhraði hans í m/s?',
-            svar: 5,
-            visbending: 'Hraði = vegalengd / tími.'
+            tegund: 'skotleikur',
+            naermynd: false,
+            spurning: 'Skjóttu Trójumenn! Nöfn falla niður salinn. Hittu aðeins þá sem börðust fyrir Tróju.',
+            teljari: 10,
+            lif: 3,
+            rett: ['París', 'Príamos', 'Hekúba', 'Agelás', 'Hektor'],
+            rong: ['Agamemnon', 'Akkíles', 'Kastor', 'Þetis', 'Menelás', 'Odysseifur', 'Hera', 'Seifur', 'Peleifur', 'Afródíta', 'Aþena']
           }
         },
         {
