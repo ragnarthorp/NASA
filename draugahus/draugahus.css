@@ -368,5 +368,32 @@ dialog.tegund-sjoorrusta{width:min(760px,calc(100vw - 32px))}
 .ferja-stjorn{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .ferja-ferdir{color:var(--muted);font-variant-numeric:tabular-nums}
 
+/* Litaþraut á Rafmagnstöflunni */
+.litathraut{display:flex;flex-direction:column;gap:14px}
+.tafla{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:clamp(6px,2vw,24px);padding:clamp(10px,2.5vw,16px);border-radius:12px;background:linear-gradient(160deg,#4b4f55,#2b2e33 60%,#1f2125);border:1px solid #5d636b;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 10px 26px rgba(0,0,0,.55)}
+.tafla figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tafla figcaption{font:700 11px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#c7ccd3}
+.lita-rammi{--rammi:#666;padding:clamp(5px,1.5vw,8px);border-radius:12px;background:#15171a;box-shadow:0 0 0 4px var(--rammi),0 0 22px color-mix(in srgb,var(--rammi) 55%,transparent);transition:box-shadow .25s}
+.lita-rammi.fastur{--rammi:#8a9099;box-shadow:0 0 0 4px var(--rammi)}
+.lita-rammi.rett{animation:litaPuls .8s ease-in-out 3}
+@keyframes litaPuls{50%{box-shadow:0 0 0 6px var(--rammi),0 0 40px var(--rammi)}}
+.lita-reitur{width:clamp(52px,17vw,150px);aspect-ratio:1;max-width:100%;border-radius:6px}
+.tafla-midja{display:flex;flex-direction:column;align-items:center;gap:8px}
+.maelir{position:relative;width:clamp(60px,17vw,130px);aspect-ratio:2/1.15;overflow:hidden;border-radius:999px 999px 8px 8px;background:#f1ece0;box-shadow:inset 0 0 0 3px #1f2125,inset 0 4px 10px rgba(0,0,0,.35)}
+.maelir-skali{position:absolute;left:10%;right:10%;top:14%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from -60deg,#d9433b,#e9a23b 40deg,#3fae5a 120deg,transparent 0);-webkit-mask:radial-gradient(circle,transparent 62%,#000 63%);mask:radial-gradient(circle,transparent 62%,#000 63%)}
+.maelir-nal{position:absolute;left:50%;bottom:10%;width:2px;height:62%;margin-left:-1px;background:#1d1a14;transform-origin:50% 100%;transform:rotate(-60deg);transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
+.maelir-nal::after{content:"";position:absolute;left:-4px;bottom:-5px;width:10px;height:10px;border-radius:50%;background:#1d1a14}
+.maelir-texti{position:absolute;left:0;right:0;bottom:2px;text-align:center;font:700 8px/1 system-ui,sans-serif;letter-spacing:.15em;color:#6b6252}
+.lita-stefna{min-height:1.2em;font:700 13px/1.2 system-ui,sans-serif}
+.lita-stefna.naer{color:#6fdc8c}
+.lita-stefna.fjaer{color:#ff8a7a}
+.lita-sledar{display:flex;flex-direction:column;gap:10px}
+.lita-sledi{display:grid;grid-template-columns:52px minmax(0,1fr) 34px;align-items:center;gap:10px}
+.lita-sledi span{font-weight:700;color:var(--rasarlitur)}
+.lita-sledi input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);outline-offset:4px}
+.lita-sledi input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#f3ecdc;border:3px solid var(--rasarlitur);box-shadow:0 2px 6px rgba(0,0,0,.6);cursor:grab}
+.lita-sledi input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#f3ecdc;border:3px solid var(--rasarlitur);box-shadow:0 2px 6px rgba(0,0,0,.6);cursor:grab}
+.lita-tala{font:600 14px/1 ui-monospace,Menlo,Consolas,monospace;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}

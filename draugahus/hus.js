@@ -33,6 +33,7 @@
 // - "tonar": nótnaborð með hreinum tónum (sjá tonar.js). notur: nóturnar á borðinu
 //   (íslensk heiti, H = B), lag: tónarnir sem á að leika í réttri röð.
 // - "ferja": úlfurinn, lambið og heyið (sjá ferja.js).
+// - "litur": endurskapa slembilit með RGB-sleðum (sjá litur.js). skekkja: leyfileg fjarlægð.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -214,10 +215,9 @@ window.HUS = {
           id: 'rafmagnstaflan', heiti: 'Rafmagnstaflan', krefst: ['kyndiklefinn'],
           svaedi: [[400, 165], [655, 165], [655, 605], [400, 605]],
           thraut: {
-            tegund: 'tala',
-            spurning: 'Spennan á töflunni er 12 V og viðnámið 4 Ω. Hver er straumurinn í amperum?',
-            svar: 3,
-            visbending: 'Lögmál Ohms: U = R · I.'
+            tegund: 'litur',
+            spurning: 'Ljósin á rafmagnstöflunni loga í dularfullum lit. Stillið rauða, græna og bláa ljósið svo litirnir í reitunum tveimur verði eins.',
+            skekkja: 20  // hámarksfjarlægð í RGB-rúmi til að liturinn teljist réttur
           }
         },
         {
