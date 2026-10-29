@@ -56,5 +56,6 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - `draugahus/skotleikur.js`: „Skjóttu Trójumenn!“ í Salnum. Nöfn falla niður og bogmaður skýtur örvum þvert á fallið. Teljarinn byrjar í 10, lækkar um einn fyrir hvern Trójumann og hækkar um einn fyrir Grikki og guði. Eftir þrjú röng skot byrjar leikurinn upp á nýtt.
 - `draugahus/ordla.js`: Wordle í Sandvík með íslensku lyklaborði. Slembiorð er valið úr listanum og ef sex tilraunir duga ekki kemur nýtt orð.
 - `draugahus/hengilas.js`: hengilás í Hádegismóum með átta talnahjólum (0–9) og tengli á verkefni í Google Classroom. Rétta talnarunan opnar efri hæðina. Hún er geymd sem fingrafar en ekki sem texti. Nýtt fingrafar fæst í vafranum með `THRAUTIR.hengilas.fingrafar('12345678')`.
+- `draugahus/rodun.js`: röðunarþrautir í Móum. Þrjár þrautir í röð með fimm hjólum, og á hverju hjóli eru allir svarmöguleikarnir. Þegar röðin er rétt verður ljós þrautarinnar grænt.
 - `draugahus/draugahus.js`: vélin sem teiknar, læsir og opnar. Framvinda vistast í vafranum (`localStorage`).
 - `draugahus/index.html?allt` opnar öll herbergi til að prófa.

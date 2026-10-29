@@ -18,6 +18,8 @@
 // - "ordla": Wordle (sjá ordla.js). Slembiorð úr ord; ef tilraunirnar klárast kemur nýtt orð.
 // - "hengilas": hengilás með talnahjólum (sjá hengilas.js). lykill: fingrafar réttu runnunnar,
 //   tengill: { texti, slod } að verkefni utan vefsins.
+// - "rodun": þrjár röðunarþrautir í röð með hjólum (sjá rodun.js). thrautir: listi af
+//   { titill, fra, til, rod } þar sem rod er rétta röðin.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -35,10 +37,13 @@ window.HUS = {
           id: 'moar', heiti: 'Móar',
           svaedi: [[690, 225], [980, 225], [980, 655], [690, 655]],
           thraut: {
-            tegund: 'ord',
-            spurning: 'Ég á borgir en engin hús, fjöll en engin tré og vötn en enga fiska. Hvað er ég?',
-            svor: ['kort', 'landakort'],
-            visbending: 'Þið finnið mig í landafræðibókinni.'
+            tegund: 'rodun',
+            spurning: 'Í Móum stendur gamall skápur með þremur ljósum og fimm hjólum. Snúið hjólunum svo röðin verði rétt. Þegar röðin er rétt verður ljósið grænt.',
+            thrautir: [
+              { titill: 'Raðaðu eftir þyngd (að meðaltali)', fra: 'Léttast', til: 'Þyngst', rod: ['Hamstur', 'Rotta', 'Kanína', 'Köttur', 'Hundur'] },
+              { titill: 'Raðaðu eftir mannfjölda', fra: 'Fæstir', til: 'Flestir', rod: ['Mónakó', 'Færeyjar', 'Ísland', 'Albanía', 'Portúgal'] },
+              { titill: 'Raðaðu eftir aldri (elst fyrst)', fra: 'Elst', til: 'Yngst', rod: ['Lóa', 'Fanney', 'Þórey Arna', 'Ragnar', 'Ingibjörg'] }
+            ]
           }
         },
         {
