@@ -32,7 +32,7 @@
         var reyna = kodi.value.trim().toUpperCase();
         if (reyna && window.THRAUTIR.hengilas.fingrafar(reyna) === th.kodi) {
           kodaSvorun.className = 'svorun rett';
-          kodaSvorun.textContent = 'Kóðinn passar!';
+          kodaSvorun.textContent = api.leyst ? 'Kóðinn passar! Kjallarinn er þegar opinn.' : 'Kóðinn passar!';
           if (!api.leyst) setTimeout(api.leysa, 900);
         } else {
           kodaSvorun.className = 'svorun rangt';
@@ -125,7 +125,7 @@
         ut.classList.add('rett');
         if (th.kodi) {
           api.vistaFramvindu(1);
-          if (!api.leyst) synaKoda();
+          synaKoda();  // líka þegar herbergið er þegar leyst, svo skilaboðin um kennarann sjáist alltaf
         } else if (!api.leyst) setTimeout(api.leysa, 1200);
       } else {
         svorun.className = 'svorun rangt';
@@ -148,7 +148,7 @@
     }
     if (api.leyst) {
       svorun.className = 'svorun rett';
-      svorun.textContent = '✓ Hátún er leyst. Vélin virkar áfram, bæði til að dulkóða og afkóða.';
+      svorun.textContent = '✓ Hátún er leyst og kjallarinn er opinn. Vélin virkar áfram, bæði til að dulkóða og afkóða.';
     }
   };
 })();
