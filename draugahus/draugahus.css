@@ -265,5 +265,25 @@ dialog.tegund-sjoorrusta{width:min(760px,calc(100vw - 32px))}
 .sjo-hula>div{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:360px}
 .sjo-hula h3{font:700 clamp(24px,4vw,32px)/1.1 Cinzel,Georgia,serif;color:var(--amber)}
 
+/* Myndagáta í Mýri */
+.myndagata{display:flex;flex-direction:column;gap:12px}
+.gata-svid{position:relative}
+.gata-spjald{position:relative;width:100%;max-width:100%;aspect-ratio:3/2;border-radius:10px;overflow:hidden;background:#0d0b08;border:6px solid #e9dfc6;box-shadow:0 0 0 1px #000,0 10px 30px rgba(0,0,0,.6)}
+.gata-spjald img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:invert(.94) sepia(.35) brightness(1.05)}
+.gata-hula{position:absolute;inset:0;display:grid;grid-auto-rows:1fr}
+.gata-butur{background:radial-gradient(circle at 30% 30%,rgba(120,130,150,.25),transparent 60%),linear-gradient(135deg,#1c2029,#0e1015);border:1px solid rgba(255,255,255,.03);transition:opacity .45s,transform .45s}
+.gata-butur.synt{opacity:0;transform:scale(1.15)}
+.gata-teljari{--hlutfall:1;position:absolute;top:10px;right:10px;width:64px;height:64px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:conic-gradient(var(--amber) calc(var(--hlutfall) * 360deg),rgba(0,0,0,.6) 0);box-shadow:0 4px 14px rgba(0,0,0,.6)}
+.gata-teljari::before{content:"";position:absolute;inset:5px;border-radius:50%;background:#16120c}
+.gata-teljari>*{position:relative}
+.gata-tala{font:700 26px/1 Cinzel,Georgia,serif;color:var(--ink);font-variant-numeric:tabular-nums}
+.gata-teljari span{font-size:10px;color:var(--muted)}
+.gata-teljari.naestum{background:conic-gradient(var(--bad) calc(var(--hlutfall) * 360deg),rgba(0,0,0,.6) 0);animation:hjartslattur .5s ease-in-out infinite}
+.gata-teljari.naestum .gata-tala{color:var(--bad)}
+.gata-teljari.uti{animation:none;opacity:.7}
+@keyframes hjartslattur{50%{transform:scale(1.08)}}
+.gata-stjorn{display:flex;flex-direction:column;gap:8px}
+.gata-stjorn>button{align-self:center}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}

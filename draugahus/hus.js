@@ -24,6 +24,8 @@
 //   svindlkodi: fingrafar kóða sem leysir þrautina líka.
 // - "sjoorrusta": sjóorrusta við tölvuna (sjá sjoorrusta.js). staerd: borð staerd x staerd,
 //   skip: lengdir skipanna. Skip mega ekki snertast, ekki heldur á horn.
+// - "myndagata": mynd birtist í slembibútum á meðan teljari telur niður (sjá myndagata.js).
+//   Ef tíminn rennur út kemur önnur mynd. Hástafir, broddar og bil skipta ekki máli í svörum.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -76,10 +78,15 @@ window.HUS = {
           id: 'myri', heiti: 'Mýri', krefst: ['melar'],
           svaedi: [[10, 225], [355, 225], [355, 655], [10, 655]],
           thraut: {
-            tegund: 'ord',
-            spurning: 'Ég er svartur og greindur fugl og Óðinn átti tvo eins og mig. Hvað er ég?',
-            svor: ['hrafn', 'hrafninn'],
-            visbending: 'Þeir hétu Huginn og Muninn.'
+            tegund: 'myndagata',
+            spurning: 'Gömul póstkort liggja á skrifborðinu í Mýri en þokan hylur þau. Myndin birtist í bútum. Skrifið nafn borgarinnar áður en tíminn rennur út!',
+            timi: 10,
+            dalkar: 6, radir: 4,
+            myndir: [
+              { mynd: 'myndir/paris.jpg', breidd: 1536, haed: 1024, svor: ['París'] },
+              { mynd: 'myndir/newyork.jpg', breidd: 1536, haed: 1024, svor: ['New York', 'Nýja Jórvík', 'NY', 'NYC'] },
+              { mynd: 'myndir/london.jpg', breidd: 1536, haed: 1024, svor: ['London', 'Lundúnir', 'Lundúnum'] }
+            ]
           }
         },
         {
