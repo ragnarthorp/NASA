@@ -126,8 +126,9 @@
 
     function sokkid(f) { return f.hittir.length === f.lengd; }
 
+    function skipA(floti, i) { return floti.filter(function (x) { return x.reitir.indexOf(i) >= 0; })[0]; }
     function skjota(floti, skot, omog, i) {
-      var f = floti.filter(function (x) { return x.reitir.indexOf(i) >= 0; })[0];
+      var f = skipA(floti, i);
       if (!f) { skot[i] = 'mis'; return 'mis'; }
       skot[i] = 'hitt';
       f.hittir.push(i);
@@ -136,13 +137,20 @@
       return 'sokkid';
     }
 
-    var ORD = { mis: 'Skvamp! Ekkert þar.', hitt: 'Hæft!', sokkid: 'Hæft og sökkt!' };
+    // Lýsing á skoti: segir alltaf hvort skip var hæft eða sökkt og hvaða skip það var
+    function heitiSkips(f) { return f.lengd === LENGDIR[0] ? 'stóra skipið' : 'litla skipið'; }
+    function lysa(nidur, f, eigandi) {
+      if (nidur === 'mis') return 'Skvamp! Ekkert þar.';
+      var nafn = heitiSkips(f) + eigandi + ' (' + f.lengd + (f.lengd === 1 ? ' reitur' : ' reitir') + ')';
+      if (nidur === 'hitt') return 'Hæft! Það var ' + nafn + '. Það flýtur enn, ' + (f.lengd - f.hittir.length) + ' reitur eftir.';
+      return 'Hæft og sökkt! ' + nafn.charAt(0).toUpperCase() + nafn.slice(1) + ' er sokkið.';
+    }
 
     function smelltSkjota(i) {
       if (!minnUmferd || stig !== 'orrusta' || skotMin[i] || omogMin[i]) return;
       var nidur = skjota(tolvuFloti, skotMin, omogMin, i);
       skilabod.className = 'sjo-skilabod ' + (nidur === 'mis' ? '' : 'gott');
-      skilabod.textContent = 'Þú skaust á ' + heiti(i) + '. ' + ORD[nidur];
+      skilabod.textContent = 'Þú skaust á ' + heiti(i) + '. ' + lysa(nidur, skipA(tolvuFloti, i), ' hjá tölvunni');
       if (tolvuFloti.every(sokkid)) return lok(true);
       minnUmferd = false;
       teikna();
@@ -184,7 +192,7 @@
       sidastaTolvuskot = i;
       var nidur = skjota(minnFloti, skotTolvu, omogTolvu, i);
       skilabod.className = 'sjo-skilabod ' + (nidur === 'mis' ? '' : 'slaemt');
-      skilabod.textContent = 'Tölvan skaut á ' + heiti(i) + '. ' + ORD[nidur] + (nidur === 'mis' ? ' Þín umferð.' : '');
+      skilabod.textContent = 'Tölvan skaut á ' + heiti(i) + '. ' + lysa(nidur, skipA(minnFloti, i), ' þitt') + (nidur === 'mis' ? ' Þín umferð.' : '');
       if (minnFloti.every(sokkid)) return lok(false);
       minnUmferd = true;
       teikna();
@@ -209,7 +217,20 @@
     }
 
     // Teikning
-    function bord(titill, smell, flokkar) {
+    function flotayfirlit(floti) {
+      return el('div', { 'class': 'sjo-floti' }, floti.map(function (f) {
+        var stada = sokkid(f) ? 'sokkid' : f.hittir.length ? 'hitt' : 'floti';
+        var texti = sokkid(f) ? 'sokkið' : f.hittir.length ? 'hæft ' + f.hittir.length + '/' + f.lengd : 'á floti';
+        var reitir = [];
+        for (var k = 0; k < f.lengd; k++) reitir.push(el('i', { 'class': k < f.hittir.length ? 'hitt' : '' }));
+        return el('span', { 'class': 'sjo-floti-skip ' + stada, title: heitiSkips(f) }, [
+          el('span', { 'class': 'sjo-floti-skrokkur' }, reitir),
+          el('small', { text: (f.lengd === LENGDIR[0] ? 'Stóra' : 'Litla') + ': ' + texti })
+        ]);
+      }));
+    }
+
+    function bord(titill, smell, flokkar, floti) {
       var grid = el('div', { 'class': 'sjo-bord', role: 'grid', 'aria-label': titill });
       grid.appendChild(el('span', { 'class': 'sjo-merki' }));
       for (var x = 0; x < N; x++) grid.appendChild(el('span', { 'class': 'sjo-merki', text: DALKAR[x] }));
@@ -225,7 +246,7 @@
           }));
         }
       }
-      return el('div', { 'class': 'sjo-bord-kassi' }, [el('h4', { text: titill }), grid]);
+      return el('div', { 'class': 'sjo-bord-kassi' }, [el('h4', { text: titill }), floti ? flotayfirlit(floti) : null, grid]);
     }
 
     function minnFlokkur(i) {
@@ -274,8 +295,8 @@
         return;
       }
       bordin.classList.remove('rada');
-      bordin.appendChild(bord('Haf tölvunnar', smelltSkjota, tolvuFlokkur));
-      bordin.appendChild(bord('Hafið þitt', function () {}, minnFlokkur));
+      bordin.appendChild(bord('Haf tölvunnar', smelltSkjota, tolvuFlokkur, tolvuFloti));
+      bordin.appendChild(bord('Hafið þitt', function () {}, minnFlokkur, minnFloti));
       bordin.firstChild.classList.toggle('virkt', stig === 'orrusta' && minnUmferd);
     }
 
