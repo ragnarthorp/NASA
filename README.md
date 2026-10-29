@@ -60,5 +60,6 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - `draugahus/skeidklukka.js`: skeiðklukka í Melum. Nemendur stöðva hana eftir nákvæmlega 10,00 sekúndur án þess að sjá tímann. Svindlkóði frá kennara opnar herbergið líka. Hann er geymdur sem fingrafar, eins og lykill lássins.
 - `draugahus/sjoorrusta.js`: sjóorrusta á Svölum á 5×5 borði, með einu tveggja reita skipi og einu eins reits skipi. Skip mega ekki snertast, ekki heldur á horn. Tölvan sér ekki skip leikmannsins. Hún velur skot í hlutfalli við hve mörg skip geta enn legið yfir hverjum reit og eltir skip sem hún hefur hitt.
 - `draugahus/myndagata.js`: myndagáta í Mýri. Póstkort af París, New York eða London birtist í 24 slembibútum á 10 sekúndum. Ef tíminn rennur út kemur annað póstkort. Hástafir, broddar og bil skipta ekki máli í svörum.
+- `draugahus/enigma.js` og `draugahus/enigmathraut.js`: dulmálsvél í Hátúni. Hún er Enigma I með snúðum I–V, endurkastara B eða C, hringstillingum, upphafsstöðu og tengiborði. Nemendur líma inn dulmálið og vélin skilar textanum, með snúðum sem snúast og ljósaborði. Rétti textinn er geymdur sem fingrafar og opnar kjallarann.
 - `draugahus/draugahus.js`: vélin sem teiknar, læsir og opnar. Framvinda vistast í vafranum (`localStorage`).
 - `draugahus/index.html?allt` opnar öll herbergi til að prófa.

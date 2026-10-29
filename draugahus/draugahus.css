@@ -285,5 +285,23 @@ dialog.tegund-sjoorrusta{width:min(760px,calc(100vw - 32px))}
 .gata-stjorn{display:flex;flex-direction:column;gap:8px}
 .gata-stjorn>button{align-self:center}
 
+/* Dulmálsvélin í Hátúni */
+.enigma{display:flex;flex-direction:column;gap:14px}
+.enigma-vel{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 12px 16px;border-radius:14px;background:linear-gradient(160deg,#4a3320,#2a1c10 60%,#1d130a);border:1px solid #5a4127;box-shadow:inset 0 2px 0 rgba(255,220,170,.12),0 10px 28px rgba(0,0,0,.55)}
+.enigma-haus{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;max-width:440px}
+.enigma-haus b{font:700 22px/1 Cinzel,Georgia,serif;letter-spacing:.3em;color:#d9b866}
+.snudagluggar{display:flex;gap:8px;padding:6px 10px;border-radius:8px;background:#0d0905;box-shadow:inset 0 2px 6px #000}
+.snudur{width:30px;height:34px;display:grid;place-items:center;border-radius:4px;font:700 18px/1 ui-monospace,Menlo,Consolas,monospace;color:#1d1a14;background:linear-gradient(#8f877a,#f3ecdc 35%,#f3ecdc 65%,#8f877a)}
+.lampar{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;border-radius:10px;background:#0d0905;box-shadow:inset 0 2px 8px #000}
+.lampar div{display:flex;gap:5px}
+.lampar span{width:clamp(22px,6vw,30px);height:clamp(22px,6vw,30px);border-radius:50%;display:grid;place-items:center;font:600 clamp(10px,2.6vw,13px)/1 ui-monospace,Menlo,Consolas,monospace;color:#6b6252;background:radial-gradient(circle at 40% 35%,#2b2620,#15120e);border:1px solid #3a3226;transition:background .15s,color .15s,box-shadow .15s}
+.lampar span.lysir{color:#2a1a04;background:radial-gradient(circle at 40% 35%,#fff3c8,#f2a541 60%,#a35f12);box-shadow:0 0 14px rgba(242,165,65,.8)}
+.enigma-form{display:flex;flex-direction:column;gap:8px}
+.enigma-merki{font:700 14px/1.2 Cinzel,Georgia,serif;letter-spacing:.06em;color:var(--amber)}
+.dulmal-inn{width:100%;min-height:96px;resize:vertical;border:1px solid var(--line);background:#100e0a;color:var(--ink);border-radius:10px;padding:10px 12px;font:15px/1.5 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.05em}
+.dulmal-ut{display:block;min-height:3em;padding:12px 14px;border-radius:6px;background:linear-gradient(#f4ecd8,#e6dcc0);color:#2a1a08;font:600 15px/1.6 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;word-break:break-all;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.dulmal-ut:empty{display:none}
+.dulmal-ut.rett{box-shadow:0 0 0 2px var(--ok),0 0 24px rgba(127,209,139,.4)}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
