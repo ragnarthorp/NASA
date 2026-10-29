@@ -16,6 +16,8 @@
 //   rett: nöfn sem á að hitta, rong: nöfn sem á ekki að hitta. teljari lækkar um
 //   einn við rétt nafn og hækkar um einn við rangt. lif: rangir smellir áður en byrjað er aftur.
 // - "ordla": Wordle (sjá ordla.js). Slembiorð úr ord; ef tilraunirnar klárast kemur nýtt orð.
+// - "hengilas": hengilás með talnahjólum (sjá hengilas.js). lykill: fingrafar réttu runnunnar,
+//   tengill: { texti, slod } að verkefni utan vefsins.
 // - "utvarp": lagbútar spilaðir í útvarpi og heiti hvers lags raðað úr stafaflísum
 //   (sjá utvarp.js). log: listi af { heiti, flytjandi, hljod }, mynd: mynd af útvarpinu.
 // visbending birtist eftir tvö röng svör.
@@ -141,10 +143,12 @@ window.HUS = {
           id: 'hadegismoar', heiti: 'Hádegismóar', krefst: ['salurinn', 'sandvik'],
           svaedi: [[1060, 70], [1580, 70], [1580, 460], [1060, 460]],
           thraut: {
-            tegund: 'ord',
-            spurning: 'Á miða við tilraunaglösin stendur H₂O. Hvaða efni er í glasinu?',
-            svor: ['vatn'],
-            visbending: 'Það sauð í pottinum í eldhúsinu.'
+            tegund: 'hengilas',
+            spurning: 'Vel gert! Til að opna efri hæðina þarftu að leysa verkefnið sem þú finnur í Google Classroom.',
+            tengill: { texti: 'Opna verkefnið í Google Classroom', slod: 'https://classroom.google.com/c/ODk2NjY3Njg4MTQ5?cjc=omuekycn' },
+            aminning: 'Þegar því er lokið færð þú talnalykil að efri hæðinni. Ekki fyrr.',
+            fjoldi: 8,
+            lykill: '87218820'  // fingrafar talnalykilsins, sjá hengilas.js
           }
         }
       ]
