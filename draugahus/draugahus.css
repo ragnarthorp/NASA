@@ -470,5 +470,11 @@ dialog.tegund-hnit{width:min(980px,calc(100vw - 32px))}
 .inngangur-svar.rett{color:var(--ok)}
 .inngangur .kennari{width:100%;text-align:left}
 
+.varaleid{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;border:2px dashed rgba(242,165,65,.6);background:rgba(242,165,65,.07)}
+.varaleid p{margin:0}
+.varaleid-kodi{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bekkjarkodi{font:700 clamp(24px,6vw,32px)/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.14em;color:var(--amber);padding:8px 14px;border-radius:8px;background:#100e0a;border:1px solid #5a4127;user-select:all}
+.varaleid a{color:var(--amber);font-weight:700}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}

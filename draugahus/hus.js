@@ -17,7 +17,7 @@
 //   einn við rétt nafn og hækkar um einn við rangt. lif: rangir smellir áður en byrjað er aftur.
 // - "ordla": Wordle (sjá ordla.js). Slembiorð úr ord; ef tilraunirnar klárast kemur nýtt orð.
 // - "hengilas": hengilás með talnahjólum (sjá hengilas.js). lykill: fingrafar réttu runnunnar,
-//   tengill: { texti, slod } að verkefni utan vefsins.
+//   tengill: { texti, slod } að verkefni utan vefsins, varaleid: { kodi, slod } bekkjarkóði.
 // - "rodun": þrjár röðunarþrautir í röð með hjólum (sjá rodun.js). thrautir: listi af
 //   { titill, fra, til, rod } þar sem rod er rétta röðin.
 // - "skeidklukka": stöðva klukku eftir markmid sekúndur (sjá skeidklukka.js).
@@ -190,6 +190,8 @@ window.HUS = {
             tegund: 'hengilas',
             spurning: 'Vel gert! Til að opna efri hæðina þarftu að leysa verkefnið sem þú finnur í Google Classroom.',
             tengill: { texti: 'Opna verkefnið í Google Classroom', slod: 'https://classroom.google.com/c/ODk2NjY3Njg4MTQ5?cjc=omuekycn' },
+            // Varaleið ef tengillinn virkar ekki: bekkjarkóði sem sleginn er inn á forsíðu Classroom
+            varaleid: { kodi: 'omuekycn', slod: 'https://classroom.google.com/' },
             aminning: 'Þegar því er lokið færð þú talnalykil að efri hæðinni. Ekki fyrr.',
             fjoldi: 8,
             lykill: '87218820'  // fingrafar talnalykilsins, sjá hengilas.js

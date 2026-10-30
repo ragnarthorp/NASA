@@ -26,6 +26,26 @@
     if (th.tengill) {
       kassi.appendChild(el('a', { 'class': 'tengill-takki', href: th.tengill.slod, target: '_blank', rel: 'noopener', text: th.tengill.texti + ' ↗' }));
     }
+    if (th.varaleid) {
+      // Bekkjarkóði sem varaleið, með afritunarhnappi og tengli á forsíðu Classroom
+      var kodiEl = el('span', { 'class': 'bekkjarkodi', text: th.varaleid.kodi });
+      var afrita = el('button', { type: 'button', 'class': 'litill', text: 'Afrita' });
+      afrita.addEventListener('click', function () {
+        function velja() {
+          var sv = document.createRange(); sv.selectNodeContents(kodiEl);
+          var val = window.getSelection(); val.removeAllRanges(); val.addRange(sv);
+          afrita.textContent = 'Valið. Ýtið á Ctrl+C';
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(th.varaleid.kodi).then(function () { afrita.textContent = 'Afritað ✓'; }, velja);
+        } else velja();
+      });
+      kassi.appendChild(el('div', { 'class': 'varaleid' }, [
+        el('p', { text: 'Virkar tengillinn ekki? Farið á Classroom, veljið + og „Taka þátt í námskeiði“ (Join class) og sláið inn bekkjarkóðann:' }),
+        el('div', { 'class': 'varaleid-kodi' }, [kodiEl, afrita]),
+        el('a', { href: th.varaleid.slod, target: '_blank', rel: 'noopener', text: 'Opna classroom.google.com ↗' })
+      ]));
+    }
     if (th.aminning) kassi.appendChild(el('p', { 'class': 'aminning', text: th.aminning }));
 
     var hjolin = el('div', { 'class': 'hjolin', role: 'group', 'aria-label': 'Talnahjól lássins' });
