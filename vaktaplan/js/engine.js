@@ -431,6 +431,9 @@ function stats(state){
 }
 
 /* ---------- Yfirferð ---------- */
+/* Vinnudagar í röð strax fyrir tímabilið (úr síðustu dögum fyrra tímabils) */
+function prevRunOf(state,e){const L=(state.prevTail||{})[e.id]||[],d0=periodDates(state.period)[0];let run=0;
+  for(let k=1;k<=14;k++){const dd=addDays(d0,-k);if(L.some(x=>x.date===dd))run++;else break;}return run;}
 function validate(state){
   const C=buildCtx(state),S=state,out=[],N=C.n;
   C.dates.forEach((d,i)=>C.shifts.forEach(sh=>{
@@ -441,13 +444,14 @@ function validate(state){
   }));
   C.emps.forEach(e=>{
     const row=C.dates.map(d=>S.plan[e.id+'|'+d]||null),allowed=allowedIds(C,e),noD=new Set(e.noDays||[]),D=C.empDays[e.id];
-    let run=0,runStart=0;
+    const pr=prevRunOf(S,e);let run=pr,runStart=-pr,told=false;
     row.forEach((c,i)=>{
       const d=C.dates[i],w=(S.wishes||{})[e.id+'|'+d];
       if(c&&c.s&&C.shift[c.s]){
         const sh=C.shift[c.s];
-        if(run===0)runStart=i;run++;
-        if(run===C.maxConsec+1)out.push({level:'warn',type:'consec',emp:e.id,date:C.dates[runStart],msg:`${e.name}: fleiri en ${C.maxConsec} vinnudagar í röð frá ${dateLabel(C.dates[runStart])}`});
+        if(run===0){runStart=i;told=false;}run++;
+        const mc=+e.maxConsec>0?+e.maxConsec:C.maxConsec,sd=runStart<0?addDays(C.dates[0],runStart):C.dates[runStart];
+        if(run>mc&&!told&&(told=true))out.push({level:'warn',type:'consec',emp:e.id,date:d,msg:`${e.name}: ${run} vinnudagar í röð frá ${dateLabel(sd)}${runStart<0?' (með síðustu dögum fyrra tímabils)':''}, hámark ${mc}`});
         for(let j=i+1;j<=Math.min(N-1,i+2);j++){const q=row[j];if(q&&q.s&&C.shift[q.s]){const gap=(j*1440+C.shift[q.s].m0)-(i*1440+sh.m1);
           if(gap<C.rest)out.push({level:'warn',type:'rest',emp:e.id,date:d,msg:`${e.name}: aðeins ${round2(gap/60)} klst. hvíld milli ${sh.code} (${dateLabel(d)}) og ${C.shift[q.s].code} (${dateLabel(C.dates[j])})`});break;}}
         if(D[i].status!=='active')out.push({level:D[i].status==='hourly'?'info':'warn',type:'status',emp:e.id,date:d,msg:`${e.name} er á vakt ${dateLabel(d)} en er skráð í ${STATUS_NAMES[D[i].status].toLowerCase()} þann dag`});
@@ -457,7 +461,7 @@ function validate(state){
         if(!allowed.has(c.s))out.push({level:'warn',type:'allowed',emp:e.id,date:d,msg:`${e.name}: ${sh.name} ${dateLabel(d)} er ekki á lista yfir vaktir starfsmanns`});
         if(noD.has(C.infos[i].dow))out.push({level:'warn',type:'noday',emp:e.id,date:d,msg:`${e.name} vinnur að jafnaði ekki á ${DAYS_PL[C.infos[i].dow]} (${dateLabel(d)})`});
         if(w&&w.off)out.push({level:'warn',type:'wish',emp:e.id,date:d,msg:`${e.name}: á vakt þrátt fyrir ósk um frí ${dateLabel(d)}`});
-      }else run=0;
+      }else{run=0;told=false;}
       if(w&&w.s&&!(c&&c.s===w.s)&&C.shift[w.s])out.push({level:'info',type:'wishshift',emp:e.id,date:d,msg:`${e.name}: ósk um ${C.shift[w.s].name} ${dateLabel(d)} ekki uppfyllt`});
     });
   });
@@ -602,9 +606,9 @@ function wishConflicts(state){
       if(w&&w.s&&C.shift[w.s])return {k,s:C.shift[w.s],wish:true,abs:v&&v.a};
       if(v&&v.s&&C.shift[v.s]&&S.locks[k])return {k,s:C.shift[v.s],wish:false};return null;});
     const add=(i,reason,fix)=>{const x=row[i];rule.push({date:C.dates[i],emp:e.id,name:e.name,key:x?x.k:null,ws:x&&x.s.id,reason,fix});if(x)keys.add(x.k);};
-    let hrs=0,run=0,wk=new Set();
+    let hrs=0,run=prevRunOf(S,e),told=false,wk=new Set();
     row.forEach((x,i)=>{
-      if(!x){run=0;return;}
+      if(!x){run=0;told=false;return;}
       hrs+=x.s.hours;
       if(x.wish){
         if(D[i].status!=='active')add(i,`er í ${STATUS_NAMES[D[i].status].toLowerCase()} þennan dag`);
@@ -616,7 +620,7 @@ function wishConflicts(state){
       if(C.R.noAfterNight!==false&&x.s.m1>1440&&row[i+1]&&row[i+1].s.m1<=1440&&(x.wish||row[i+1].wish))add(i,`vakt ${dateLabel(C.dates[i+1])} sama dag og næturvakt lýkur`);
       for(let j=i+1;j<=Math.min(C.n-1,i+2);j++){const y=row[j];if(y){const gap=(j*1440+y.s.m0)-(i*1440+x.s.m1);
         if(gap<minRest&&(x.wish||y.wish))add(i,`aðeins ${hhh(gap)} klst. hvíld fram að ${y.s.code} ${dateLabel(C.dates[j])}`);break;}}
-      run++;if(run===maxCon+1)add(i,`fleiri en ${maxCon} vinnudagar í röð`);
+      run++;if(run>maxCon&&!told&&(told=true))add(i,`${run} vinnudagar í röð${i<maxCon?' (með síðustu dögum fyrra tímabils)':''}, hámark ${maxCon}`);
       if(C.infos[i].dow>=5)wk.add(isoWeek(C.dates[i]));
     });
     if(e.maxWeekends!==''&&e.maxWeekends!=null&&wk.size>+e.maxWeekends)rule.push({emp:e.id,name:e.name,reason:`óskar eftir ${wk.size} helgum en hámark er ${e.maxWeekends}`,fix:'emp'});
