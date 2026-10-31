@@ -21,9 +21,14 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
    - **Föst vakt:** starfsmaður fær vaktina alla daga sem hún er í boði, nema annað sé ákveðið (t.d. sjúkraliði á 8–16).
    - **Hámark helga** á tímabili og **hámark vinnudaga í röð**.
    - Staðan **Ekki á vaktaplani** er t.d. fyrir forstöðumann.
+   - **Ekki á tilteknum dögum:** t.d. „ekki morgunvaktir á þriðjudögum og fimmtudögum“.
+   - **Helgar:** allar, aðra hvora helgi (A eða B, dagsetningar sýndar) eða engar, og **helst sömu helgar og** annar starfsmaður.
+   - **Forgangur gildir** alla daga, aðeins virka daga eða aðeins um helgar (t.d. „óskir á virkum dögum hafa forgang“).
+   - **Aðeins óskaðar vaktir:** starfsmaður fær bara þær vaktir sem hann óskar eftir, auk fastrar vaktar.
    - Vikustundir (t.d. 40 fyrir dagvinnu), föst vinnuskylda, flutt staða og vikudagar sem viðkomandi vinnur ekki.
 
    Hægt er að líma inn lista (`Nafn; hlutfall; starfsheiti`, þar sem hlutfallið má vera 80, 80%, 0,8 eða TV). Listinn sýnir vinnuskyldu, tíma á vöktum og **útistandandi tíma** fyrir hvern starfsmann.
+   Almenn regla í Grunni: **aldrei vakt sama dag og næturvakt lýkur**. Önnur næturvakt í röð er þó leyfð.
 4. **Hátíðis- og rauðir dagar:** íslenskir frídagar eru merktir sjálfkrafa og flokkaðir sér:
    - **Stórhátíðardagar (★):** nýársdagur, föstudagurinn langi, páskadagur, hvítasunnudagur, 17. júní, aðfangadagur frá kl. 12, jóladagur og gamlársdagur frá kl. 12.
    - **Rauðir dagar:** skírdagur, annar í páskum, sumardagurinn fyrsti, 1. maí, uppstigningardagur, annar í hvítasunnu, frídagur verslunarmanna og annar í jólum.

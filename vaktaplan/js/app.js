@@ -28,6 +28,7 @@ function newEmp(e={}){
   if(!pl){pl={};if(e.prefs&&e.prefs.length)VP.PREF_CATS.forEach(([k])=>pl[k]=e.prefs.includes(k)?2:0);}
   return {id:e.id||VPD.uid('e'),name:e.name||'',title:e.title||'',pct:e.pct??100,status:e.status||'active',prefs:[],prefLevels:pl,
   priority:e.priority||2,fixedShift:e.fixedShift||'',maxWeekends:e.maxWeekends??'',maxConsec:e.maxConsec??'',
+  dayRules:e.dayRules||[],weekendPattern:e.weekendPattern||'all',weekendWith:e.weekendWith||'',priorityScope:e.priorityScope||'all',onlyWishes:!!e.onlyWishes,
   changes:e.changes||[],allowed:e.allowed||[],noDays:e.noDays||[],carry:e.carry??0,fixedTarget:e.fixedTarget??'',weekly:e.weekly??'',note:e.note||''};}
 const SAMPLES=()=>[{id:'demo',name:'Almennt sýnidæmi',build:()=>({state:VPD.sampleState()})},...(window.VP_SAMPLES||[])];
 function sampleState(id){const x=SAMPLES().find(z=>z.id===id)||SAMPLES()[0];const r=x.build();return {state:normalize(r.state),report:r.report};}
@@ -176,6 +177,7 @@ VIEWS.grunnur=()=>{
    </div>
    <label class="check"><input type="checkbox" data-k="rules.hardWishes" ${R.hardWishes?'checked':''}> Óskir um frí eru bindandi (annars reynir röðunin að virða þær en má víkja frá þeim)</label>
    <label class="check"><input type="checkbox" data-k="rules.fillUp" ${R.fillUp?'checked':''}> Fylla upp í vinnuskyldu með aukavöktum umfram lágmarksmönnun (að hámarki „hámark á vakt“ ef það er skráð)</label>
+   <label class="check"><input type="checkbox" data-k="rules.noAfterNight" ${S.rules.noAfterNight!==false?'checked':''}> Aldrei vakt sama dag og næturvakt lýkur (önnur næturvakt í röð er leyfð)</label>
    <label class="check"><input type="checkbox" data-k="rules.wishFirst" ${R.wishFirst!==false?'checked':''}> Úthluta óskum um vaktir fyrst. Ef fleiri óska eftir vakt en pláss er ræður forgangur starfsmanns, síðan hver hefur fengið hlutfallslega fæstar óskir uppfylltar.</label>
    <label class="check"><input type="checkbox" data-k="rules.lockManual" ${R.lockManual?'checked':''}> Læsa vöktum sem eru settar inn handvirkt svo þær haldist þegar raðað er aftur</label>
    <p class="hint">Hvíldartími samkvæmt vinnutímaákvæðum kjarasamninga er að jafnaði 11 klst. á sólarhring og a.m.k. einn frídagur á viku.</p>
@@ -261,7 +263,10 @@ VIEWS.starfsfolk=()=>{
   const rowOf=e=>{const o=st.emp.find(x=>x.id===e.id),now=VP.empOn(e,last),beg=VP.empOn(e,first),changed=now.pct!==beg.pct||now.status!==beg.status;
     const pl=VP.PREF_CATS.map(([k,n])=>[k,n,VP.prefLevel(e,k)]),hi=pl.filter(x=>x[2]===2),no=pl.filter(x=>x[2]===0);
     const fx=e.fixedShift&&shiftById(e.fixedShift);
-    const prefs=(fx?`<span class="pref fixed">Föst: ${esc(fx.code)}</span>`:'')+hi.map(x=>`<span class="pref">${esc(x[1])}</span>`).join('')+no.map(x=>`<span class="pref no">Ekki ${esc(x[1].toLowerCase())}</span>`).join('')+(!hi.length&&!no.length&&!fx?'<span class="muted small">Allar vaktir</span>':'')+(e.priority&&+e.priority!==2?`<span class="pref prio">Forgangur: ${esc(VP.PRIORITY_NAMES[e.priority])}</span>`:'');
+    const prefs=(fx?`<span class="pref fixed">Föst: ${esc(fx.code)}</span>`:'')+hi.map(x=>`<span class="pref">${esc(x[1])}</span>`).join('')+no.map(x=>`<span class="pref no">Ekki ${esc(x[1].toLowerCase())}</span>`).join('')+(!hi.length&&!no.length&&!fx?'<span class="muted small">Allar vaktir</span>':'')+(e.priority&&+e.priority!==2?`<span class="pref prio">Forgangur: ${esc(VP.PRIORITY_NAMES[e.priority])}${e.priorityScope&&e.priorityScope!=='all'?' ('+esc(VP.PRIO_SCOPES[e.priorityScope].toLowerCase())+')':''}</span>`:'')
+      +(e.onlyWishes?'<span class="pref prio">Aðeins óskir</span>':'')+(e.weekendPattern&&e.weekendPattern!=='all'?`<span class="pref">${esc(VP.WEEKEND_PATTERNS[e.weekendPattern])}</span>`:'')
+      +(e.weekendWith&&empById(e.weekendWith)?`<span class="pref">Helgar með ${esc(empById(e.weekendWith).name.split(' ')[0])}</span>`:'')
+      +(e.dayRules||[]).map(r=>`<span class="pref no">Ekki ${esc(r.cats&&r.cats.length?r.cats.map(c=>VP.PREF_NAME[c].toLowerCase()).join('/'):'vaktir')} ${esc(r.days.map(d=>VP.DAYS_SHORT[d]).join('/'))}</span>`).join('');
     return `<button class="emp-row ${selEmp===e.id?'sel':''}" data-emp="${e.id}">
       <span class="en"><b>${esc(e.name||'(nafnlaus)')}</b>${e.title?`<small>${esc(e.title)}</small>`:''}</span>
       <span class="ep">${now.status==='active'?fmt(now.pct)+'%':statusBadge(now.status)}${changed?`<small title="Breyting á tímabilinu">frá ${beg.status==='active'?fmt(beg.pct)+'%':VP.STATUS_NAMES[beg.status]}</small>`:''}</span>
@@ -300,6 +305,15 @@ function empEditor(e,C){
   <div class="row"><div class="field"><label>Hámark helga á tímabili</label><input type="number" data-k="employees.${i}.maxWeekends" data-numblank min="0" max="6" value="${esc(e.maxWeekends)}" placeholder="engin mörk"></div>
    <div class="field"><label>Hámark vinnudaga í röð</label><input type="number" data-k="employees.${i}.maxConsec" data-numblank min="1" max="14" value="${esc(e.maxConsec)}" placeholder="${esc(S.rules.maxConsec)} (almenn regla)"></div></div>
   <p class="hint">Föst vakt er sett á starfsmanninn alla daga sem hún er í boði og hann er laus, nema annað sé ákveðið (t.d. með því að breyta reit í planinu).</p>
+  <div class="row"><div class="field"><label>Forgangur gildir</label><select data-k="employees.${i}.priorityScope" data-re>${Object.entries(VP.PRIO_SCOPES).map(([k,n])=>`<option value="${k}" ${e.priorityScope===k?'selected':''}>${n}</option>`).join('')}</select></div>
+   <div class="field"><label>Helgar</label><select data-k="employees.${i}.weekendPattern" data-re>${Object.entries(VP.WEEKEND_PATTERNS).map(([k,n])=>`<option value="${k}" ${e.weekendPattern===k?'selected':''}>${n}${k==='A'||k==='B'?': '+VP.weekendDates(C,k==='A'?0:1).filter(d=>VP.dow(d)===5).map(d=>VP.shortDate(d)).join(', '):''}</option>`).join('')}</select></div></div>
+  <div class="row"><div class="field"><label>Helst sömu helgar og</label><select data-k="employees.${i}.weekendWith" data-re><option value="">–</option>${C.emps.filter(x=>x.id!==e.id).map(x=>`<option value="${x.id}" ${e.weekendWith===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
+   <div class="field" style="align-self:end"><label class="check"><input type="checkbox" data-k="employees.${i}.onlyWishes" ${e.onlyWishes?'checked':''}> Aðeins vaktir sem starfsmaður óskar eftir (og föst vakt)</label></div></div>
+  <h3>Ekki á tilteknum dögum</h3>
+  ${e.dayRules.length?`<ul class="changes">${e.dayRules.map((r,j)=>`<li>Ekki <b>${esc(r.cats&&r.cats.length?r.cats.map(c=>VP.PREF_NAME[c].toLowerCase()).join(', '):'vaktir')}</b> á ${esc(r.days.map(d=>VP.DAYS_PL[d]).join(', '))} <button class="small ghost danger" data-delrule="${j}">✕</button></li>`).join('')}</ul>`:'<p class="muted small">Engin bönn eftir vikudögum.</p>'}
+  <div class="row" style="align-items:end"><div class="field" style="margin:0"><label>Flokkur</label><select id="drCat"><option value="">Allar vaktir</option>${VP.PREF_CATS.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select></div>
+   <div class="field" style="margin:0"><label>Dagar</label><div class="chips">${VP.DAYS_SHORT.map((d,j)=>`<button class="chip day" data-drday="${j}">${d}</button>`).join('')}</div></div>
+   <button id="addRule">+ Bæta við</button></div>
   <h3>Breytingar á tímabili</h3>
   ${ch.length?`<ul class="changes">${ch.map(c=>`<li><b>Frá ${esc(VP.dateLabel(c.from))}:</b> ${c.status&&c.status!=='active'?esc(VP.STATUS_NAMES[c.status]):''}${(c.status==='active'||!c.status)&&c.pct!==''&&c.pct!=null?fmt(c.pct)+'%':''}${c.note?` <span class="muted">· ${esc(c.note)}</span>`:''} <button class="small ghost danger" data-delch="${c.j}">✕</button></li>`).join('')}</ul>`:'<p class="muted small">Engar breytingar skráðar.</p>'}
   <div class="row chform"><div class="field"><label>Gildir frá</label><input type="date" id="chFrom" value="${VP.periodRange(S.period.year,S.period.month).start}"></div>
@@ -330,6 +344,10 @@ AFTER.starfsfolk=()=>{
     return;
   }
   $('#closeEmp').onclick=()=>{selEmp=null;rerender();};
+  $$('[data-drday]').forEach(b=>b.onclick=()=>b.classList.toggle('off'));
+  $('#addRule').onclick=()=>{const days=$$('[data-drday].off').map(b=>+b.dataset.drday);if(!days.length){toast('Veldu a.m.k. einn dag');return;}
+    pushUndo();const c=$('#drCat').value;e.dayRules=[...e.dayRules,{cats:c?[c]:[],days}];save();rerender();};
+  $$('[data-delrule]').forEach(b=>b.onclick=()=>{pushUndo();e.dayRules=e.dayRules.filter((_,j)=>j!==+b.dataset.delrule);save();rerender();});
   $$('[data-plv]').forEach(b=>b.onclick=()=>{const [k,v]=b.dataset.plv.split('|');e.prefLevels={...e.prefLevels,[k]:+v};e.prefs=[];save();rerender();});
   $$('[data-noday]').forEach(b=>b.onclick=()=>{const j=+b.dataset.noday;e.noDays=e.noDays.includes(j)?e.noDays.filter(x=>x!==j):[...e.noDays,j].sort();save();rerender();});
   $('#chStatus').onchange=()=>{$('#chPct').disabled=$('#chStatus').value!=='active';};
