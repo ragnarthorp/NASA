@@ -14,6 +14,7 @@ const light=(h,a=0.55)=>rgb(h).map(c=>Math.round(c+(255-c)*a));
 const dark=h=>{const [r,g,b]=rgb(h);return (r*299+g*587+b*114)/1000<150;};
 const fmt=(n,d=1)=>VP.fmtNum(n,d);
 const fmtS=(n,d=1)=>(n>0.005?'+':'')+fmt(n,d);
+const outTxt=o=>o.outstanding>0.05?`vantar ${fmt(o.outstanding)}`:o.outstanding<-0.05?`+${fmt(-o.outstanding)} umfr.`:'0';
 const INK='#1f3a40',MUTED='#667a7c',LINE='#c9d3d1',WK='#eef1f0',RED='#fbe1de',REDT='#b3261e',MAJ='#e8a19a',MAJT='#7a0f0a';
 
 async function writer(format='a4',orientation='landscape'){
@@ -99,7 +100,7 @@ async function full(S,opts={}){
   const st=VP.stats(S),C=st.C,n=C.n,E=C.emps;
   const big=E.length>32||n>31&&E.length>24;
   const w=await writer(big?'a3':'a4','landscape'),{doc,W,H,M}=w;
-  const nameW=40,sumW=[10,12,12,12],sumT=sumW.reduce((a,b)=>a+b,0),dayW=(W-2*M-nameW-sumT)/n,headH=8.5;let rowH=5.4;
+  const nameW=40,sumW=[10,12,12,16],sumT=sumW.reduce((a,b)=>a+b,0),dayW=(W-2*M-nameW-sumT)/n,headH=8.5;let rowH=5.4;
   const title='Vaktaplan',sub=VP.periodLabel(S.period);
   if(opts.wall!==false){drawWall(w,S,st);doc.addPage();}   // fyrsta síða: veggplan til að hengja upp
   const usedMain=st.usedShifts.filter(s=>!s.countsAs);
@@ -125,8 +126,8 @@ async function full(S,opts={}){
       else if(v&&v.a&&C.abs[v.a]){const a=C.abs[v.a];w.rect(x,y,dayW,rowH,a.color,LINE);w.cellText(a.code,x,y,dayW,rowH,{size:6,color:dark(a.color)?'#ffffff':INK});}
       else{const fl=dayFill(f);w.rect(x,y,dayW,rowH,fl?light(fl,0.35):'#ffffff',LINE);}
     });
-    let x=M+nameW+n*dayW;const vals=[String(o.shifts),fmt(o.total),fmt(o.target),fmt(o.outstanding)];
-    vals.forEach((t,j)=>{w.rect(x,y,sumW[j],rowH,'#ffffff',LINE);w.cellText(t,x,y,sumW[j],rowH,{size:6.6,align:'right',style:j===3?'bold':'normal',color:j===3&&o.outstanding<-(+S.rules.hourTolerance||0)?REDT:INK});x+=sumW[j];});
+    let x=M+nameW+n*dayW;const vals=[String(o.shifts),fmt(o.total),fmt(o.target),outTxt(o)];
+    vals.forEach((t,j)=>{w.rect(x,y,sumW[j],rowH,'#ffffff',LINE);w.cellText(t,x,y,sumW[j],rowH,{size:6.6,align:'right',style:j===3?'bold':'normal',color:j===3&&o.outstanding>(+S.rules.hourTolerance||0)?REDT:INK});x+=sumW[j];});
     y+=rowH;
   });
   // mönnun
@@ -151,7 +152,7 @@ function statsPages(w,S,st,title,sub){
   const {doc,W,H,M}=w,R=S.rules,C=st.C;doc.addPage();let y=header(w,S,'Útreikningar',sub);
   w.font('normal',8,MUTED);
   w.text(`Vinnuskylda: ${C.workdays} virkir dagar${C.holReduction?' − '+fmt(C.holReduction)+' frídagar á virkum degi':''} = ${fmt(C.effWorkdays)} dagar × ${fmt(C.daily,2)} klst. í 100% starfi = ${fmt(C.effWorkdays*C.daily)} klst. Dagvinna ${R.dayStart}–${R.dayEnd}, kvöld til ${R.eveningEnd}.`,M,y);y+=5;
-  const cols=[['Starfsmaður',44,'l'],['Hlutf.',12],['Skylda',15],['Vaktir',12],['Á vöktum',16],['Fjarv.',14],['Samtals',16],['Útist.',14],['Flutt',13],['Staða',14],
+  const cols=[['Starfsmaður',44,'l'],['Hlutf.',12],['Skylda',15],['Vaktir',12],['Á vöktum',16],['Fjarv.',14],['Samtals',16],['Útist.',19],['Flutt',13],['Staða',14],
     ...VP.CATS.map(c=>[VP.CAT_NAMES[c]+(c!=='day'?` ${fmt(R.rates[c],2)}%`:''),c==='day'?15:17]),['Álagsst.',15]];
   const tw=cols.reduce((a,c)=>a+c[1],0),sc=(W-2*M)/tw;cols.forEach(c=>c[1]*=sc);
   const rh=5.4,drawH=()=>{let x=M;cols.forEach(([t,cw,al])=>{w.rect(x,y,cw,8,'#e9efee',LINE);w.font('bold',6.3,INK);
@@ -159,12 +160,12 @@ function statsPages(w,S,st,title,sub){
   drawH();
   const row=(vals,bold,fill)=>{if(y+rh>H-14){doc.addPage();y=header(w,S,'Útreikningar',sub+' · framhald');drawH();}
     let x=M;vals.forEach((v,j)=>{const [,cw,al]=cols[j];w.rect(x,y,cw,rh,fill||'#ffffff',LINE);w.cellText(v,x,y,cw,rh,{align:al==='l'?'left':'right',size:7,style:bold||j===9?'bold':'normal'});x+=cw;});y+=rh;};
-  st.emp.forEach(o=>row([o.name,fmt(o.pctMax)+'%',fmt(o.target),String(o.shifts),fmt(o.worked),fmt(o.credit),fmt(o.total),fmt(o.outstanding),fmtS(o.carry),fmtS(o.balance),
+  st.emp.forEach(o=>row([o.name,fmt(o.pctMax)+'%',fmt(o.target),String(o.shifts),fmt(o.worked),fmt(o.credit),fmt(o.total),outTxt(o),fmtS(o.carry),fmtS(o.balance),
     ...VP.CATS.map(c=>o.cats[c]?fmt(o.cats[c],2):'–'),fmt(o.premium,2)]));
-  const t=st.tot;row(['Samtals','',fmt(t.target),String(st.emp.reduce((a,o)=>a+o.shifts,0)),fmt(t.worked),fmt(t.credit),fmt(t.worked+t.credit),fmt(t.target-t.worked-t.credit),'','',
+  const t=st.tot;row(['Samtals','',fmt(t.target),String(st.emp.reduce((a,o)=>a+o.shifts,0)),fmt(t.worked),fmt(t.credit),fmt(t.worked+t.credit),outTxt({outstanding:t.target-t.worked-t.credit}),'','',
     ...VP.CATS.map(c=>fmt(t.cats[c],2)),fmt(st.emp.reduce((a,o)=>a+o.premium,0),2)],true,'#f3f6f5');
   y+=5;w.font('normal',7.5,MUTED);
-  ['Samtals = stundir á vöktum + fjarvistir sem teljast til vinnuskyldu. Útistandandi = vinnuskylda − samtals. Staða = samtals − vinnuskylda + flutt staða frá fyrra tímabili.',
+  ['Samtals = stundir á vöktum + fjarvistir sem teljast til vinnuskyldu. Útistandandi: „vantar x“ = vantar upp á vinnuskyldu, „+x umfr.“ = umfram vinnuskyldu. Staða = samtals − vinnuskylda + flutt staða frá fyrra tímabili.',
    'Álagsstundir = Σ (stundir í flokki × álagsprósenta). Stundir á rauðum dögum og stórhátíðardögum eru í eigin flokkum og ekki taldar með helgum.',
    `Mönnun: ${fmt(t.have)} af ${fmt(t.need)} vöktum mannaðar samkvæmt lágmarksþörf.`].forEach(l=>{w.text(l,M,y,{maxWidth:W-2*M});y+=4.2;});
 }
@@ -246,7 +247,7 @@ async function person(S,ids){
     // samantekt
     y+=5;w.font('bold',10,INK);w.text('Stundauppgjör',M,y);y+=2;
     const box=[['Vinnuskylda',fmt(o.target)+' klst.'],['Á vöktum',fmt(o.worked)+' klst. ('+o.shifts+' vaktir)'],['Fjarvistir (reiknaðar)',fmt(o.credit)+' klst.'],
-      ['Samtals',fmt(o.total)+' klst.'],['Útistandandi',fmt(o.outstanding)+' klst.'],['Flutt staða',fmtS(o.carry)+' klst.'],['Staða í lok tímabils',fmtS(o.balance)+' klst.']];
+      ['Samtals',fmt(o.total)+' klst.'],['Útistandandi',(o.outstanding>0.05?'vantar '+fmt(o.outstanding):o.outstanding<-0.05?'+'+fmt(-o.outstanding)+' umfram':'0')+' klst.'],['Flutt staða',fmtS(o.carry)+' klst.'],['Staða í lok tímabils',fmtS(o.balance)+' klst.']];
     const bw=(W-2*M)/2-3;
     box.forEach(([k,v],j)=>{const yy=y+2+j*5;w.rect(M,yy,bw,5,j===6?'#e9efee':'#ffffff',LINE);w.cellText(k,M,yy,bw*0.55,5,{align:'left',size:7.8,style:j===6?'bold':'normal'});
       w.cellText(v,M+bw*0.55,yy,bw*0.45,5,{align:'right',size:7.8,style:'bold'});});

@@ -5,6 +5,9 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=(n,d=1)=>VP.fmtNum(n,d);
 const fmtS=(n,d=1)=>(n>0.005?'+':'')+fmt(n,d);
+/* Útistandandi sett fram skýrt: „vantar 3,4“ (skuld) eða „+1,6 umfram“; aldrei bara mínustala */
+const outTxt=o=>o.outstanding>0.05?`vantar ${fmt(o.outstanding)}`:o.outstanding<-0.05?`+${fmt(-o.outstanding)} umfram`:'0';
+const outCls=o=>o.outstanding>(+S.rules.hourTolerance||0)?'bad':o.outstanding<-(+S.rules.hourTolerance||0)?'over':'';
 const STEPS=[
   {id:'grunnur',t:'Grunnur'},{id:'vaktir',t:'Vaktir'},{id:'starfsfolk',t:'Starfsfólk'},{id:'dagatal',t:'Hátíðis- og rauðir dagar'},
   {id:'oskir',t:'Óskir og fjarvistir'},{id:'plan',t:'Vaktaplan'},{id:'utreikningar',t:'Útreikningar'},{id:'utgafa',t:'Útgáfa'}];
@@ -283,9 +286,9 @@ VIEWS.starfsfolk=()=>{
       <span class="ep">${now.status==='active'?fmt(now.pct)+'%':statusBadge(now.status)}${changed?`<small title="Breyting á tímabilinu">frá ${beg.status==='active'?fmt(beg.pct)+'%':VP.STATUS_NAMES[beg.status]}</small>`:''}</span>
       <span class="eprefs">${o?prefs:''}</span>
       <span class="num">${o?fmt(o.target):'–'}</span><span class="num muted">${o&&o.wished?fmt(o.wished):'–'}</span><span class="num">${o?fmt(o.total):'–'}</span>
-      <span class="num ${o&&o.outstanding<-(+S.rules.hourTolerance||0)?'bad':''}"><b>${o?fmt(o.outstanding):'–'}</b></span></button>`;};
+      <span class="num ${o?outCls(o):''}"><b>${o?outTxt(o):'–'}</b></span></button>`;};
   const inPlan=S.employees.filter(e=>C.emps.includes(e)),out=S.employees.filter(e=>!C.emps.includes(e));
-  return intro('Starfsfólk',`Starfsmannalistinn fylgir öllum tímabilum. Smelltu á starfsmann til að breyta starfshlutfalli, skrá breytingu frá ákveðnum degi eða velja hvaða vaktir hann vill (óskir). Starfsfólk í <b>tímavinnu</b> eða <b>leyfi</b> er ekki í vaktaplaninu. <b>Útistandandi</b> = vinnuskylda − tímar sem þegar eru á vöktum (og fjarvistir).`)+`
+  return intro('Starfsfólk',`Starfsmannalistinn fylgir öllum tímabilum. Smelltu á starfsmann til að breyta starfshlutfalli, skrá breytingu frá ákveðnum degi eða velja hvaða vaktir hann vill (óskir). Starfsfólk í <b>tímavinnu</b> eða <b>leyfi</b> er ekki í vaktaplaninu. <b>Útistandandi</b> sýnir „vantar x“ ef vantar upp á vinnuskyldu og „+x umfram“ ef unnið er umfram hana.`)+`
  <div class="split emp-split">
   <section class="panel"><div class="emp-head"><span>Nafn</span><span>Hlutfall</span><span>Óskir og forsendur</span><span class="num">Vinnuskylda</span><span class="num" title="Klst. í óskuðum vöktum">Óskir</span><span class="num">Á vöktum</span><span class="num">Útistandandi</span></div>
    <h3 class="grp">Í vaktaplani (${inPlan.length})</h3>${inPlan.map(rowOf).join('')||'<p class="muted">Enginn.</p>'}
@@ -307,7 +310,7 @@ function empEditor(e,C){
    <div class="field"><label>Starfsheiti</label><input data-k="employees.${i}.title" value="${esc(e.title)}"></div></div>
   <div class="row"><div class="field"><label>Staða</label><select data-k="employees.${i}.status" data-re>${Object.entries(VP.STATUS_NAMES).map(([k,n])=>`<option value="${k}" ${e.status===k?'selected':''}>${n}</option>`).join('')}</select></div>
    <div class="field"><label>Starfshlutfall %</label><input type="number" data-k="employees.${i}.pct" data-num data-re min="0" max="100" step="0.1" value="${esc(e.pct)}" ${e.status!=='active'?'disabled':''}></div></div>
-  <p class="hint" style="margin-top:-6px">${e.status==='hourly'?'Tímavinna: tilfallandi tímar, ekki fastar vaktir og ekki í vaktaplani.':e.status==='leave'?'Í leyfi: ekki í vaktaplani og engin vinnuskylda.':`Vinnuskylda á tímabilinu: <b>${fmt(o?o.target:0)} klst.</b>${o?` · á vöktum ${fmt(o.total)} · útistandandi <b>${fmt(o.outstanding)}</b>`:''}`}</p>
+  <p class="hint" style="margin-top:-6px">${e.status==='hourly'?'Tímavinna: tilfallandi tímar, ekki fastar vaktir og ekki í vaktaplani.':e.status==='leave'?'Í leyfi: ekki í vaktaplani og engin vinnuskylda.':`Vinnuskylda á tímabilinu: <b>${fmt(o?o.target:0)} klst.</b>${o?` · á vöktum ${fmt(o.total)} · útistandandi: <b>${outTxt(o)}</b>`:''}`}</p>
   <h3>Óskir um vaktir</h3>
   <table class="plv">${VP.PREF_CATS.map(([k,n])=>{const lv=VP.prefLevel(e,k);return `<tr><td>${n}</td><td><div class="seg small">${VP.PREF_LEVELS.map(([v,t])=>`<button data-plv="${k}|${v}" class="${lv===v?'on lv'+v:''}">${t}</button>`).join('')}</div></td></tr>`;}).join('')}</table>
   <p class="hint"><b>Helst</b>: röðunin velur starfsmanninn frekar á slíkar vaktir. <b>Má</b>: kemur til greina. <b>Ekki</b>: aldrei sett á slíkar vaktir.</p>
@@ -633,7 +636,7 @@ VIEWS.plan=()=>{
   gridEmpIds=C.emps.map(e=>e.id);
   const rows=C.emps.map(e=>{const o=st.emp.find(x=>x.id===e.id);
     return `<tr><th class="nm"><span>${esc(e.name||'(nafnlaus)')}</span><small>${o.status==='hourly'?'tímavinna':o.status==='mixed'?'breyting á tímabili':fmt(o.pctMax)+'%'}${e.prefs.length?' · '+esc(e.prefs.map(p=>VP.PREF_NAME[p]).join(', ')):''}</small></th>${C.dates.map((d,i)=>cellHtml(e,d,C,i)).join('')}
-    <td class="sum">${o.shifts}</td><td class="sum">${fmt(o.total)}</td><td class="sum">${fmt(o.target)}</td><td class="sum ${o.outstanding<-(+S.rules.hourTolerance||0)?'bad':o.outstanding>(+S.rules.hourTolerance||0)?'todo':''}"><b>${fmt(o.outstanding)}</b></td></tr>`;}).join('');
+    <td class="sum">${o.shifts}</td><td class="sum">${fmt(o.total)}</td><td class="sum">${fmt(o.target)}</td><td class="sum ${outCls(o)}"><b>${outTxt(o)}</b></td></tr>`;}).join('');
   const cov=C.shifts.filter(s=>!s.countsAs&&used.has(s.id)).map(s=>`<tr class="cov"><th class="nm"><span><span class="sw" style="background:${s.color}"></span>${esc(s.code)} · ${esc(s.name)}</span><small>mannað / þörf</small></th>
     ${st.days.map((r,i)=>{const x=r.shifts[s.id],ov=S.needOverride[r.date+'|'+s.id]!=null,oc=wconf.over.find(o=>o.date===r.date&&o.main===s.id);if(oc)return `<td><button class="covc conflict" data-cday="${r.date}" title="${esc(`${oc.pending} óska en ${oc.avail} laus pláss · smelltu til að breyta vöktum dagsins`)}">⚠ ${x.have}/${x.need}</button></td>`;return `<td class="${C.infos[i].weekend?'wkend':''} ${C.infos[i].hol?C.infos[i].hol.kind:''}"><button class="covc ${x.have<x.need?'under':x.have>x.need?'over':x.need?'ok':''} ${ov?'ovr':''}" data-need="${r.date}|${s.id}" title="${esc(s.name+' '+VP.dateLabel(r.date)+': '+x.have+' af '+x.need+(x.names.length?' · '+x.names.join(', '):'')+'. Smelltu til að breyta þörf.')}">${x.need||x.have?x.have+'/'+x.need:'·'}</button></td>`;}).join('')}<td colspan="4"></td></tr>`).join('');
   const shown=warn.filter(w=>w.type!=='over'&&(warnFilter==='all'||w.level===warnFilter));
@@ -662,7 +665,7 @@ VIEWS.plan=()=>{
  <div class="legend">${st.usedShifts.map(s=>`<span class="lg" style="background:${s.color};color:${textColor(s.color)}"><b>${esc(s.code)}</b> ${esc(s.name)} ${esc(s.start)}–${esc(s.end)}</span>`).join('')}
   ${S.absTypes.map(a=>`<span class="lg" style="background:${a.color};color:${textColor(a.color)}"><b>${esc(a.code)}</b> ${esc(a.name)}</span>`).join('')}
   <span class="lg wishoff-lg">Ósk um frí</span><span class="lg major">★ Stórhátíð</span><span class="lg red">● Rauður dagur</span></div>
- <div class="gridwrap"><table class="pgrid"><thead><tr><th class="nm corner">${esc(VP.periodLabel(S.period))}</th>${head}<th class="sum" title="Fjöldi vakta">Vaktir</th><th class="sum" title="Unnar stundir + fjarvistir sem teljast til vinnuskyldu">Klst.</th><th class="sum">Skylda</th><th class="sum" title="Útistandandi: vinnuskylda − klst. (jákvætt = vantar tíma, neikvætt = umfram)">Útist.</th></tr></thead>
+ <div class="gridwrap"><table class="pgrid"><thead><tr><th class="nm corner">${esc(VP.periodLabel(S.period))}</th>${head}<th class="sum" title="Fjöldi vakta">Vaktir</th><th class="sum" title="Unnar stundir + fjarvistir sem teljast til vinnuskyldu">Klst.</th><th class="sum">Skylda</th><th class="sum" title="Útistandandi: „vantar x“ = vantar upp á vinnuskyldu, „+x umfram“ = umfram vinnuskyldu">Útistandandi</th></tr></thead>
   <tbody>${rows}</tbody><tbody class="covb">${cov}</tbody></table></div>
  ${st.hourly.length?`<p class="hint">Ekki í vaktaplani: ${st.hourly.map(h=>`${esc(h.name)} (${esc(VP.STATUS_NAMES[h.status].toLowerCase())})`).join(', ')}.</p>`:''}
  <section class="panel" style="margin-top:20px"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Athugasemdir (${shown.length})</h2>
@@ -770,10 +773,10 @@ VIEWS.utreikningar=()=>{
   <div><b>${fmt(t.credit)}</b><span>klst. fjarvistir (reiknaðar)</span></div><div class="${t.have<t.need?'bad':'good'}"><b>${t.need?fmt(t.have/t.need*100,1):100}%</b><span>mönnun skv. þörf</span></div></div>
  <section class="panel"><h2>Vinnustundir og staða</h2><div class="tablewrap"><table class="data stat"><thead><tr><th>Starfsmaður</th><th class="num">Hlutf.</th><th class="num">Vinnu&shy;skylda</th><th class="num">Vaktir</th><th class="num">Á vöktum</th><th class="num">Fjarvistir</th><th class="num">Samtals</th><th class="num">Útistand&shy;andi</th><th class="num">Flutt</th><th class="num">Staða</th><th style="min-width:120px"></th></tr></thead><tbody>
  ${st.emp.map(o=>`<tr><td><b>${esc(o.name)}</b></td><td class="num">${fmt(o.pctMax)}%</td><td class="num">${fmt(o.target)}</td><td class="num">${o.shifts}</td><td class="num">${fmt(o.worked)}</td><td class="num">${fmt(o.credit)}</td><td class="num">${fmt(o.total)}</td>
-   <td class="num ${o.outstanding<-(+R.hourTolerance||0)?'bad':''}">${fmt(o.outstanding)}</td><td class="num">${fmtS(o.carry)}</td><td class="num"><b>${fmtS(o.balance)}</b></td>
+   <td class="num ${outCls(o)}">${outTxt(o)}</td><td class="num">${fmtS(o.carry)}</td><td class="num"><b>${fmtS(o.balance)}</b></td>
    <td><div class="bal"><span class="${o.balance<0?'neg':'pos'}" style="width:${Math.abs(o.balance)/max*50}%"></span></div></td></tr>`).join('')}
- </tbody><tfoot><tr><td>Samtals</td><td></td><td class="num">${fmt(t.target)}</td><td class="num">${st.emp.reduce((a,o)=>a+o.shifts,0)}</td><td class="num">${fmt(t.worked)}</td><td class="num">${fmt(t.credit)}</td><td class="num">${fmt(t.worked+t.credit)}</td><td class="num">${fmt(t.target-t.worked-t.credit)}</td><td></td><td></td><td></td></tr></tfoot></table></div>
- <p class="hint">Samtals = stundir á vöktum + fjarvistir sem teljast til vinnuskyldu. Útistandandi = vinnuskylda − samtals (jákvætt: tímar sem á eftir að raða, neikvætt: umfram). Staða = samtals − vinnuskylda + flutt staða frá fyrra tímabili. Vinnuskylda reiknast fyrir hvern virkan dag eftir starfshlutfalli þann dag, svo breytingar á tímabilinu skila sér.</p>
+ </tbody><tfoot><tr><td>Samtals</td><td></td><td class="num">${fmt(t.target)}</td><td class="num">${st.emp.reduce((a,o)=>a+o.shifts,0)}</td><td class="num">${fmt(t.worked)}</td><td class="num">${fmt(t.credit)}</td><td class="num">${fmt(t.worked+t.credit)}</td><td class="num">${outTxt({outstanding:t.target-t.worked-t.credit})}</td><td></td><td></td><td></td></tr></tfoot></table></div>
+ <p class="hint">Samtals = stundir á vöktum + fjarvistir sem teljast til vinnuskyldu. Útistandandi: „vantar x“ = tímar sem vantar upp á vinnuskyldu (skuld), „+x umfram“ = unnið umfram vinnuskyldu. Staða = samtals − vinnuskylda + flutt staða frá fyrra tímabili. Vinnuskylda reiknast fyrir hvern virkan dag eftir starfshlutfalli þann dag, svo breytingar á tímabilinu skila sér.</p>
  ${st.hourly.length?`<p class="hint">Ekki í vaktaplani: ${st.hourly.map(h=>`${esc(h.name)} (${esc(VP.STATUS_NAMES[h.status].toLowerCase())})`).join(', ')}.</p>`:''}</section>
  <section class="panel"><h2>Skipting vinnustunda og álag</h2><div class="tablewrap"><table class="data stat"><thead><tr><th>Starfsmaður</th>${catCols}<th class="num">Álags&shy;stundir</th><th class="num">Helgar</th><th class="num">Nætur</th><th class="num">Frídaga&shy;vaktir</th><th class="num">Óskaðar vaktir</th><th class="num">Óskir um frí</th></tr></thead><tbody>
  ${st.emp.map(o=>`<tr><td><b>${esc(o.name)}</b></td>${VP.CATS.map(c=>`<td class="num">${o.cats[c]?fmt(o.cats[c],2):'–'}</td>`).join('')}<td class="num"><b>${fmt(o.premium,2)}</b></td><td class="num" title="${o.weekendDays} helgardagar">${o.weekends}</td><td class="num">${o.nights}</td><td class="num">${o.holidayShifts}</td><td class="num">${o.wishShift?o.wishShiftKept+'/'+o.wishShift:'–'}</td><td class="num">${o.wishOff?o.wishOffKept+'/'+o.wishOff:'–'}</td></tr>`).join('')}

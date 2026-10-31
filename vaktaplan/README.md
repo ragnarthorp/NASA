@@ -71,7 +71,7 @@ Efst í skrefi 6 sést hvað er búið og hvað er næst:
 - **Fjarvistir** sem teljast til vinnuskyldu reiknast sem (vikustundir ÷ 5) × starfshlutfall fyrir hvern virkan dag.
 - **Unnar stundir** eru flokkaðar eftir tíma og degi. Stórhátíð og rauður dagur ganga framar helgum, og helgar ganga framar dagvinnu, kvöldi og nótt. Vakt sem nær yfir miðnætti er flokkuð eftir þeim degi sem hver klukkustund fellur á.
 - **Álagsstundir** = Σ stundir í flokki × álagsprósenta flokks.
-- **Útistandandi** = vinnuskylda − (unnið + fjarvistir). Jákvæð tala eru tímar sem á eftir að raða, neikvæð tala tímar umfram vinnuskyldu.
+- **Útistandandi** er sýnt sem „vantar x“ (tímar sem vantar upp á vinnuskyldu) eða „+x umfram“ (unnið umfram vinnuskyldu).
 - **Staða** = (unnið + fjarvistir − vinnuskylda) + flutt staða.
 - Vinnuskylda reiknast fyrir hvern virkan dag eftir starfshlutfalli þann dag. Dagar í tímavinnu eða leyfi gefa enga vinnuskyldu.
 
