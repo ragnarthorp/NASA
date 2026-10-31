@@ -594,9 +594,20 @@ async function importFile(file){
     if(/\.xlsx?$/i.test(file.name)){const X=await loadXlsxLib();const wb=X.read(await file.arrayBuffer(),{type:'array'});
       rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''});}
     else rows=VP.parseCsv(await file.text());
-    const mode=await choose(`Hvernig á að setja vaktirnar í „${file.name}“ inn?`,[['wish','Sem óskir (röðunin úthlutar þeim sanngjarnt)'],['lock','Sem fastar vaktir (læstar)'],['prev','Sem fyrra tímabil (síðustu 7 dagar fyrir 16., til að virða hvíld og vinnudaga í röð við mánaðamót)']]);
+    const mode=await choose(`Hvernig á að setja vaktirnar í „${file.name}“ inn?`,[['wish','Sem óskir (mælt með): röðunin úthlutar þeim sanngjarnt innan reglna'],['lock','Sem fastar vaktir (læstar): fara framhjá reglum, vinnuskyldu og forgangi'],['prev','Sem fyrra tímabil (síðustu 7 dagar fyrir 16., til að virða hvíld og vinnudaga í röð við mánaðamót)']]);
     if(!mode)return;
-    pushUndo();const rep=VP.importTable(S,rows,{mode});save();lastGen=null;render();
+    pushUndo();const before=JSON.stringify(S);const rep=VP.importTable(S,rows,{mode});
+    if(mode==='lock'){   // vörn: læstar vaktir sem brjóta reglur
+      const st=VP.stats(S),C=st.C,issues=[];
+      st.emp.forEach(o=>{const e=C.emps.find(x=>x.id===o.id),mo=e.maxOver===''||e.maxOver==null?+S.rules.maxOver||0:+e.maxOver;
+        if(o.total>o.target+mo+0.01)issues.push(`${o.name}: ${fmt(o.total)} klst. á móti ${fmt(o.target)} í vinnuskyldu (+${fmt(o.total-o.target)})`);});
+      VP.validate(S).filter(w=>w.type==='week'||w.type==='over').slice(0,8).forEach(w=>issues.push(w.msg));
+      if(issues.length){const ch=await choose(`Læstu vaktirnar brjóta reglur:\n• ${issues.slice(0,12).join('\n• ')}${issues.length>12?'\n• …':''}\n\nViltu frekar setja þær inn sem óskir? Þá úthlutar röðunin þeim innan reglna.`,
+          [['wish','Setja inn sem óskir í staðinn (mælt með)'],['keep','Halda læstu vöktunum samt']]);
+        if(ch!=='keep'){S=normalize(JSON.parse(before));const r2=VP.importTable(S,rows,{mode:'wish'});save();lastGen=null;render();
+          await ask(`${r2.wishes} óskir lesnar inn. Smelltu á „Búa til vaktaplan“ til að úthluta þeim.`,{ok:'Í lagi',cancel:'Loka'});return;}}
+    }
+    save();lastGen=null;render();
     if(mode==='prev'){const n=Object.keys(S.prevTail||{}).length;await ask(`${rep.prev} vaktir frá síðustu 7 dögum fyrra tímabils lesnar inn fyrir ${n} starfsmenn. Röðunin tekur tillit til þeirra við mánaðamót (hvíld, næturvakt, vinnudagar í röð).`+(rep.matched.length?'\n\nNöfn pöruð: '+rep.matched.join(', '):'')+(rep.unknown.length?'\n\nEkki á starfsmannalista: '+rep.unknown.join(', '):''),{ok:'Í lagi',cancel:'Loka'});return;}
     const L=[mode==='wish'?`${rep.wishes} óskir um vaktir lesnar inn${rep.count>rep.wishes?` og ${rep.count-rep.wishes} fjarvistir`:''}.`:`${rep.count} vaktir lesnar inn og læstar${rep.replaced?` (${rep.replaced} skrifuðu yfir eldri færslur)`:''}.`];
     if(rep.matched.length)L.push('Nöfn pöruð: '+rep.matched.join(', ')+'.');
