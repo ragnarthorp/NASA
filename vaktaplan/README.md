@@ -24,6 +24,7 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
    - **Ekki á tilteknum dögum:** t.d. „ekki morgunvaktir á þriðjudögum og fimmtudögum“.
    - **Helgar:** allar, aðra hvora helgi (A eða B, dagsetningar sýndar) eða engar, og **helst sömu helgar og** annar starfsmaður.
    - **Forgangur gildir** alla daga, aðeins virka daga eða aðeins um helgar (t.d. „óskir á virkum dögum hafa forgang“).
+   - **Hámark klst. á viku** (t.d. 36) og **hámark umfram vinnuskyldu** fyrir hvern starfsmann.
    - **Aðeins óskaðar vaktir:** starfsmaður fær bara þær vaktir sem hann óskar eftir, auk fastrar vaktar.
    - Vikustundir (t.d. 40 fyrir dagvinnu), föst vinnuskylda, flutt staða og vikudagar sem viðkomandi vinnur ekki.
 
@@ -42,6 +43,12 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
    Hægt er að bregðast við hverjum árekstri beint: **Veita** (vaktin sett inn læst), **Hafna**, **Færa á** aðra vakt með laust pláss, **+1 pláss**, breyta vöktum dagsins eða opna starfsmannablaðið. Árekstrar eru líka merktir í töflunni (⚠ í haus og mönnunarlínu, brotinn rammi um óskina). **Manna allar lausar vaktir** fyllir í ómannaðar vaktir með lausu starfsfólki án þess að breyta því sem er komið. Ef ekki tekst að manna innan vinnuskyldu er leyft að fara umfram hana (aukatími). Til að losa **óheppilega vakt** er smellt á hana og valið **Raða aftur án þessarar vaktar**. Shift- eða Ctrl-smellur, eða „Velja fleiri…“, velur nokkrar í einu. Vaktin er tekin af viðkomandi, hann er bannaður á henni („Hreinsa bönn“ fjarlægir það) og losuðu plássin fá annað laust starfsfólk, en öðru er ekki breytt. **Uppfylltar óskir eru fastar** og eru aldrei færðar við endurröðun eða uppstokkun. Til að breyta þeim þarf að „Hafna ósk“. Síðan kemur sjálfvirk röðun og handvirkar breytingar í töflu (smella á reit eða slá inn kóða). Handvirkar vaktir læsast og haldast þegar raðað er aftur. Neðst sést mönnun á móti þörf (smelltu til að breyta þörf einstaks dags) og listi yfir athugasemdir.
 7. **Útreikningar:** vinnuskylda, unnar stundir, fjarvistir, mismunur og staða fyrir hvern starfsmann, skipting í dagvinnu, kvöld, nætur, helgar, rauða daga og stórhátíðir, álagsstundir og fjöldi vakta eftir tegund.
 8. **Útgáfa:** PDF fyrir allt planið, vikuplan (eina viku eða allar) og einstaklingsplan (einn eða alla), JSON fyrir öll gögnin eða valda viku eða starfsmann, og nýtt tímabil sem tekur stöðu starfsfólks með sér.
+
+## Tímavinnufólk og mánaðamót
+
+- **Tímavinnufólk í göt:** ef það er leyft í Grunni fer „Manna allar lausar vaktir“ þessa leið: fyrst fastráðnir innan vinnuskyldu, síðan tímavinnufólk eftir forsendum þess, og aukatími fastráðinna aðeins ef enn vantar.
+- **Fyrra tímabil:** síðustu 7 dagar fyrra tímabils eru lesnir inn („Lesa inn vaktaóskir“ → „Sem fyrra tímabil“), eða fylgja sjálfkrafa þegar næsta tímabil er stofnað. Þá eru hvíld, „ekki vakt sama dag og næturvakt lýkur“ og vinnudagar í röð virt yfir mánaðamótin.
+- **Nöfn:** við innlestur eru nöfn pöruð þó þau séu skrifuð á ólíkan hátt, t.d. „Haukur Birgir Jónsson“ og „Haukur Birgir“.
 
 ## Vinnuferli hvers mánaðar
 

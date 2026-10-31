@@ -118,7 +118,8 @@ function buildCtx(state){
   const abs={};(state.absTypes||[]).forEach(a=>abs[a.id]=a);
   const allEmps=state.employees||[],empDays={};
   allEmps.forEach(e=>empDays[e.id]=dates.map(d=>empOn(e,d)));
-  const emps=allEmps.filter(e=>empDays[e.id].some(x=>x.status==='active'));
+  const P0=state.plan||{};
+  const emps=allEmps.filter(e=>empDays[e.id].some(x=>x.status==='active')||(e.status!=='off'&&dates.some(d=>{const v=P0[e.id+'|'+d];return v&&v.s;})));
   const C={state,R,dates,n,idx,hol,infos,info,shifts,shift,abs,emps,allEmps,empDays,
     dayStart:toMin(R.dayStart)??480,dayEnd:toMin(R.dayEnd)??1020,eveEnd:toMin(R.eveningEnd)??1440,
     rest:(+R.minRest||0)*60,maxConsec:+R.maxConsec||99,maxOver:R.maxOver===''||R.maxOver==null?999:+R.maxOver,
@@ -244,8 +245,18 @@ function prepare(C){
   const partner=E.map(e=>e.weekendWith?E.findIndex(x=>x.id===e.weekendWith):-1);
   const scope=E.map(e=>e.priorityScope||'all');
   const nightPref=E.map(e=>prefLevel(e,'night')===2);
+  const empOver=E.map(e=>e.maxOver===''||e.maxOver==null||isNaN(+e.maxOver)?null:+e.maxOver);
+  const weekCap=E.map(e=>e.maxWeekHours===''||e.maxWeekHours==null||!(+e.maxWeekHours>0)?null:+e.maxWeekHours);
+  const weekKey=C.dates.map(d=>isoWeek(d));
+  const d0=C.dates[0],PT=S.prevTail||{};
+  const prev=E.map(e=>{const L=(PT[e.id]||[]).filter(x=>x.date<d0).sort((a,b)=>a.date<b.date?-1:1);if(!L.length)return null;
+    let lastEnd=-1e9,lastNight=false,run=0;
+    L.forEach(x=>{const off=diffDays(d0,x.date)*1440,end=off+x.m1;if(end>lastEnd){lastEnd=end;}});
+    const last=L[L.length-1];lastNight=diffDays(last.date,d0)===1&&last.m1>1440;
+    for(let k=1;k<=14;k++){const dd=addDays(d0,-k);if(L.some(x=>x.date===dd))run++;else break;}
+    return {lastEnd,lastNight,run};});
   const hasHelst=E.map(e=>PREF_CATS.some(([c])=>prefLevel(e,c)===2));
-  return {hasHelst,nightPref,onlyW,partner,scope,blocked,wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
+  return {empOver,weekCap,weekKey,prev,hasHelst,nightPref,onlyW,partner,scope,blocked,wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
 }
 function runOnce(C,P,rnd,noise,pace){
   const S=C.state,E=C.emps,N=C.n,SH=C.shifts,shIdx={};SH.forEach((s,j)=>shIdx[s.id]=j);
@@ -271,10 +282,13 @@ function runOnce(C,P,rnd,noise,pace){
     const st=i*1440+sh.m0,en=i*1440+sh.m1;
     for(let j=Math.max(0,i-2);j<i;j++){const p=row[j];if(p&&p.s&&j*1440+C.shift[p.s].m1+C.rest>st)return false;}
     for(let j=i+1;j<=Math.min(N-1,i+2);j++){const q=row[j];if(q&&q.s&&en+C.rest>j*1440+C.shift[q.s].m0)return false;}
-    let run=1;for(let j=i-1;j>=0&&row[j]&&row[j].s;j--)run++;for(let j=i+1;j<N&&row[j]&&row[j].s;j++)run++;
+    const pv0=P.prev[ei];
+    if(pv0&&i<=1){if(st<pv0.lastEnd+C.rest)return false;if(i===0&&pv0.lastNight&&sh.m1<=1440&&C.R.noAfterNight!==false)return false;}
+    let run=1,j0=i-1;for(;j0>=0&&row[j0]&&row[j0].s;j0--)run++;if(j0<0&&pv0)run+=pv0.run;for(let j=i+1;j<N&&row[j]&&row[j].s;j++)run++;
     if(run>P.maxCon[ei])return false;
     if(P.maxWk[ei]!=null&&P.wkKey[i]!=null&&!wkSets[ei].has(P.wkKey[i])&&wkSets[ei].size+1>P.maxWk[ei])return false;
-    if(hours[ei]+sh.hours>P.target[ei]+(tol??C.maxOver)+1e-6)return false;
+    if(hours[ei]+sh.hours>P.target[ei]+(tol??(P.empOver[ei]??C.maxOver))+1e-6)return false;
+    if(P.weekCap[ei]!=null){const wk0=P.weekKey[i];let wh=sh.hours;for(let j=0;j<N;j++)if(P.weekKey[j]===wk0&&row[j]&&row[j].s)wh+=C.shift[row[j].s].hours;if(wh>P.weekCap[ei]+1e-6)return false;}
     if(pace&&tol==null&&hours[ei]+sh.hours>P.target[ei]*(i+1)/N+pace)return false;
     return true;
   };
@@ -288,7 +302,7 @@ function runOnce(C,P,rnd,noise,pace){
     const pa=P.partner[ei];if(pa>=0){const k=weekendIdx(C,i,sh);if(k!=null){const pe=E[pa],pp=pe.weekendPattern||'all';
       let on;if(pp==='A'||pp==='B')on=(k%2===0?'A':'B')===pp;else on=grid[pa].some((c,j)=>c&&c.s&&weekendIdx(C,j,C.shift[c.s])===k);
       s+=on?-30:45;}}
-    if(isWk(i))s+=wk[ei]/P.pctf[ei]*7;
+    const wpE=E[ei].weekendPattern;if(isWk(i)&&!(wpE==='A'||wpE==='B'||P.partner[ei]>=0))s+=wk[ei]/P.pctf[ei]*7;
     if(sh.isNight){if(P.nightPref[ei])s-=20;else s+=nt[ei]/P.pctf[ei]*5;}
     const wp=E[ei].weekendPattern;if(wp==='A'||wp==='B'){const k=weekendIdx(C,i,sh);s+=k!=null?-60:45;}  // helgarnar hans ganga fyrir virkum dögum
     const p=i>0?row[i-1]:null;
@@ -430,7 +444,7 @@ function validate(state){
         if(run===C.maxConsec+1)out.push({level:'warn',type:'consec',emp:e.id,date:C.dates[runStart],msg:`${e.name}: fleiri en ${C.maxConsec} vinnudagar í röð frá ${dateLabel(C.dates[runStart])}`});
         for(let j=i+1;j<=Math.min(N-1,i+2);j++){const q=row[j];if(q&&q.s&&C.shift[q.s]){const gap=(j*1440+C.shift[q.s].m0)-(i*1440+sh.m1);
           if(gap<C.rest)out.push({level:'warn',type:'rest',emp:e.id,date:d,msg:`${e.name}: aðeins ${round2(gap/60)} klst. hvíld milli ${sh.code} (${dateLabel(d)}) og ${C.shift[q.s].code} (${dateLabel(C.dates[j])})`});break;}}
-        if(D[i].status!=='active')out.push({level:'warn',type:'status',emp:e.id,date:d,msg:`${e.name} er á vakt ${dateLabel(d)} en er skráð í ${STATUS_NAMES[D[i].status].toLowerCase()} þann dag`});
+        if(D[i].status!=='active')out.push({level:D[i].status==='hourly'?'info':'warn',type:'status',emp:e.id,date:d,msg:`${e.name} er á vakt ${dateLabel(d)} en er skráð í ${STATUS_NAMES[D[i].status].toLowerCase()} þann dag`});
         const rb=empRuleBlock(C,e,i,sh);if(rb)out.push({level:'warn',type:'rule',emp:e.id,date:d,msg:`${e.name}: ${sh.code} ${dateLabel(d)} (${rb})`});
         if(C.R.noAfterNight!==false&&sh.m1<=1440&&i>0&&row[i-1]&&row[i-1].s&&C.shift[row[i-1].s]&&C.shift[row[i-1].s].m1>1440)out.push({level:'warn',type:'afternight',emp:e.id,date:d,msg:`${e.name}: vakt ${dateLabel(d)} sama dag og næturvakt lýkur`});
         const bl=(S.blocks||{})[e.id+'|'+d];if(bl&&bl.includes(covId(C,c.s)))out.push({level:'warn',type:'block',emp:e.id,date:d,msg:`${e.name}: ${sh.code} ${dateLabel(d)} var tekin út („raða aftur án“) en er komin aftur inn`});
@@ -474,11 +488,13 @@ function parseRange(v){
 function importTable(state,rows,opts={}){
   const uid=p=>p+Math.random().toString(36).slice(2,9);
   rows=(rows||[]).map(r=>(r||[]).map(c=>c==null?'':String(c).trim()));
-  const rep={period:null,count:0,replaced:0,wishes:0,newEmps:[],newShifts:[],unknown:[],inactive:[],ignored:[]};const asWish=opts.mode==='wish';
+  const rep={matched:[],prev:0,period:null,count:0,replaced:0,wishes:0,newEmps:[],newShifts:[],unknown:[],inactive:[],ignored:[]};const asWish=opts.mode==='wish';
   // tímabil úr skjalinu, t.d. „16.11.2026 - 15.12.2026“
   for(const r of rows)for(const c of r){const m=c.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})\s*[-–]\s*(\d{1,2})\.(\d{1,2})\.(\d{4})/);
     if(m&&!rep.period&&+m[1]===16){rep.period={year:+m[3],month:+m[2]};}}
-  if(rep.period&&(rep.period.year!==state.period.year||rep.period.month!==state.period.month)&&opts.setPeriod!==false){
+  const asPrev=opts.mode==='prev';
+  if(asPrev)state.prevTail={};
+  if(rep.period&&!asPrev&&(rep.period.year!==state.period.year||rep.period.month!==state.period.month)&&opts.setPeriod!==false){
     const custom=(state.holidays||[]).filter(h=>h.custom);state.period=rep.period;const {start,end}=periodRange(rep.period.year,rep.period.month);
     const auto=holidaysForPeriod(rep.period),ad=new Set(auto.map(h=>h.date));
     state.holidays=[...auto,...custom.filter(h=>h.date>=start&&h.date<=end&&!ad.has(h.date))].sort((a,b)=>a.date<b.date?-1:1);rep.periodChanged=true;}
@@ -497,12 +513,19 @@ function importTable(state,rows,opts={}){
   for(const r of rows.slice(hi+1)){
     const name=r[nameCol];if(!name||!/[a-zA-Z\u00C0-\u00FF]/.test(name))continue;
     let e=byName[normName(name)];
+    if(!e){const t=normName(name).split(' '),C2=(state.employees||[]).filter(x=>{const u=normName(x.name).split(' ');return u[0]===t[0]&&(u.length<2||t.length<2||u[1]===t[1]);});
+      if(C2.length===1)e=C2[0];else{const C3=(state.employees||[]).filter(x=>normName(x.name).split(' ')[0]===t[0]);if(C3.length===1)e=C3[0];
+        else{const C4=(state.employees||[]).filter(x=>{const u=normName(x.name).split(' ')[0];return u.length>=3&&t[0].length>=3&&(u.startsWith(t[0])||t[0].startsWith(u));});if(C4.length===1)e=C4[0];}}
+      if(e)rep.matched.push(`${name} → ${e.name}`);}
     if(e&&e.status==='off'&&!(e.changes||[]).length){rep.ignored.push(name);continue;}
+    if(!e&&asPrev){rep.unknown.push(name+' (ekki á starfsmannalista)');continue;}
     const cells=Object.entries(cols).filter(([j])=>r[j]);
     if(!e){if(!cells.length&&opts.addEmpty===false)continue;
       e={id:uid('e'),name,title:'',pct:0,status:'active',prefs:[],changes:[],allowed:[],noDays:[],carry:0,fixedTarget:'',weekly:'',note:'Bætt við úr innlestri. Skráðu starfshlutfall.'};
       state.employees.push(e);byName[normName(name)]=e;rep.newEmps.push(name);}
     for(const [j,d] of cells){
+      if(asPrev){const t=parseRange(r[j]);if(t&&d<start&&d>=addDays(start,-7)){state.prevTail=state.prevTail||{};const L=state.prevTail[e.id]=state.prevTail[e.id]||[];
+          L.push({date:d,m0:t.m0,m1:t.m1});rep.prev++;}continue;}
       if(d<start||d>end)continue;
       const v=r[j],k=e.id+'|'+d;let C=buildCtx(state);const i=C.idx[d],f=C.infos[i],wk=f.weekend||!!f.hol;
       const t=parseRange(v);let val=null;
@@ -584,7 +607,10 @@ function wishConflicts(state){
       if(C.infos[i].dow>=5)wk.add(isoWeek(C.dates[i]));
     });
     if(e.maxWeekends!==''&&e.maxWeekends!=null&&wk.size>+e.maxWeekends)rule.push({emp:e.id,name:e.name,reason:`óskar eftir ${wk.size} helgum en hámark er ${e.maxWeekends}`,fix:'emp'});
-    if(hrs>tgt+C.maxOver+1e-6)rule.push({emp:e.id,name:e.name,reason:`óskir eru ${fmtNum(hrs)} klst. en vinnuskylda ${fmtNum(tgt)} (+${fmtNum(C.maxOver)} leyfilegt umfram)`,fix:'emp'});
+    const mo=e.maxOver===''||e.maxOver==null||isNaN(+e.maxOver)?C.maxOver:+e.maxOver;
+    if(hrs>tgt+mo+1e-6)rule.push({emp:e.id,name:e.name,reason:`óskir eru ${fmtNum(hrs)} klst. en vinnuskylda ${fmtNum(tgt)}${mo?` (+${fmtNum(mo)} leyfilegt umfram)`:''}`,fix:'emp'});
+    if(+e.maxWeekHours>0){const W={};row.forEach((x,i)=>{if(x){const k=isoWeek(C.dates[i]);W[k]=(W[k]||0)+x.s.hours;}});
+      Object.entries(W).filter(([k,h])=>h>+e.maxWeekHours+1e-6).forEach(([k,h])=>rule.push({emp:e.id,name:e.name,reason:`óskir í viku ${k} eru ${fmtNum(h)} klst. en hámark ${fmtNum(e.maxWeekHours)} klst. á viku`,fix:'emp'}));}
   });
   return {over,noslot,rule,keys,days,free,count:over.length+noslot.length+rule.length};
 }
@@ -602,16 +628,21 @@ function grantWish(state,key){
 /* Manna lausar vaktir án þess að hrófla við því sem er komið: allar núverandi vaktir haldast.
    1. umferð virðir hámark umfram vinnuskyldu; 2. umferð (relax) leyfir aukatíma ef enn vantar. */
 function fillPlan(state,opts={}){
-  const before=state.plan,mk=()=>{const T=JSON.parse(JSON.stringify(state));T.locks=T.locks||{};
+  // 1) innan vinnuskyldu  2) tímavinnufólk (ef leyft)  3) aukatími fastráðinna ef enn vantar
+  const before=state.plan,g=(T)=>generate(T,{runs:opts.runs??160,ms:opts.ms??1000,seed:opts.seed});
+  const mk=(plan)=>{const T=JSON.parse(JSON.stringify(state));if(plan)T.plan=plan;T.locks=T.locks||{};
     for(const [k,v] of Object.entries(T.plan))if(v.s)T.locks[k]=true;T.rules={...T.rules,fillUp:false};return T;};
-  const T1=mk(),r1=generate(T1,{runs:opts.runs??160,ms:opts.ms??1000,seed:opts.seed});
-  let plan=r1.plan,r=r1,extra=0;
-  if(r1.unfilled&&opts.relax!==false){const T2=mk();T2.plan=r1.plan;for(const [k,v] of Object.entries(T2.plan))if(v.s)T2.locks[k]=true;
-    T2.rules.maxOver=999;const r2=generate(T2,{runs:opts.runs??160,ms:opts.ms??1000,seed:opts.seed});
-    extra=Object.keys(r2.plan).filter(k=>r2.plan[k].s&&!(r1.plan[k]&&r1.plan[k].s)).length;plan=r2.plan;r=r2;}
+  let r=g(mk()),plan=r.plan,hourly=0,extra=0;
+  if(r.unfilled&&opts.useHourly){const T=mk(plan),ids=[];
+    T.employees.forEach(e=>{if(e.status==='off'||e.status==='leave')return;const D=periodDates(T.period).map(d=>empOn(e,d));
+      if(D.some(x=>x.status==='hourly')){ids.push(e.id);e.status='active';e.changes=[];e.pct=0;e.fixedTarget=0;e.maxOver=60;e.onlyWishes=false;}});
+    if(ids.length){const r3=g(T);hourly=Object.keys(r3.plan).filter(k=>r3.plan[k].s&&!(plan[k]&&plan[k].s)&&ids.includes(k.split('|')[0])).length;plan=r3.plan;r=r3;}}
+  if(r.unfilled&&opts.relax!==false){const T=mk(plan);T.rules.maxOver=999;
+    const r2=g(T);extra=Object.keys(r2.plan).filter(k=>r2.plan[k].s&&!(plan[k]&&plan[k].s)).length;plan=r2.plan;r=r2;}
   const added=Object.keys(plan).filter(k=>plan[k].s&&!(before[k]&&before[k].s===plan[k].s));
-  return {plan,added,overtime:extra,unfilled:r.unfilled,holes:r.holes};
+  return {plan,added,overtime:extra,hourly,unfilled:r.unfilled,holes:r.holes};
 }
+
 const API={WEEKEND_PATTERNS,PRIO_SCOPES,weekendIdx,weekendDates,empRuleBlock,fillPlan,wishConflicts,grantWish,PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
   MONTHS,DAYS,DAYS_PL,DAYS_SHORT,DAYS_1,CATS,CAT_NAMES,easter,icelandicHolidays,holidaysForPeriod,shiftTimes,buildCtx,targetHours,absenceCredit,
   shiftCats,needFor,generate,stats,validate};
