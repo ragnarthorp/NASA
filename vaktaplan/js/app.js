@@ -20,6 +20,8 @@ function normalize(s){
   s.absTypes=s.absTypes&&s.absTypes.length?s.absTypes:VPD.defaultAbsTypes();
   s.employees=(s.employees||[]).map(e=>newEmp(e));
   if(!Array.isArray(s.holidays))s.holidays=VP.holidaysForPeriod(s.period);
+  // eldri útgáfa af innbyggðu plani: rétt heiti og tenging við nýjustu útgáfu
+  for(const x of window.VP_SAMPLES||[])if(x.legacyName&&s.workplace&&s.workplace.name===x.legacyName){s.workplace.name=x.workplace||'';s.sampleId=s.sampleId||x.id;}
   for(const k of ['plan','locks','wishes','needOverride','blocks'])if(!s[k]||typeof s[k]!=='object')s[k]={};
   return s;
 }
@@ -32,6 +34,8 @@ function newEmp(e={}){
   changes:e.changes||[],allowed:e.allowed||[],noDays:e.noDays||[],carry:e.carry??0,fixedTarget:e.fixedTarget??'',weekly:e.weekly??'',note:e.note||''};}
 const SAMPLES=()=>[{id:'demo',name:'Almennt sýnidæmi',build:()=>({state:VPD.sampleState()})},...(window.VP_SAMPLES||[])];
 function sampleState(id){const x=SAMPLES().find(z=>z.id===id)||SAMPLES()[0];const r=x.build();return {state:normalize(r.state),report:r.report};}
+/* Er nýrri útgáfa af innbyggða planinu til en sú sem er í vafranum? */
+function newerSample(){const x=(window.VP_SAMPLES||[]).find(z=>z.id===S.sampleId);return x&&x.rev&&x.rev>(+S.sampleRev||0)?x:null;}
 function load(){try{const r=localStorage.getItem(KEY);return r?normalize(JSON.parse(r)):null;}catch(e){return null;}}
 let S=load()||sampleState((window.VP_SAMPLES||[])[0]?.id||'demo').state;
 let step=Math.min(+(()=>{try{return localStorage.getItem(STEP_KEY)}catch(e){return 0}})()||0,STEPS.length-1);
@@ -129,7 +133,10 @@ function render(){
   $('#periodBadge').textContent=VP.periodLabel(S.period)+(S.approved?' · ✓ staðfest':'');
   $('#wpName').textContent=S.workplace.name||'Vaktaplan';
   const v=$('#view');closePop();
-  v.innerHTML=VIEWS[STEPS[step].id]();
+  const nx=newerSample();
+  v.innerHTML=(nx?`<div class="alert newer"><b>Ný útgáfa af „${esc(nx.name)}“ er til.</b> Vafrinn sýnir eldri útgáfu sem var vistuð hér. <span class="toolbar" style="display:inline-flex;margin-left:8px"><button class="small primary" id="loadNewer">Hlaða nýjustu útgáfu</button><button class="small" id="keepOld">Halda minni útgáfu</button></span></div>`:'')+VIEWS[STEPS[step].id]();
+  if(nx){$('#loadNewer').onclick=()=>{pushUndo();S=sampleState(nx.id).state;lastGen=null;save();render();toast('Nýjasta útgáfa hlaðin');};
+    $('#keepOld').onclick=()=>{S.sampleRev=nx.rev;save();render();};}
   AFTER[STEPS[step].id]?.();
   updUndo();
 }

@@ -296,3 +296,4 @@ ol.flow li.done b{color:var(--good)}
 ol.flow li.cur{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 ol.flow small{color:var(--muted);font-size:12px}
 ol.flow button{align-self:flex-start;margin-top:4px}
+.alert.newer{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
