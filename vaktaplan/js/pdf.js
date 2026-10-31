@@ -45,11 +45,11 @@ function header(w,S,title,sub){
   w.line(M,M+13,W-M,M+13,INK,0.4);
   return M+17;
 }
-function legend(w,S,C,y,{abs=true,hol=true}={}){
+function legend(w,S,C,y,{abs=true,hol=true,shifts=null}={}){
   const {M,W}=w;let x=M;const h=4.4;
   const chip=(code,label,fill,tc)=>{w.font('bold',7);const cw=Math.max(5,w.doc.getTextWidth(code)+2.4);w.font('normal',7);const lw=w.doc.getTextWidth(label)+3;
     if(x+cw+lw>W-M){x=M;y+=h+1.5;}w.rect(x,y,cw,h,fill,LINE);w.cellText(code,x,y,cw,h,{style:'bold',color:tc});w.font('normal',7,INK);w.text(label,x+cw+1,y+h*0.72);x+=cw+lw+2;};
-  C.shifts.forEach(s=>chip(s.code,`${s.name} ${s.start}–${s.end} (${fmt(s.hours,2)} klst.)`,s.color,dark(s.color)?'#ffffff':INK));
+  (shifts||C.shifts).forEach(s=>chip(s.code,`${s.name} ${s.start}–${s.end} (${fmt(s.hours,2)} klst.)`,s.color,dark(s.color)?'#ffffff':INK));
   if(abs)S.absTypes.forEach(a=>chip(a.code,a.name,a.color,dark(a.color)?'#ffffff':INK));
   if(hol){chip('*','Stórhátíðardagur',MAJ,MAJT);chip(' ','Rauður dagur',RED,REDT);chip(' ','Helgi',WK,INK);}
   return y+h+3;
@@ -63,9 +63,11 @@ async function full(S,opts={}){
   const st=VP.stats(S),C=st.C,n=C.n,E=C.emps;
   const big=E.length>32||n>31&&E.length>24;
   const w=await writer(big?'a3':'a4','landscape'),{doc,W,H,M}=w;
-  const nameW=40,sumW=[10,12,12,12],sumT=sumW.reduce((a,b)=>a+b,0),dayW=(W-2*M-nameW-sumT)/n,rowH=E.length>24?4.6:5.4,headH=8.5;
+  const nameW=40,sumW=[10,12,12,12],sumT=sumW.reduce((a,b)=>a+b,0),dayW=(W-2*M-nameW-sumT)/n,headH=8.5;let rowH=5.4;
   const title='Vaktaplan',sub=VP.periodLabel(S.period);
-  let y=header(w,S,title,sub);y=legend(w,S,C,y);
+  const usedMain=st.usedShifts.filter(s=>!s.countsAs);
+  let y=header(w,S,title,sub);y=legend(w,S,C,y,{shifts:st.usedShifts});
+  rowH=Math.max(3.8,Math.min(5.4,(H-12-y-headH-1-usedMain.length*4.2-8)/Math.max(1,E.length)));  // allt planið á eina síðu ef hægt er
   const drawHead=y=>{
     w.rect(M,y,nameW,headH,'#ffffff',LINE);w.cellText('Starfsmaður',M,y,nameW,headH,{align:'left',style:'bold',size:7.5});
     C.dates.forEach((d,i)=>{const f=C.infos[i],x=M+nameW+i*dayW,fill=dayFill(f)||'#ffffff',tc=f.hol?(f.hol.kind==='major'?MAJT:REDT):INK;
@@ -77,7 +79,7 @@ async function full(S,opts={}){
   y=drawHead(y);
   const covH=4.2,bottom=H-12;
   E.forEach((e,ri)=>{
-    if(y+rowH>bottom-(ri===E.length-1?C.shifts.length*covH:0)){doc.addPage();y=header(w,S,title,sub+' · framhald');y=drawHead(y);}
+    if(y+rowH>bottom-(ri===E.length-1?usedMain.length*covH:0)){doc.addPage();y=header(w,S,title,sub+' · framhald');y=drawHead(y);}
     const o=st.emp.find(x=>x.id===e.id);
     w.rect(M,y,nameW,rowH,ri%2?'#fafbfb':'#ffffff',LINE);
     w.font('bold',7,INK);w.text(w.fit(e.name,nameW-11),M+0.9,y+rowH*0.66);w.font('normal',6,MUTED);w.text(fmt(o.pctMax)+'%',M+nameW-0.8,y+rowH*0.66,{align:'right'});
@@ -92,7 +94,7 @@ async function full(S,opts={}){
   });
   // mönnun
   y+=1;
-  C.shifts.filter(s=>!s.countsAs).forEach(s=>{
+  usedMain.forEach(s=>{
     if(y+covH>bottom){doc.addPage();y=header(w,S,title,sub+' · framhald');y=drawHead(y);}
     w.rect(M,y,nameW,covH,light(s.color,0.6),LINE);w.cellText(`Mönnun ${s.code} (mannað/þörf)`,M,y,nameW,covH,{align:'left',size:5.8});
     st.days.forEach((r,i)=>{const x=M+nameW+i*dayW,c=r.shifts[s.id];w.rect(x,y,dayW,covH,c.have<c.need?'#fbe1de':'#ffffff',LINE);

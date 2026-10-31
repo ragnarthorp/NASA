@@ -520,6 +520,20 @@ function pickBar(){
 function togglePick(key){if(!(S.plan[key]&&S.plan[key].s)){toast('Aðeins er hægt að velja reiti með vakt');return;}
   if(isWishKept(key)){toast('Þetta er óskuð vakt og hún er föst. Notaðu „Hafna ósk“ ef breyta þarf.');return;}
   picked.has(key)?picked.delete(key):picked.add(key);const el=document.querySelector(`[data-cell="${key}"]`);if(el)el.classList.toggle('picked',picked.has(key));pickBar();}
+/* Vinnuferli tímabilsins: hvað er búið og hvað er næst */
+function flowPanel(st){
+  const C=st.C,nW=Object.entries(S.wishes).filter(([k,w])=>w.s&&C.idx[k.split('|')[1]]!=null).length;
+  const assigned=st.emp.reduce((a,o)=>a+o.shifts,0),missing=st.days.reduce((a,r)=>a+Object.values(r.shifts).reduce((b,x)=>b+Math.max(0,x.need-x.have),0),0);
+  const unres=wconf?wconf.over.length+wconf.noslot.length+wconf.rule.length:0;
+  const steps=[
+    ['Lesa inn vaktaóskir',nW?`${nW} óskir`:'engar óskir enn',nW>0,'importBtn'],
+    ['Fara yfir árekstra',nW?(unres?(assigned?`${unres} óskir fengust ekki, sjá spjaldið`:`${unres} óleystir (röðunin leysir þá ef þú gerir það ekki)`):'engir árekstrar'):'–',nW>0&&(!unres||assigned>0),null],
+    ['Búa til vaktaplan',assigned?`${assigned} vaktir í plani`:'ekki búið',assigned>0,'genBtn'],
+    ['Manna allar vaktir',missing?`${missing} ómannaðar`:assigned?'allar mannaðar':'–',assigned>0&&!missing,'fillBtn'],
+    ['Lagfæra og gefa út','smelltu á vakt til að breyta · Útgáfa: PDF/JSON',false,null]];
+  const cur=steps.findIndex(x=>!x[2]);
+  return `<section class="panel flow"><ol class="flow">${steps.map((x,j)=>`<li class="${x[2]?'done':j===cur?'cur':''}"><b>${x[2]?'✓ ':''}${esc(x[0])}</b><small>${esc(x[1])}</small>${j===cur&&x[3]?`<button class="small primary" data-flow="${x[3]}">Gera</button>`:''}</li>`).join('')}</ol></section>`;
+}
 function conflictsPanel(C){
   const c=wconf,sh=id=>C.shift[id],lbl=id=>{const x=sh(id);return x?`${x.code} (${x.start}–${x.end})`:'?';};
   if(!c)return '';
@@ -606,6 +620,7 @@ VIEWS.plan=()=>{
     ${st.days.map((r,i)=>{const x=r.shifts[s.id],ov=S.needOverride[r.date+'|'+s.id]!=null,oc=wconf.over.find(o=>o.date===r.date&&o.main===s.id);if(oc)return `<td><button class="covc conflict" data-cday="${r.date}" title="${esc(`${oc.pending} óska en ${oc.avail} laus pláss · smelltu til að breyta vöktum dagsins`)}">⚠ ${x.have}/${x.need}</button></td>`;return `<td class="${C.infos[i].weekend?'wkend':''} ${C.infos[i].hol?C.infos[i].hol.kind:''}"><button class="covc ${x.have<x.need?'under':x.have>x.need?'over':x.need?'ok':''} ${ov?'ovr':''}" data-need="${r.date}|${s.id}" title="${esc(s.name+' '+VP.dateLabel(r.date)+': '+x.have+' af '+x.need+(x.names.length?' · '+x.names.join(', '):'')+'. Smelltu til að breyta þörf.')}">${x.need||x.have?x.have+'/'+x.need:'·'}</button></td>`;}).join('')}<td colspan="4"></td></tr>`).join('');
   const shown=warn.filter(w=>w.type!=='over'&&(warnFilter==='all'||w.level===warnFilter));
   return intro('Vaktaplan',`Smelltu á <b>Búa til vaktaplan</b> til að raða sjálfvirkt. Smelltu á reit til að breyta handvirkt, eða veldu reit og sláðu inn kóða vaktar (Delete tæmir, örvatakkar færa). Læstar vaktir (<i class="lk inline"></i>) haldast þegar raðað er aftur. Með <b>Lesa inn vaktaóskir</b> eru óskir starfsfólks lesnar úr CSV- eða Excel-skjali (ein lína á starfsmann, einn dálkur á dag, tímar eins og „08:00-16:00“). Óskir birtast sem „8-16?“. Röðunin úthlutar þeim fyrst og sanngjarnt, og raðar svo á það sem eftir er. <b>Smelltu á dag</b> í hausnum til að breyta vöktum þess dags. <b>Manna allar lausar vaktir</b> fyllir í það sem vantar án þess að breyta öðru. Til að losa óheppilega vakt: smelltu á hana og veldu <b>Raða aftur án þessarar vaktar</b>. Shift- eða Ctrl-smelltu til að velja nokkrar í einu. <b>Uppfylltar óskir eru fastar</b> og eru aldrei færðar við uppstokkun.`)+`
+ ${flowPanel(st)}
  <section class="panel planbar">
   <div class="toolbar">
    <button class="primary" id="genBtn">⚙ Búa til vaktaplan</button>
@@ -649,6 +664,7 @@ AFTER.plan=()=>{
   $('#unlockAll').onclick=()=>{pushUndo();S.locks={};save();render();};
   $('#undoBtn').onclick=doUndo;
   $('#importBtn').onclick=()=>$('#importInput').click();
+  $$('[data-flow]').forEach(b=>b.onclick=()=>{const t=$('#'+b.dataset.flow);if(t)t.click();});
   $('#clearWishes').onclick=async()=>{if(!await ask('Fjarlægja allar óskir um vaktir á þessu tímabili? Óskir um frí haldast.'))return;pushUndo();
     const C=VP.buildCtx(S);for(const [k,w] of Object.entries(S.wishes))if(w.s&&C.idx[k.split('|')[1]]!=null)delete S.wishes[k];save();render();};
   $$('.dhb').forEach(b=>b.onclick=()=>dayEditor(b.dataset.day));
@@ -775,7 +791,7 @@ VIEWS.utgafa=()=>{
    <div class="toolbar"><button class="primary" data-act="save">Sækja JSON</button><button data-act="open">Opna JSON</button></div>
    <details><summary>JSON fyrir vikuplan eða einstakling</summary>
     <div class="toolbar" style="margin-top:8px"><button data-json="week">Vika (valin að ofan)</button><button data-json="person">Starfsmaður (valinn að ofan)</button></div></details></div>
-  <div class="card"><h3>Næsta tímabil</h3><p>Stofnar nýtt tímabil með sömu vöktum, starfsfólki og reglum. Staða hvers starfsmanns flyst yfir sem „flutt staða“. Sæktu JSON af núverandi tímabili fyrst.</p>
+  <div class="card"><h3>Næsta tímabil</h3><p>Stofnar nýtt tímabil með sömu vöktum, starfsfólki, forsendum og reglum. Staða hvers starfsmanns flyst yfir sem „flutt staða“. Síðan eru óskir fyrir nýja mánuðinn lesnar inn og planið búið til á sama hátt.</p>
    <button id="nextPeriod">Stofna næsta tímabil</button></div>
  </div>`+navBtns();
 };
@@ -804,9 +820,11 @@ AFTER.utgafa=()=>{
       download(fileSlug()+(v==='all'?'-starfsmenn':'-'+(empById(v).name||'starfsmadur').toLowerCase().replace(/ð/g,'d').replace(/þ/g,'th').replace(/æ/g,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-'))+'.json',JSON.stringify(data,null,2),'application/json');}
   });
   $('#nextPeriod').onclick=async()=>{
-    if(!await ask('Stofna næsta tímabil? Planið fyrir núverandi tímabil helst í skránni en staða starfsfólks flyst yfir sem „flutt staða“.'))return;
+    const ch=await choose(`Stofna næsta tímabil eftir ${VP.periodLabel(S.period)}? Starfsfólk, forsendur, vaktaskipulag og reglur fylgja með og staða hvers starfsmanns flyst yfir sem „flutt staða“. Síðan lestu inn óskir fyrir nýja tímabilið.`,
+      [['save','Sækja JSON af þessu plani og stofna næsta'],['go','Stofna næsta án þess að sækja']]);
+    if(!ch)return;if(ch==='save')saveJson();
     pushUndo();const st=VP.stats(S);S.employees.forEach(e=>{const o=st.emp.find(x=>x.id===e.id);if(o)e.carry=VP.round2(o.balance);});
-    let {year:y,month:m}=S.period;m++;if(m>12){m=1;y++;}S.locks={};lastGen=null;setPeriod({year:y,month:m});step=5;render();toast('Nýtt tímabil: '+VP.periodLabel(S.period));};
+    let {year:y,month:m}=S.period;m++;if(m>12){m=1;y++;}S.locks={};lastGen=null;picked.clear();setPeriod({year:y,month:m});step=5;try{localStorage.setItem(STEP_KEY,step);}catch(e){}render();toast('Nýtt tímabil: '+VP.periodLabel(S.period)+'. Næst: Lesa inn vaktaóskir');};
 };
 
 /* ---------- Almennt ---------- */

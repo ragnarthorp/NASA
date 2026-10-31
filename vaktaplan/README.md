@@ -43,6 +43,18 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
 7. **Útreikningar:** vinnuskylda, unnar stundir, fjarvistir, mismunur og staða fyrir hvern starfsmann, skipting í dagvinnu, kvöld, nætur, helgar, rauða daga og stórhátíðir, álagsstundir og fjöldi vakta eftir tegund.
 8. **Útgáfa:** PDF fyrir allt planið, vikuplan (eina viku eða allar) og einstaklingsplan (einn eða alla), JSON fyrir öll gögnin eða valda viku eða starfsmann, og nýtt tímabil sem tekur stöðu starfsfólks með sér.
 
+## Vinnuferli hvers mánaðar
+
+Efst í skrefi 6 sést hvað er búið og hvað er næst:
+
+1. **Lesa inn vaktaóskir** (CSV/Excel).
+2. **Fara yfir árekstra:** veita, hafna, færa eða bæta við plássi.
+3. **Búa til vaktaplan:** fastar vaktir, síðan óskir, síðan það sem eftir er, allt eftir forsendum á starfsmannablöðum.
+4. **Manna allar lausar vaktir.**
+5. **Lagfæra og gefa út:** „Raða aftur án“ á óheppilegar vaktir, síðan PDF og JSON.
+
+**Stofna næsta tímabil** (Útgáfa) tekur starfsfólk, forsendur, vaktaskipulag, reglur og stöðu hvers starfsmanns með sér yfir á næsta mánuð.
+
 ## Útreikningar
 
 - **Vinnuskylda** = (virkir dagar mán–fös − frídagar á virkum degi) × (vikustundir ÷ 5) × starfshlutfall. Dagur sem gildir frá hádegi telst hálfur. Hægt er að slökkva á lækkun vegna frídaga.

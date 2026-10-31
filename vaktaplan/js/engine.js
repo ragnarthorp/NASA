@@ -244,7 +244,8 @@ function prepare(C){
   const partner=E.map(e=>e.weekendWith?E.findIndex(x=>x.id===e.weekendWith):-1);
   const scope=E.map(e=>e.priorityScope||'all');
   const nightPref=E.map(e=>prefLevel(e,'night')===2);
-  return {nightPref,onlyW,partner,scope,blocked,wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
+  const hasHelst=E.map(e=>PREF_CATS.some(([c])=>prefLevel(e,c)===2));
+  return {hasHelst,nightPref,onlyW,partner,scope,blocked,wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
 }
 function runOnce(C,P,rnd,noise,pace){
   const S=C.state,E=C.emps,N=C.n,SH=C.shifts,shIdx={};SH.forEach((s,j)=>shIdx[s.id]=j);
@@ -283,13 +284,13 @@ function runOnce(C,P,rnd,noise,pace){
     const after=hours[ei]+sh.hours;if(after>P.target[ei])s+=(after-P.target[ei])*12;
     const w=P.wishes[ei][i];
     if(w){if(w.off)s+=400;else if(w.s===sh.id)s-=250;else if(w.s)s+=60;}
-    const lv=P.lvl[ei][shIdx[sh.id]];if(lv===2)s-=40;
+    const lv=P.lvl[ei][shIdx[sh.id]];if(lv===2)s-=40;else if(P.hasHelst[ei])s+=25;  // þeir sem hafa „Helst“ fara síður á aðrar vaktir
     const pa=P.partner[ei];if(pa>=0){const k=weekendIdx(C,i,sh);if(k!=null){const pe=E[pa],pp=pe.weekendPattern||'all';
       let on;if(pp==='A'||pp==='B')on=(k%2===0?'A':'B')===pp;else on=grid[pa].some((c,j)=>c&&c.s&&weekendIdx(C,j,C.shift[c.s])===k);
       s+=on?-30:45;}}
     if(isWk(i))s+=wk[ei]/P.pctf[ei]*7;
     if(sh.isNight){if(P.nightPref[ei])s-=20;else s+=nt[ei]/P.pctf[ei]*5;}
-    const wp=E[ei].weekendPattern;if(wp==='A'||wp==='B'){const k=weekendIdx(C,i,sh);if(k!=null)s-=60;}
+    const wp=E[ei].weekendPattern;if(wp==='A'||wp==='B'){const k=weekendIdx(C,i,sh);s+=k!=null?-60:45;}  // helgarnar hans ganga fyrir virkum dögum
     const p=i>0?row[i-1]:null;
     if(p&&p.s===sh.id)s-=6;                     // samfella í sömu vakt
     else if(p&&p.s&&C.shift[p.s].isNight&&!sh.isNight)s+=10;
@@ -603,10 +604,10 @@ function grantWish(state,key){
 function fillPlan(state,opts={}){
   const before=state.plan,mk=()=>{const T=JSON.parse(JSON.stringify(state));T.locks=T.locks||{};
     for(const [k,v] of Object.entries(T.plan))if(v.s)T.locks[k]=true;T.rules={...T.rules,fillUp:false};return T;};
-  const T1=mk(),r1=generate(T1,{runs:opts.runs??160,ms:opts.ms??1000});
+  const T1=mk(),r1=generate(T1,{runs:opts.runs??160,ms:opts.ms??1000,seed:opts.seed});
   let plan=r1.plan,r=r1,extra=0;
   if(r1.unfilled&&opts.relax!==false){const T2=mk();T2.plan=r1.plan;for(const [k,v] of Object.entries(T2.plan))if(v.s)T2.locks[k]=true;
-    T2.rules.maxOver=999;const r2=generate(T2,{runs:opts.runs??160,ms:opts.ms??1000});
+    T2.rules.maxOver=999;const r2=generate(T2,{runs:opts.runs??160,ms:opts.ms??1000,seed:opts.seed});
     extra=Object.keys(r2.plan).filter(k=>r2.plan[k].s&&!(r1.plan[k]&&r1.plan[k].s)).length;plan=r2.plan;r=r2;}
   const added=Object.keys(plan).filter(k=>plan[k].s&&!(before[k]&&before[k].s===plan[k].s));
   return {plan,added,overtime:extra,unfilled:r.unfilled,holes:r.holes};
