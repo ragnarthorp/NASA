@@ -60,7 +60,7 @@ const slug=S=>(S.workplace.name||'vaktaplan').toLowerCase().replace(/ð/g,'d').r
 
 /* ---------- Allt planið ---------- */
 async function full(S,opts={}){
-  const st=VP.stats(S),C=st.C,n=C.n,E=S.employees;
+  const st=VP.stats(S),C=st.C,n=C.n,E=C.emps;
   const big=E.length>32||n>31&&E.length>24;
   const w=await writer(big?'a3':'a4','landscape'),{doc,W,H,M}=w;
   const nameW=40,sumW=[10,12,12,12],sumT=sumW.reduce((a,b)=>a+b,0),dayW=(W-2*M-nameW-sumT)/n,rowH=E.length>24?4.6:5.4,headH=8.5;
@@ -71,7 +71,7 @@ async function full(S,opts={}){
     C.dates.forEach((d,i)=>{const f=C.infos[i],x=M+nameW+i*dayW,fill=dayFill(f)||'#ffffff',tc=f.hol?(f.hol.kind==='major'?MAJT:REDT):INK;
       w.rect(x,y,dayW,headH,fill,LINE);w.font('normal',5.6,tc);w.text(VP.DAYS_1[f.dow],x+dayW/2,y+3,{align:'center'});
       w.font('bold',6.6,tc);w.text(String(VP.parse(d).getUTCDate())+(f.hol&&f.hol.kind==='major'?'*':''),x+dayW/2,y+6.8,{align:'center'});});
-    let x=M+nameW+n*dayW;['Vaktir','Klst.','Skylda','Mism.'].forEach((t,j)=>{w.rect(x,y,sumW[j],headH,'#ffffff',LINE);w.cellText(t,x,y,sumW[j],headH,{style:'bold',size:6.5});x+=sumW[j];});
+    let x=M+nameW+n*dayW;['Vaktir','Klst.','Skylda','Útist.'].forEach((t,j)=>{w.rect(x,y,sumW[j],headH,'#ffffff',LINE);w.cellText(t,x,y,sumW[j],headH,{style:'bold',size:6.5});x+=sumW[j];});
     return y+headH;
   };
   y=drawHead(y);
@@ -80,19 +80,19 @@ async function full(S,opts={}){
     if(y+rowH>bottom-(ri===E.length-1?C.shifts.length*covH:0)){doc.addPage();y=header(w,S,title,sub+' · framhald');y=drawHead(y);}
     const o=st.emp.find(x=>x.id===e.id);
     w.rect(M,y,nameW,rowH,ri%2?'#fafbfb':'#ffffff',LINE);
-    w.font('bold',7,INK);w.text(w.fit(e.name,nameW-11),M+0.9,y+rowH*0.66);w.font('normal',6,MUTED);w.text(fmt(e.pct)+'%',M+nameW-0.8,y+rowH*0.66,{align:'right'});
+    w.font('bold',7,INK);w.text(w.fit(e.name,nameW-11),M+0.9,y+rowH*0.66);w.font('normal',6,MUTED);w.text(fmt(o.pctMax)+'%',M+nameW-0.8,y+rowH*0.66,{align:'right'});
     C.dates.forEach((d,i)=>{const x=M+nameW+i*dayW,v=S.plan[e.id+'|'+d],f=C.infos[i];
-      if(v&&v.s&&C.shift[v.s]){const s=C.shift[v.s];w.rect(x,y,dayW,rowH,s.color,LINE);w.cellText(s.code,x,y,dayW,rowH,{style:'bold',size:6.6,color:dark(s.color)?'#ffffff':INK});}
+      if(v&&v.s&&C.shift[v.s]){const s=C.shift[v.s];w.rect(x,y,dayW,rowH,s.color,LINE);w.cellText(s.code,x,y,dayW,rowH,{style:'bold',size:s.code.length>3?4.6:s.code.length>2?5.6:6.6,color:dark(s.color)?'#ffffff':INK});}
       else if(v&&v.a&&C.abs[v.a]){const a=C.abs[v.a];w.rect(x,y,dayW,rowH,a.color,LINE);w.cellText(a.code,x,y,dayW,rowH,{size:6,color:dark(a.color)?'#ffffff':INK});}
       else{const fl=dayFill(f);w.rect(x,y,dayW,rowH,fl?light(fl,0.35):'#ffffff',LINE);}
     });
-    let x=M+nameW+n*dayW;const vals=[String(o.shifts),fmt(o.total),fmt(o.target),fmtS(o.diff)];
-    vals.forEach((t,j)=>{w.rect(x,y,sumW[j],rowH,'#ffffff',LINE);w.cellText(t,x,y,sumW[j],rowH,{size:6.6,align:'right',style:j===3?'bold':'normal',color:j===3&&Math.abs(o.diff)>(+S.rules.hourTolerance||0)?REDT:INK});x+=sumW[j];});
+    let x=M+nameW+n*dayW;const vals=[String(o.shifts),fmt(o.total),fmt(o.target),fmt(o.outstanding)];
+    vals.forEach((t,j)=>{w.rect(x,y,sumW[j],rowH,'#ffffff',LINE);w.cellText(t,x,y,sumW[j],rowH,{size:6.6,align:'right',style:j===3?'bold':'normal',color:j===3&&o.outstanding<-(+S.rules.hourTolerance||0)?REDT:INK});x+=sumW[j];});
     y+=rowH;
   });
   // mönnun
   y+=1;
-  C.shifts.forEach(s=>{
+  C.shifts.filter(s=>!s.countsAs).forEach(s=>{
     if(y+covH>bottom){doc.addPage();y=header(w,S,title,sub+' · framhald');y=drawHead(y);}
     w.rect(M,y,nameW,covH,light(s.color,0.6),LINE);w.cellText(`Mönnun ${s.code} (mannað/þörf)`,M,y,nameW,covH,{align:'left',size:5.8});
     st.days.forEach((r,i)=>{const x=M+nameW+i*dayW,c=r.shifts[s.id];w.rect(x,y,dayW,covH,c.have<c.need?'#fbe1de':'#ffffff',LINE);
@@ -112,7 +112,7 @@ function statsPages(w,S,st,title,sub){
   const {doc,W,H,M}=w,R=S.rules,C=st.C;doc.addPage();let y=header(w,S,'Útreikningar',sub);
   w.font('normal',8,MUTED);
   w.text(`Vinnuskylda: ${C.workdays} virkir dagar${C.holReduction?' − '+fmt(C.holReduction)+' frídagar á virkum degi':''} = ${fmt(C.effWorkdays)} dagar × ${fmt(C.daily,2)} klst. í 100% starfi = ${fmt(C.effWorkdays*C.daily)} klst. Dagvinna ${R.dayStart}–${R.dayEnd}, kvöld til ${R.eveningEnd}.`,M,y);y+=5;
-  const cols=[['Starfsmaður',44,'l'],['Hlutf.',12],['Skylda',15],['Vaktir',12],['Á vöktum',16],['Fjarv.',14],['Samtals',16],['Mism.',14],['Flutt',13],['Staða',14],
+  const cols=[['Starfsmaður',44,'l'],['Hlutf.',12],['Skylda',15],['Vaktir',12],['Á vöktum',16],['Fjarv.',14],['Samtals',16],['Útist.',14],['Flutt',13],['Staða',14],
     ...VP.CATS.map(c=>[VP.CAT_NAMES[c]+(c!=='day'?` ${fmt(R.rates[c],2)}%`:''),c==='day'?15:17]),['Álagsst.',15]];
   const tw=cols.reduce((a,c)=>a+c[1],0),sc=(W-2*M)/tw;cols.forEach(c=>c[1]*=sc);
   const rh=5.4,drawH=()=>{let x=M;cols.forEach(([t,cw,al])=>{w.rect(x,y,cw,8,'#e9efee',LINE);w.font('bold',6.3,INK);
@@ -120,12 +120,12 @@ function statsPages(w,S,st,title,sub){
   drawH();
   const row=(vals,bold,fill)=>{if(y+rh>H-14){doc.addPage();y=header(w,S,'Útreikningar',sub+' · framhald');drawH();}
     let x=M;vals.forEach((v,j)=>{const [,cw,al]=cols[j];w.rect(x,y,cw,rh,fill||'#ffffff',LINE);w.cellText(v,x,y,cw,rh,{align:al==='l'?'left':'right',size:7,style:bold||j===9?'bold':'normal'});x+=cw;});y+=rh;};
-  st.emp.forEach(o=>row([o.name,fmt(o.pct)+'%',fmt(o.target),String(o.shifts),fmt(o.worked),fmt(o.credit),fmt(o.total),fmtS(o.diff),fmtS(o.carry),fmtS(o.balance),
+  st.emp.forEach(o=>row([o.name,fmt(o.pctMax)+'%',fmt(o.target),String(o.shifts),fmt(o.worked),fmt(o.credit),fmt(o.total),fmt(o.outstanding),fmtS(o.carry),fmtS(o.balance),
     ...VP.CATS.map(c=>o.cats[c]?fmt(o.cats[c],2):'–'),fmt(o.premium,2)]));
-  const t=st.tot;row(['Samtals','',fmt(t.target),String(st.emp.reduce((a,o)=>a+o.shifts,0)),fmt(t.worked),fmt(t.credit),fmt(t.worked+t.credit),fmtS(t.worked+t.credit-t.target),'','',
+  const t=st.tot;row(['Samtals','',fmt(t.target),String(st.emp.reduce((a,o)=>a+o.shifts,0)),fmt(t.worked),fmt(t.credit),fmt(t.worked+t.credit),fmt(t.target-t.worked-t.credit),'','',
     ...VP.CATS.map(c=>fmt(t.cats[c],2)),fmt(st.emp.reduce((a,o)=>a+o.premium,0),2)],true,'#f3f6f5');
   y+=5;w.font('normal',7.5,MUTED);
-  ['Samtals = stundir á vöktum + fjarvistir sem teljast til vinnuskyldu. Mismunur = samtals − vinnuskylda. Staða = mismunur + flutt staða frá fyrra tímabili.',
+  ['Samtals = stundir á vöktum + fjarvistir sem teljast til vinnuskyldu. Útistandandi = vinnuskylda − samtals. Staða = samtals − vinnuskylda + flutt staða frá fyrra tímabili.',
    'Álagsstundir = Σ (stundir í flokki × álagsprósenta). Stundir á rauðum dögum og stórhátíðardögum eru í eigin flokkum og ekki taldar með helgum.',
    `Mönnun: ${fmt(t.have)} af ${fmt(t.need)} vöktum mannaðar samkvæmt lágmarksþörf.`].forEach(l=>{w.text(l,M,y,{maxWidth:W-2*M});y+=4.2;});
 }
@@ -147,7 +147,7 @@ async function week(S,weeks){
     // 1) hverjir á hvaða vakt
     y=dayHead(y,'Vakt');
     C.shifts.forEach(s=>{
-      const names=days.map(d=>inP(d)?S.employees.filter(e=>(S.plan[e.id+'|'+d]||{}).s===s.id).map(e=>e.name):[]);
+      const names=days.map(d=>inP(d)?C.emps.map(e=>{const v=S.plan[e.id+'|'+d];if(!v||!v.s||!C.shift[v.s]||VP.covId(C,v.s)!==s.id)return null;return v.s===s.id?e.name:`${e.name} ${C.shift[v.s].start.slice(0,2)}–${C.shift[v.s].end.slice(0,2)}`;}).filter(Boolean):[]);
       const need=days.map(d=>inP(d)?VP.needFor(C,C.idx[d],s):0);
       const lines=Math.max(1,...names.map(x=>x.length+(1)));const rh=Math.max(9,3+lines*3.4);
       if(y+rh>H-14){doc.addPage();y=header(w,S,title,sub+' · framhald');y=dayHead(y,'Vakt');}
@@ -166,7 +166,7 @@ async function week(S,weeks){
       days.forEach((d,j)=>{const x=M+lw+j*dw2;w.rect(x,y,dw2,6,'#e9efee',LINE);w.cellText(VP.DAYS_SHORT[j]+' '+VP.shortDate(d),x,y,dw2,6,{style:'bold',size:7,color:inP(d)?INK:MUTED});});
       w.rect(M+lw+7*dw2,y,sw,6,'#e9efee',LINE);w.cellText('Klst.',M+lw+7*dw2,y,sw,6,{style:'bold',size:7});y+=6;};
     head2();
-    S.employees.forEach(e=>{
+    C.emps.forEach(e=>{
       let hrs=0;const cells=days.map(d=>{if(!inP(d))return null;const v=S.plan[e.id+'|'+d];if(v&&v.s&&C.shift[v.s]){const s=C.shift[v.s];hrs+=s.hours;return {t:`${s.code}  ${s.start}–${s.end}`,c:s.color};}
         if(v&&v.a&&C.abs[v.a])return {t:C.abs[v.a].name,c:C.abs[v.a].color};return {t:'',c:null};});
       if(cells.every(c=>!c||!c.t))return;
@@ -188,7 +188,7 @@ async function person(S,ids){
     if(pi)doc.addPage();
     const e=S.employees.find(x=>x.id===id),o=st.emp.find(x=>x.id===id);if(!e)return;
     let y=header(w,S,e.name||'Starfsmaður',VP.periodLabel(S.period));
-    w.font('normal',9,INK);w.text([e.title,fmt(e.pct)+'% starf'].filter(Boolean).join(' · '),M,y);y+=5;
+    w.font('normal',9,INK);w.text([e.title,fmt(o.pctMax)+'% starf'+(o.status==='mixed'?' (breyting á tímabilinu)':'')].filter(Boolean).join(' · '),M,y);y+=5;
     const cols=[['Dagsetning',30,'l'],['Dagur',24,'l'],['Vakt',40,'l'],['Tími',26,'l'],['Klst.',14,'r'],['Athugasemd',56,'l']];
     const tw=cols.reduce((a,c)=>a+c[1],0),sc=(W-2*M)/tw;cols.forEach(c=>c[1]*=sc);
     const rh=Math.min(5.6,(H-y-78)/(C.n+1));
@@ -207,7 +207,7 @@ async function person(S,ids){
     // samantekt
     y+=5;w.font('bold',10,INK);w.text('Stundauppgjör',M,y);y+=2;
     const box=[['Vinnuskylda',fmt(o.target)+' klst.'],['Á vöktum',fmt(o.worked)+' klst. ('+o.shifts+' vaktir)'],['Fjarvistir (reiknaðar)',fmt(o.credit)+' klst.'],
-      ['Samtals',fmt(o.total)+' klst.'],['Mismunur',fmtS(o.diff)+' klst.'],['Flutt staða',fmtS(o.carry)+' klst.'],['Staða í lok tímabils',fmtS(o.balance)+' klst.']];
+      ['Samtals',fmt(o.total)+' klst.'],['Útistandandi',fmt(o.outstanding)+' klst.'],['Flutt staða',fmtS(o.carry)+' klst.'],['Staða í lok tímabils',fmtS(o.balance)+' klst.']];
     const bw=(W-2*M)/2-3;
     box.forEach(([k,v],j)=>{const yy=y+2+j*5;w.rect(M,yy,bw,5,j===6?'#e9efee':'#ffffff',LINE);w.cellText(k,M,yy,bw*0.55,5,{align:'left',size:7.8,style:j===6?'bold':'normal'});
       w.cellText(v,M+bw*0.55,yy,bw*0.45,5,{align:'right',size:7.8,style:'bold'});});

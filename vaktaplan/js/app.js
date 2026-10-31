@@ -16,16 +16,19 @@ function normalize(s){
   s.rules=Object.assign(VPD.defaultRules(),s.rules||{});s.rules.rates=Object.assign(VPD.defaultRules().rates,s.rules.rates||{});
   s.period=s.period&&s.period.year?s.period:d.period;
   s.shifts=(s.shifts||[]).map(x=>({id:x.id||VPD.uid('s'),code:x.code||'?',name:x.name||'',start:x.start||'08:00',end:x.end||'16:00',break:+x.break||0,
-    color:x.color||'#cccccc',demand:Array.from({length:9},(_,i)=>x.demand&&x.demand[i]!=null?x.demand[i]:(i<7?0:'')),max:x.max??''}));
+    color:x.color||'#cccccc',demand:Array.from({length:9},(_,i)=>x.demand&&x.demand[i]!=null?x.demand[i]:(i<7?0:'')),max:x.max??'',cat:x.cat||'',countsAs:x.countsAs||''}));
   s.absTypes=s.absTypes&&s.absTypes.length?s.absTypes:VPD.defaultAbsTypes();
-  s.employees=(s.employees||[]).map(e=>({id:e.id||VPD.uid('e'),name:e.name||'',title:e.title||'',pct:e.pct??100,allowed:e.allowed||[],noDays:e.noDays||[],
-    carry:e.carry??0,fixedTarget:e.fixedTarget??'',note:e.note||''}));
+  s.employees=(s.employees||[]).map(e=>newEmp(e));
   if(!Array.isArray(s.holidays))s.holidays=VP.holidaysForPeriod(s.period);
   for(const k of ['plan','locks','wishes','needOverride'])if(!s[k]||typeof s[k]!=='object')s[k]={};
   return s;
 }
+function newEmp(e={}){return {id:e.id||VPD.uid('e'),name:e.name||'',title:e.title||'',pct:e.pct??100,status:e.status||'active',prefs:e.prefs||[],
+  changes:e.changes||[],allowed:e.allowed||[],noDays:e.noDays||[],carry:e.carry??0,fixedTarget:e.fixedTarget??'',weekly:e.weekly??'',note:e.note||''};}
+const SAMPLES=()=>[{id:'demo',name:'Almennt sýnidæmi',build:()=>({state:VPD.sampleState()})},...(window.VP_SAMPLES||[])];
+function sampleState(id){const x=SAMPLES().find(z=>z.id===id)||SAMPLES()[0];const r=x.build();return {state:normalize(r.state),report:r.report};}
 function load(){try{const r=localStorage.getItem(KEY);return r?normalize(JSON.parse(r)):null;}catch(e){return null;}}
-let S=load()||normalize(VPD.sampleState());
+let S=load()||sampleState((window.VP_SAMPLES||[])[0]?.id||'demo').state;
 let step=Math.min(+(()=>{try{return localStorage.getItem(STEP_KEY)}catch(e){return 0}})()||0,STEPS.length-1);
 let saveT=null;
 function save(){
@@ -137,7 +140,7 @@ VIEWS.grunnur=()=>{
    <div class="grid5">${['evening','night','weekend','red','major'].map(c=>`<div class="field"><label>${VP.CAT_NAMES[c]} (%)</label>${num('rules.rates.'+c,R.rates[c],'min="0" step="0.01"')}</div>`).join('')}</div>
   </section>
   <section class="panel"><h2>Byrja upp á nýtt</h2>
-   <div class="toolbar"><button id="loadSample">Hlaða sýnidæmi</button><button id="startBlank" class="danger">Byrja með autt plan</button><button data-act="open">Opna JSON-skrá</button></div>
+   <div class="toolbar"><select id="sampleSel" style="width:auto">${SAMPLES().map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select><button id="loadSample">Hlaða sýnidæmi</button><button id="startBlank" class="danger">Byrja með autt plan</button><button data-act="open">Opna JSON-skrá</button></div>
    <p class="hint">„Byrja með autt plan“ eyðir vöktum, starfsfólki og plani í vafranum. Sæktu JSON-afrit fyrst ef þú vilt geyma núverandi vinnu.</p>
   </section>`+navBtns();
 };
@@ -145,7 +148,8 @@ AFTER.grunnur=()=>{
   $('#periodSel').onchange=e=>{const [y,m]=e.target.value.split('-').map(Number);setPeriod({year:y,month:m});};
   $('#pPrev').onclick=()=>{let {year:y,month:m}=S.period;m--;if(m<1){m=12;y--;}setPeriod({year:y,month:m});};
   $('#pNext').onclick=()=>{let {year:y,month:m}=S.period;m++;if(m>12){m=1;y++;}setPeriod({year:y,month:m});};
-  $('#loadSample').onclick=async()=>{if(!await ask('Skipta núverandi gögnum út fyrir sýnidæmi?'))return;pushUndo();S=normalize(VPD.sampleState());save();render();toast('Sýnidæmi hlaðið');};
+  $('#loadSample').onclick=async()=>{const id=$('#sampleSel').value,nm=$('#sampleSel').selectedOptions[0].textContent;
+    if(!await ask(`Skipta núverandi gögnum út fyrir „${nm}“?`))return;pushUndo();S=sampleState(id).state;lastGen=null;save();render();toast(nm+' hlaðið');};
   $('#startBlank').onclick=async()=>{if(!await ask('Eyða öllum vöktum, starfsfólki og plani?'))return;pushUndo();
     S=normalize({workplace:{name:'',unit:'',manager:''},period:S.period,rules:S.rules,shifts:[],employees:[],absTypes:VPD.defaultAbsTypes()});save();render();};
 };
@@ -159,8 +163,8 @@ function setPeriod(p){
 
 /* ---------- Skref 2: Vaktir ---------- */
 const DEM_HEAD=['Mán','Þri','Mið','Fim','Fös','Lau','Sun','Rauður','Stórhát.'];
-VIEWS.vaktir=()=>intro('Tegundir vakta','Skráðu vaktirnar, tíma þeirra og hve marga þarf á hverja vakt eftir vikudögum. Vakt sem lýkur fyrir upphafstíma nær yfir miðnætti og telst til dagsins sem hún hefst. Ef reitur fyrir rauðan dag eða stórhátíðardag er auður gildir mönnun sunnudags.')+`
- <section class="panel"><div class="tablewrap"><table class="edit shifts"><thead><tr><th>Litur</th><th>Kóði</th><th>Heiti</th><th>Hefst</th><th>Lýkur</th><th>Ógreitt hlé (mín.)</th><th>Klst.</th>
+VIEWS.vaktir=()=>intro('Tegundir vakta','Skráðu vaktirnar, tíma þeirra og hve marga þarf á hverja vakt eftir vikudögum. Vakt sem lýkur fyrir upphafstíma nær yfir miðnætti og telst til dagsins sem hún hefst. Ef reitur fyrir rauðan dag eða stórhátíðardag er auður gildir mönnun sunnudags. <b>Flokkur</b> tengir vaktina við óskir starfsfólks (t.d. „Kvöldvaktir um helgar“). <b>Telst sem</b> gerir vakt að afbrigði (t.d. 08–13 í stað 08–16) sem telst með aðalvaktinni í mönnun. Afbrigði verða sjálfkrafa til við innlestur.')+`
+ <section class="panel"><div class="tablewrap"><table class="edit shifts"><thead><tr><th>Litur</th><th>Kóði</th><th>Heiti</th><th>Hefst</th><th>Lýkur</th><th>Ógreitt hlé (mín.)</th><th>Klst.</th><th title="Flokkur sem starfsfólk velur sér (óskir)">Flokkur</th><th title="Afbrigði telst með þessari vakt í mönnun">Telst sem</th>
   ${DEM_HEAD.map((d,i)=>`<th class="dem ${i>=7?(i===7?'red':'major'):i>=5?'wkend':''}">${d}</th>`).join('')}<th title="Hámark á vakt þegar fyllt er upp í vinnuskyldu">Hámark</th><th></th></tr></thead><tbody>
   ${S.shifts.map((s,i)=>{const t=VP.shiftTimes(s);return `<tr>
    <td><input type="color" data-k="shifts.${i}.color" value="${esc(s.color)}"></td>
@@ -170,7 +174,9 @@ VIEWS.vaktir=()=>intro('Tegundir vakta','Skráðu vaktirnar, tíma þeirra og hv
    <td><input type="time" data-k="shifts.${i}.end" data-re value="${esc(s.end==='24:00'?'00:00':s.end)}"></td>
    <td><input type="number" class="sm" data-k="shifts.${i}.break" data-num data-re min="0" step="5" value="${esc(s.break)}"></td>
    <td class="num"><b>${fmt(t.hours,2)}</b>${t.m1>1440?'<span class="tag" title="Nær yfir miðnætti">+1</span>':''}</td>
-   ${s.demand.map((v,j)=>`<td class="dem"><input type="number" class="xs" data-k="shifts.${i}.demand.${j}" data-numblank min="0" value="${esc(v)}" ${j>=7?'placeholder="sun"':''}></td>`).join('')}
+   <td><select data-k="shifts.${i}.cat" data-re class="sel-sm"><option value="">–</option>${VP.PREF_CATS.map(([k,n])=>`<option value="${k}" ${s.cat===k?'selected':''}>${n}</option>`).join('')}</select></td>
+   <td><select data-k="shifts.${i}.countsAs" data-re class="sel-sm"><option value="">Sjálfstæð vakt</option>${S.shifts.filter(x=>x.id!==s.id&&!x.countsAs).map(x=>`<option value="${x.id}" ${s.countsAs===x.id?'selected':''}>${esc(x.code+' · '+x.name)}</option>`).join('')}</select></td>
+   ${s.countsAs?`<td class="dem muted" colspan="9" style="font-size:12px">Telst með ${esc(shiftById(s.countsAs)?.name||'')} í mönnun</td>`:s.demand.map((v,j)=>`<td class="dem"><input type="number" class="xs" data-k="shifts.${i}.demand.${j}" data-numblank min="0" value="${esc(v)}" ${j>=7?'placeholder="sun"':''}></td>`).join('')}
    <td><input type="number" class="xs" data-k="shifts.${i}.max" data-numblank min="0" value="${esc(s.max)}" placeholder="–"></td>
    <td><button class="small ghost danger" data-delshift="${i}" title="Eyða vakt">✕</button></td></tr>`;}).join('')}
   </tbody></table></div>
@@ -180,62 +186,104 @@ VIEWS.vaktir=()=>intro('Tegundir vakta','Skráðu vaktirnar, tíma þeirra og hv
  <section class="panel"><h2>Mönnun á viku</h2>${weekDemandSummary()}</section>`+navBtns();
 function weekDemandSummary(){
   if(!S.shifts.length)return '<p class="muted">Engar vaktir skráðar.</p>';
-  let tot=0;const rows=S.shifts.map(s=>{const t=VP.shiftTimes(s);const n=s.demand.slice(0,7).reduce((a,b)=>a+(+b||0),0);tot+=n*t.hours;return `<tr><td>${esc(s.code)} · ${esc(s.name)}</td><td class="num">${n}</td><td class="num">${fmt(n*t.hours)}</td></tr>`;}).join('');
+  let tot=0;const rows=S.shifts.filter(s=>!s.countsAs).map(s=>{const t=VP.shiftTimes(s);const n=s.demand.slice(0,7).reduce((a,b)=>a+(+b||0),0);tot+=n*t.hours;return `<tr><td>${esc(s.code)} · ${esc(s.name)}</td><td class="num">${n}</td><td class="num">${fmt(n*t.hours)}</td></tr>`;}).join('');
   const C=VP.buildCtx(S),fte=tot/((+S.rules.weekly)||40);
   return `<table class="data"><thead><tr><th>Vakt</th><th class="num">Vaktir á viku</th><th class="num">Klst. á viku</th></tr></thead><tbody>${rows}</tbody>
   <tfoot><tr><td>Samtals</td><td></td><td class="num">${fmt(tot)}</td></tr></tfoot></table>
-  <p class="hint">Lágmarksmönnun samsvarar um <b>${fmt(fte,2)} stöðugildum</b> (${fmt(tot)} klst. ÷ ${fmt(S.rules.weekly)}). Starfsfólk í planinu er samtals <b>${fmt(S.employees.reduce((a,e)=>a+(+e.pct||0),0)/100,2)} stöðugildi</b>.</p>`;
+  <p class="hint">Lágmarksmönnun samsvarar um <b>${fmt(fte,2)} stöðugildum</b> (${fmt(tot)} klst. ÷ ${fmt(S.rules.weekly)}). Starfsfólk í vaktaplani er samtals <b>${fmt(C.emps.reduce((a,e)=>{const x=VP.empOn(e,C.dates[C.n-1]);return a+(x.status==='active'?x.pct:0);},0)/100,2)} stöðugildi</b>.</p>`;
 }
 AFTER.vaktir=()=>{
   $('#addShift').onclick=()=>{const i=S.shifts.length;S.shifts.push({id:VPD.uid('s'),code:String.fromCharCode(65+i%26),name:'Ný vakt',start:'08:00',end:'16:00',break:0,
-    color:VPD.SHIFT_COLORS[i%VPD.SHIFT_COLORS.length],demand:[1,1,1,1,1,1,1,'',''],max:''});save();render();};
+    color:VPD.SHIFT_COLORS[i%VPD.SHIFT_COLORS.length],demand:[1,1,1,1,1,1,1,'',''],max:'',cat:'',countsAs:''});save();render();};
   $$('[data-delshift]').forEach(b=>b.onclick=async()=>{const s=S.shifts[+b.dataset.delshift];if(!await ask(`Eyða vaktinni „${s.name}“? Hún verður líka fjarlægð úr planinu.`))return;
     pushUndo();S.shifts.splice(+b.dataset.delshift,1);for(const [k,v] of Object.entries(S.plan))if(v.s===s.id)delete S.plan[k];
-    S.employees.forEach(e=>e.allowed=e.allowed.filter(x=>x!==s.id));save();render();});
+    S.employees.forEach(e=>e.allowed=e.allowed.filter(x=>x!==s.id));S.shifts.forEach(x=>{if(x.countsAs===s.id)x.countsAs='';});save();render();});
 };
 
 /* ---------- Skref 3: Starfsfólk ---------- */
+let selEmp=null;
+const statusBadge=st=>`<span class="badge st-${st}">${esc(VP.STATUS_NAMES[st]||st)}</span>`;
+function parsePct(v){const t=String(v??'').trim();if(/^tv$/i.test(t)||/tímav/i.test(t))return {status:'hourly',pct:0};
+  const n=parseFloat(t.replace(/\s+/g,'').replace('%','').replace(',','.'));if(isNaN(n))return null;return {status:'active',pct:n<=1&&t.indexOf('%')<0&&n>0?n*100:n};}
 VIEWS.starfsfolk=()=>{
-  const C=VP.buildCtx(S);
-  return intro('Starfsfólk','Skráðu starfsfólk, starfshlutfall og hvaða vaktir hver má taka. „Vinnur ekki“ eru vikudagar sem starfsmaður er aldrei settur á. „Flutt staða“ er inneign (+) eða skuld (−) í klst. frá fyrra tímabili.')+`
- <section class="panel"><div class="tablewrap"><table class="edit emps"><thead><tr><th>#</th><th>Nafn</th><th>Starfsheiti</th><th>Hlutfall %</th><th>Vinnuskylda</th><th>Vaktir sem má taka</th><th>Vinnur ekki</th><th>Flutt staða</th><th>Athugasemd</th><th></th></tr></thead><tbody>
- ${S.employees.map((e,i)=>`<tr>
-  <td class="muted">${i+1}<div class="mv"><button class="small ghost" data-mv="${i}|-1" title="Færa upp">↑</button><button class="small ghost" data-mv="${i}|1" title="Færa niður">↓</button></div></td>
-  <td><input data-k="employees.${i}.name" value="${esc(e.name)}" placeholder="Nafn"></td>
-  <td><input data-k="employees.${i}.title" value="${esc(e.title)}"></td>
-  <td><input type="number" class="sm" data-k="employees.${i}.pct" data-num data-re min="0" max="100" step="1" value="${esc(e.pct)}"></td>
-  <td><input type="number" class="sm" data-k="employees.${i}.fixedTarget" data-numblank data-re step="0.5" value="${esc(e.fixedTarget)}" placeholder="${fmt(VP.targetHours(C,{...e,fixedTarget:''}))}" title="Sjálfgefin vinnuskylda er reiknuð. Skráðu tölu til að festa aðra."></td>
-  <td><div class="chips">${S.shifts.map(s=>{const on=!e.allowed.length||e.allowed.includes(s.id);return `<button class="chip ${on?'on':''}" data-allow="${i}|${s.id}" style="${on?`background:${s.color};color:${textColor(s.color)}`:''}" title="${esc(s.name)}">${esc(s.code)}</button>`;}).join('')}</div></td>
-  <td><div class="chips">${VP.DAYS_SHORT.map((d,j)=>`<button class="chip day ${e.noDays.includes(j)?'off':''}" data-noday="${i}|${j}" title="${VP.DAYS[j]}">${d}</button>`).join('')}</div></td>
-  <td><input type="number" class="sm" data-k="employees.${i}.carry" data-num step="0.25" value="${esc(e.carry)}"></td>
-  <td><input data-k="employees.${i}.note" value="${esc(e.note)}"></td>
-  <td><button class="small ghost danger" data-delemp="${i}" title="Eyða">✕</button></td></tr>`).join('')}
- </tbody></table></div>
- <div class="toolbar" style="margin-top:12px"><button id="addEmp">+ Bæta við starfsmanni</button></div>
- <p class="hint">Allar vaktir eru leyfðar þegar enginn kóði er valinn sérstaklega. Smelltu á kóða til að kveikja eða slökkva. Yfirstrikaður vikudagur þýðir að starfsmaður vinnur ekki þann dag.</p>
- </section>
- <section class="panel"><h2>Líma inn lista</h2>
-  <p class="hint">Ein lína á starfsmann: <code>Nafn; starfsheiti; hlutfall</code> (semíkomma eða tab á milli, t.d. beint úr Excel). Starfsheiti og hlutfall má sleppa.</p>
-  <textarea id="pasteEmps" rows="4" placeholder="Anna Jónsdóttir; Sjúkraliði; 80"></textarea>
-  <div class="toolbar" style="margin-top:10px"><button id="addPasted">Bæta við</button></div>
- </section>`+navBtns();
+  const st=VP.stats(S),C=st.C,last=C.dates[C.n-1],first=C.dates[0];
+  const rowOf=e=>{const o=st.emp.find(x=>x.id===e.id),now=VP.empOn(e,last),beg=VP.empOn(e,first),changed=now.pct!==beg.pct||now.status!==beg.status;
+    const prefs=e.prefs.length?e.prefs.map(p=>`<span class="pref">${esc(VP.PREF_NAME[p]||p)}</span>`).join(''):'<span class="muted small">Allar vaktir</span>';
+    return `<button class="emp-row ${selEmp===e.id?'sel':''}" data-emp="${e.id}">
+      <span class="en"><b>${esc(e.name||'(nafnlaus)')}</b>${e.title?`<small>${esc(e.title)}</small>`:''}</span>
+      <span class="ep">${now.status==='active'?fmt(now.pct)+'%':statusBadge(now.status)}${changed?`<small title="Breyting á tímabilinu">frá ${beg.status==='active'?fmt(beg.pct)+'%':VP.STATUS_NAMES[beg.status]}</small>`:''}</span>
+      <span class="eprefs">${o?prefs:''}</span>
+      <span class="num">${o?fmt(o.target):'–'}</span><span class="num">${o?fmt(o.total):'–'}</span>
+      <span class="num ${o&&o.outstanding<-(+S.rules.hourTolerance||0)?'bad':''}"><b>${o?fmt(o.outstanding):'–'}</b></span></button>`;};
+  const inPlan=S.employees.filter(e=>C.emps.includes(e)),out=S.employees.filter(e=>!C.emps.includes(e));
+  return intro('Starfsfólk',`Starfsmannalistinn fylgir öllum tímabilum. Smelltu á starfsmann til að breyta starfshlutfalli, skrá breytingu frá ákveðnum degi eða velja hvaða vaktir hann vill (óskir). Starfsfólk í <b>tímavinnu</b> eða <b>leyfi</b> er ekki í vaktaplaninu. <b>Útistandandi</b> = vinnuskylda − tímar sem þegar eru á vöktum (og fjarvistir).`)+`
+ <div class="split emp-split">
+  <section class="panel"><div class="emp-head"><span>Nafn</span><span>Hlutfall</span><span>Óskir um vaktir</span><span class="num">Vinnuskylda</span><span class="num">Á vöktum</span><span class="num">Útistandandi</span></div>
+   <h3 class="grp">Í vaktaplani (${inPlan.length})</h3>${inPlan.map(rowOf).join('')||'<p class="muted">Enginn.</p>'}
+   ${out.length?`<h3 class="grp">Tímavinna og leyfi, ekki í vaktaplani (${out.length})</h3>${out.map(rowOf).join('')}`:''}
+   <div class="toolbar" style="margin-top:14px"><button id="addEmp">+ Nýr starfsmaður</button></div>
+  </section>
+  <section class="panel sticky emp-edit">${selEmp&&empById(selEmp)?empEditor(empById(selEmp),C):`<h2>Veldu starfsmann</h2><p class="muted">Smelltu á nafn í listanum til að breyta starfshlutfalli, stöðu, óskum um vaktir og fleiru.</p>
+   <h2 style="margin-top:22px">Líma inn lista</h2>
+   <p class="hint">Ein lína á starfsmann: <code>Nafn; starfshlutfall; starfsheiti</code> (semíkomma eða tab á milli, t.d. úr Excel). Hlutfall má skrifa 80, 80%, 0,8 eða TV fyrir tímavinnu. Starfsfólk sem er þegar á listanum fær nýja hlutfallið.</p>
+   <textarea id="pasteEmps" rows="5" placeholder="Anna Jónsdóttir; 80%&#10;Jón Jónsson; TV"></textarea>
+   <div class="toolbar" style="margin-top:10px"><button id="addPasted">Bæta við / uppfæra</button></div>`}</section>
+ </div>`+navBtns();
 };
+function empEditor(e,C){
+  const i=S.employees.indexOf(e),o=VP.stats(S).emp.find(x=>x.id===e.id),dl=VP.dailyOf(C,e)*5;
+  const ch=(e.changes||[]).map((c,j)=>({...c,j})).sort((a,b)=>a.from<b.from?-1:1);
+  return `<div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">${esc(e.name||'Nýr starfsmaður')}</h2><button class="small ghost" id="closeEmp">Loka ✕</button></div>
+  <div class="row" style="margin-top:14px"><div class="field"><label>Nafn</label><input data-k="employees.${i}.name" data-re value="${esc(e.name)}"></div>
+   <div class="field"><label>Starfsheiti</label><input data-k="employees.${i}.title" value="${esc(e.title)}"></div></div>
+  <div class="row"><div class="field"><label>Staða</label><select data-k="employees.${i}.status" data-re>${Object.entries(VP.STATUS_NAMES).map(([k,n])=>`<option value="${k}" ${e.status===k?'selected':''}>${n}</option>`).join('')}</select></div>
+   <div class="field"><label>Starfshlutfall %</label><input type="number" data-k="employees.${i}.pct" data-num data-re min="0" max="100" step="0.1" value="${esc(e.pct)}" ${e.status!=='active'?'disabled':''}></div></div>
+  <p class="hint" style="margin-top:-6px">${e.status==='hourly'?'Tímavinna: tilfallandi tímar, ekki fastar vaktir og ekki í vaktaplani.':e.status==='leave'?'Í leyfi: ekki í vaktaplani og engin vinnuskylda.':`Vinnuskylda á tímabilinu: <b>${fmt(o?o.target:0)} klst.</b>${o?` · á vöktum ${fmt(o.total)} · útistandandi <b>${fmt(o.outstanding)}</b>`:''}`}</p>
+  <h3>Óskir um vaktir</h3>
+  <div class="prefs">${VP.PREF_CATS.map(([k,n])=>`<label class="check"><input type="checkbox" data-pref="${k}" ${e.prefs.includes(k)?'checked':''}> ${n}</label>`).join('')}</div>
+  <p class="hint">Ekkert valið = allar vaktir koma til greina. Röðunin setur starfsmann aðeins á vaktir í völdum flokkum.</p>
+  <h3>Breytingar á tímabili</h3>
+  ${ch.length?`<ul class="changes">${ch.map(c=>`<li><b>Frá ${esc(VP.dateLabel(c.from))}:</b> ${c.status&&c.status!=='active'?esc(VP.STATUS_NAMES[c.status]):''}${(c.status==='active'||!c.status)&&c.pct!==''&&c.pct!=null?fmt(c.pct)+'%':''}${c.note?` <span class="muted">· ${esc(c.note)}</span>`:''} <button class="small ghost danger" data-delch="${c.j}">✕</button></li>`).join('')}</ul>`:'<p class="muted small">Engar breytingar skráðar.</p>'}
+  <div class="row chform"><div class="field"><label>Gildir frá</label><input type="date" id="chFrom" value="${VP.periodRange(S.period.year,S.period.month).start}"></div>
+   <div class="field"><label>Ný staða</label><select id="chStatus">${Object.entries(VP.STATUS_NAMES).map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select></div>
+   <div class="field"><label>Nýtt hlutfall %</label><input type="number" id="chPct" min="0" max="100" step="0.1" value="${esc(e.pct)}"></div></div>
+  <div class="field"><label>Athugasemd</label><input id="chNote" placeholder="t.d. skv. breytingablaði"></div>
+  <div class="toolbar"><button id="addCh">Skrá breytingu</button></div>
+  <details style="margin-top:16px"><summary>Fleiri stillingar</summary>
+   <div class="row" style="margin-top:10px"><div class="field"><label>Vikustundir í 100% (autt = ${fmt(S.rules.weekly)})</label><input type="number" data-k="employees.${i}.weekly" data-numblank data-re step="0.5" value="${esc(e.weekly)}" placeholder="${fmt(S.rules.weekly)}"></div>
+    <div class="field"><label>Föst vinnuskylda (klst.)</label><input type="number" data-k="employees.${i}.fixedTarget" data-numblank data-re step="0.5" value="${esc(e.fixedTarget)}" placeholder="reiknuð"></div>
+    <div class="field"><label>Flutt staða (klst.)</label><input type="number" data-k="employees.${i}.carry" data-num step="0.25" value="${esc(e.carry)}"></div></div>
+   <label>Vinnur ekki</label><div class="chips" style="margin-bottom:12px">${VP.DAYS_SHORT.map((d,j)=>`<button class="chip day ${e.noDays.includes(j)?'off':''}" data-noday="${j}" title="${VP.DAYS[j]}">${d}</button>`).join('')}</div>
+   <div class="field"><label>Athugasemd</label><input data-k="employees.${i}.note" value="${esc(e.note)}"></div>
+   <div class="toolbar"><button class="small" data-mv="-1">↑ Færa upp</button><button class="small" data-mv="1">↓ Færa niður</button><button class="small danger" id="delEmp">Eyða starfsmanni</button></div>
+  </details>`;
+}
 AFTER.starfsfolk=()=>{
-  $('#addEmp').onclick=()=>{S.employees.push({id:VPD.uid('e'),name:'',title:'',pct:100,allowed:[],noDays:[],carry:0,fixedTarget:'',note:''});save();render();
-    const ins=$$('.emps tbody tr:last-child input');ins[0]&&ins[0].focus();};
-  $$('[data-allow]').forEach(b=>b.onclick=()=>{const [i,id]=b.dataset.allow.split('|'),e=S.employees[+i];
-    let a=e.allowed.length?e.allowed.slice():S.shifts.map(s=>s.id);a=a.includes(id)?a.filter(x=>x!==id):[...a,id];
-    e.allowed=a.length===S.shifts.length?[]:a;if(!a.length){toast('Starfsmaður þarf að mega taka a.m.k. eina vakt');e.allowed=[id];}save();render();});
-  $$('[data-noday]').forEach(b=>b.onclick=()=>{const [i,j]=b.dataset.noday.split('|').map(Number),e=S.employees[i];
-    e.noDays=e.noDays.includes(j)?e.noDays.filter(x=>x!==j):[...e.noDays,j].sort();save();render();});
-  $$('[data-delemp]').forEach(b=>b.onclick=async()=>{const e=S.employees[+b.dataset.delemp];if(!await ask(`Eyða ${e.name||'starfsmanni'} úr planinu?`))return;pushUndo();
-    S.employees.splice(+b.dataset.delemp,1);for(const m of [S.plan,S.locks,S.wishes])for(const k of Object.keys(m))if(k.startsWith(e.id+'|'))delete m[k];save();render();});
-  $$('[data-mv]').forEach(b=>b.onclick=()=>{const [i,d]=b.dataset.mv.split('|').map(Number),j=i+d;if(j<0||j>=S.employees.length)return;
-    [S.employees[i],S.employees[j]]=[S.employees[j],S.employees[i]];save();render();});
-  $('#addPasted').onclick=()=>{const lines=$('#pasteEmps').value.split('\n').map(l=>l.trim()).filter(Boolean);let n=0;
-    for(const l of lines){const p=l.split(/\t|;/).map(x=>x.trim());if(!p[0])continue;const pct=parseFloat(String(p[2]||'100').replace(',','.').replace('%',''));
-      S.employees.push({id:VPD.uid('e'),name:p[0],title:p[1]||'',pct:isNaN(pct)?100:pct,allowed:[],noDays:[],carry:0,fixedTarget:'',note:''});n++;}
-    save();render();toast(n+' starfsmönnum bætt við');};
+  $$('[data-emp]').forEach(b=>b.onclick=()=>{selEmp=b.dataset.emp;rerender();});
+  $('#addEmp').onclick=()=>{const e=newEmp({name:'',pct:100});S.employees.push(e);selEmp=e.id;save();rerender();const n=$('.emp-edit input');n&&n.focus();};
+  const e=selEmp&&empById(selEmp);
+  if(!e){
+    $('#addPasted').onclick=()=>{const lines=$('#pasteEmps').value.split('\n').map(l=>l.trim()).filter(Boolean);let n=0,u=0;pushUndo();
+      for(const l of lines){const p=l.split(/\t|;/).map(x=>x.trim());if(!p[0])continue;const pr=parsePct(p[1]??'100')||{status:'active',pct:100};
+        const ex=S.employees.find(x=>x.name.trim().toLowerCase()===p[0].toLowerCase());
+        if(ex){ex.pct=pr.pct||ex.pct;ex.status=pr.status;if(p[2])ex.title=p[2];u++;}
+        else{S.employees.push(newEmp({name:p[0],title:p[2]||'',pct:pr.pct,status:pr.status}));n++;}}
+      save();render();toast(`${n} bætt við, ${u} uppfærð`);};
+    return;
+  }
+  $('#closeEmp').onclick=()=>{selEmp=null;rerender();};
+  $$('[data-pref]').forEach(c=>c.onchange=()=>{const k=c.dataset.pref;e.prefs=c.checked?[...new Set([...e.prefs,k])]:e.prefs.filter(x=>x!==k);
+    e.prefs=VP.PREF_CATS.map(x=>x[0]).filter(x=>e.prefs.includes(x));save();rerender();});
+  $$('[data-noday]').forEach(b=>b.onclick=()=>{const j=+b.dataset.noday;e.noDays=e.noDays.includes(j)?e.noDays.filter(x=>x!==j):[...e.noDays,j].sort();save();rerender();});
+  $('#chStatus').onchange=()=>{$('#chPct').disabled=$('#chStatus').value!=='active';};
+  $('#addCh').onclick=()=>{const from=$('#chFrom').value;if(!from){toast('Veldu dagsetningu');return;}pushUndo();
+    const status=$('#chStatus').value;e.changes.push({from,status,pct:status==='active'?(+$('#chPct').value||0):'',note:$('#chNote').value.trim()});
+    save();rerender();toast('Breyting skráð frá '+VP.dateLabel(from));};
+  $$('[data-delch]').forEach(b=>b.onclick=()=>{pushUndo();e.changes.splice(+b.dataset.delch,1);save();rerender();});
+  $$('[data-mv]').forEach(b=>b.onclick=()=>{const i=S.employees.indexOf(e),j=i+(+b.dataset.mv);if(j<0||j>=S.employees.length)return;
+    [S.employees[i],S.employees[j]]=[S.employees[j],S.employees[i]];save();rerender();});
+  $('#delEmp').onclick=async()=>{if(!await ask(`Eyða ${e.name||'starfsmanni'} af starfsmannalistanum? Vaktir og óskir hans hverfa líka.`))return;pushUndo();
+    S.employees.splice(S.employees.indexOf(e),1);for(const m of [S.plan,S.locks,S.wishes])for(const k of Object.keys(m))if(k.startsWith(e.id+'|'))delete m[k];selEmp=null;save();render();};
 };
 
 /* ---------- Skref 4: Dagatal ---------- */
@@ -349,37 +397,63 @@ AFTER.oskir=()=>{
 };
 
 /* ---------- Skref 6: Vaktaplan ---------- */
-let lastGen=null,warnFilter='all';
+let lastGen=null,warnFilter='all',gridEmpIds=[];
+/* Innlestur á völdum vöktum úr CSV eða Excel */
+function loadXlsxLib(){
+  if(window.XLSX)return Promise.resolve(window.XLSX);
+  return new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=()=>window.XLSX?ok(window.XLSX):no(Error('Excel-safnið hlóðst ekki'));s.onerror=()=>no(Error('Excel-safnið hlóðst ekki. Vistaðu skjalið sem CSV og reyndu aftur.'));document.head.appendChild(s);});
+}
+async function importFile(file){
+  try{
+    let rows;
+    if(/\.xlsx?$/i.test(file.name)){const X=await loadXlsxLib();const wb=X.read(await file.arrayBuffer(),{type:'array'});
+      rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''});}
+    else rows=VP.parseCsv(await file.text());
+    pushUndo();const rep=VP.importTable(S,rows);save();lastGen=null;render();
+    const L=[`${rep.count} vaktir lesnar inn og læstar${rep.replaced?` (${rep.replaced} skrifuðu yfir eldri færslur)`:''}.`];
+    if(rep.periodChanged)L.push('Tímabil stillt á '+VP.periodLabel(S.period)+' samkvæmt skjalinu.');
+    if(rep.newEmps.length)L.push('Nýir á starfsmannalista (skráðu starfshlutfall): '+rep.newEmps.join(', ')+'.');
+    if(rep.newShifts.length)L.push('Ný afbrigði vakta: '+rep.newShifts.join('; ')+'.');
+    if(rep.inactive.length)L.push('Á vakt þrátt fyrir tímavinnu/leyfi: '+rep.inactive.slice(0,8).join(', ')+(rep.inactive.length>8?' …':'')+'.');
+    if(rep.unknown.length)L.push('Óþekkt gildi, ekki lesin inn: '+rep.unknown.slice(0,8).join('; ')+(rep.unknown.length>8?' …':'')+'.');
+    L.push('Smelltu á „Búa til vaktaplan“ til að raða á vaktirnar sem eftir eru.');
+    await ask(L.join('\n\n'),{ok:'Í lagi',cancel:'Loka'});
+  }catch(err){console.error(err);toast('Innlestur tókst ekki: '+err.message);}
+}
 function cellHtml(e,d,C,i){
   const k=K(e.id,d),v=S.plan[k],w=S.wishes[k],lock=S.locks[k],f=C.infos[i];
   let cls='cell',style='',txt='',title=[];
-  if(v&&v.s&&C.shift[v.s]){const s=C.shift[v.s];txt=s.code;style=`background:${s.color};color:${textColor(s.color)}`;title.push(`${s.name} ${s.start}–${s.end}`);}
+  if(v&&v.s&&C.shift[v.s]){const s=C.shift[v.s];txt=s.code;if(txt.length>3)cls+=' long';style=`background:${s.color};color:${textColor(s.color)}`;title.push(`${s.name} ${s.start}–${s.end}`);}
   else if(v&&v.a&&C.abs[v.a]){const a=C.abs[v.a];txt=a.code;cls+=' abs';style=`background:${a.color};color:${textColor(a.color)}`;title.push(a.name);}
   if(w&&w.off){cls+=' wishoff';title.push('Ósk um frí');if(v&&v.s)cls+=' conflict';}
   if(w&&w.s){const s=C.shift[w.s];cls+=' wishs';title.push('Ósk um '+(s?s.name:'vakt'));if(!txt&&s)txt=`<span class="ghosttxt">${esc(s.code)}?</span>`;}
   if(lock)cls+=' locked';
+  const ed=C.empDays[e.id][i];if(ed.status!=='active'){cls+=' inactive';title.push(VP.STATUS_NAMES[ed.status]);}
   if(f.weekend)cls+=' wkend';if(f.hol)cls+=' '+f.hol.kind;
   return `<td class="${f.weekend?'wkend':''} ${f.hol?f.hol.kind:''}"><button class="${cls}" data-cell="${e.id}|${d}" style="${style}" title="${esc(e.name+' · '+VP.dateLabel(d)+(title.length?' · '+title.join(' · '):''))}">${txt&&txt.startsWith('<')?txt:esc(txt)}${lock?'<i class="lk"></i>':''}</button></td>`;
 }
 VIEWS.plan=()=>{
   const st=VP.stats(S),C=st.C,warn=VP.validate(S);
-  if(!S.employees.length||!S.shifts.length)return intro('Vaktaplan','')+`<section class="panel"><p>Skráðu fyrst ${!S.shifts.length?'vaktir':'starfsfólk'} áður en planið er búið til.</p></section>`+navBtns();
+  if(!C.emps.length||!S.shifts.length)return intro('Vaktaplan','')+`<section class="panel"><p>Skráðu fyrst ${!S.shifts.length?'vaktir':'starfsfólk'} áður en planið er búið til.</p></section>`+navBtns();
   const under=warn.filter(w=>w.type==='under'),missing=st.days.reduce((a,r)=>a+Object.values(r.shifts).reduce((b,x)=>b+Math.max(0,x.need-x.have),0),0);
   const head=C.dates.map((d,i)=>{const f=C.infos[i],p=VP.parse(d);return `<th class="dh ${f.weekend?'wkend':''} ${f.hol?f.hol.kind:''}" title="${esc(VP.dateLabel(d)+(f.hol?' · '+f.hol.name:''))}">
     <span class="wd">${VP.DAYS_1[f.dow]}</span><span class="dn">${p.getUTCDate()}</span>${f.hol?`<span class="hm">${f.hol.kind==='major'?'★':'●'}</span>`:''}</th>`;}).join('');
-  const rows=S.employees.map(e=>{const o=st.emp.find(x=>x.id===e.id);
-    return `<tr><th class="nm"><span>${esc(e.name||'(nafnlaus)')}</span><small>${fmt(e.pct)}%${e.title?' · '+esc(e.title):''}</small></th>${C.dates.map((d,i)=>cellHtml(e,d,C,i)).join('')}
-    <td class="sum">${o.shifts}</td><td class="sum">${fmt(o.total)}</td><td class="sum">${fmt(o.target)}</td><td class="sum ${Math.abs(o.diff)>(+S.rules.hourTolerance||0)?'bad':''}">${fmtS(o.diff)}</td></tr>`;}).join('');
-  const cov=C.shifts.map(s=>`<tr class="cov"><th class="nm"><span><span class="sw" style="background:${s.color}"></span>${esc(s.code)} · ${esc(s.name)}</span><small>mannað / þörf</small></th>
+  gridEmpIds=C.emps.map(e=>e.id);
+  const rows=C.emps.map(e=>{const o=st.emp.find(x=>x.id===e.id);
+    return `<tr><th class="nm"><span>${esc(e.name||'(nafnlaus)')}</span><small>${o.status==='mixed'?'breyting á tímabili':fmt(o.pctMax)+'%'}${e.prefs.length?' · '+esc(e.prefs.map(p=>VP.PREF_NAME[p]).join(', ')):''}</small></th>${C.dates.map((d,i)=>cellHtml(e,d,C,i)).join('')}
+    <td class="sum">${o.shifts}</td><td class="sum">${fmt(o.total)}</td><td class="sum">${fmt(o.target)}</td><td class="sum ${o.outstanding<-(+S.rules.hourTolerance||0)?'bad':o.outstanding>(+S.rules.hourTolerance||0)?'todo':''}"><b>${fmt(o.outstanding)}</b></td></tr>`;}).join('');
+  const cov=C.shifts.filter(s=>!s.countsAs).map(s=>`<tr class="cov"><th class="nm"><span><span class="sw" style="background:${s.color}"></span>${esc(s.code)} · ${esc(s.name)}</span><small>mannað / þörf</small></th>
     ${st.days.map((r,i)=>{const x=r.shifts[s.id],ov=S.needOverride[r.date+'|'+s.id]!=null;return `<td class="${C.infos[i].weekend?'wkend':''} ${C.infos[i].hol?C.infos[i].hol.kind:''}"><button class="covc ${x.have<x.need?'under':x.have>x.need?'over':x.need?'ok':''} ${ov?'ovr':''}" data-need="${r.date}|${s.id}" title="${esc(s.name+' '+VP.dateLabel(r.date)+': '+x.have+' af '+x.need+(x.names.length?' · '+x.names.join(', '):'')+'. Smelltu til að breyta þörf.')}">${x.need||x.have?x.have+'/'+x.need:'·'}</button></td>`;}).join('')}<td colspan="4"></td></tr>`).join('');
   const shown=warn.filter(w=>w.type!=='over'&&(warnFilter==='all'||w.level===warnFilter));
-  return intro('Vaktaplan',`Smelltu á <b>Búa til vaktaplan</b> til að raða sjálfvirkt. Smelltu á reit til að breyta handvirkt, eða veldu reit og sláðu inn kóða vaktar (Delete tæmir, örvatakkar færa). Læstar vaktir (<i class="lk inline"></i>) haldast þegar raðað er aftur.`)+`
+  return intro('Vaktaplan',`Smelltu á <b>Búa til vaktaplan</b> til að raða sjálfvirkt. Smelltu á reit til að breyta handvirkt, eða veldu reit og sláðu inn kóða vaktar (Delete tæmir, örvatakkar færa). Læstar vaktir (<i class="lk inline"></i>) haldast þegar raðað er aftur. Með <b>Lesa inn valdar vaktir</b> eru vaktir sem starfsfólk hefur þegar valið settar inn úr CSV- eða Excel-skjali (ein lína á starfsmann, einn dálkur á dag, tímar eins og „08:00-16:00“). Þær læsast, og röðunin raðar síðan á það sem eftir er.`)+`
  <section class="panel planbar">
   <div class="toolbar">
    <button class="primary" id="genBtn">⚙ Búa til vaktaplan</button>
    <button id="clearBtn" title="Fjarlægja allar vaktir sem eru ekki læstar">Hreinsa ólæstar vaktir</button>
    <button id="lockAll">Læsa öllum vöktum</button><button id="unlockAll">Aflæsa öllu</button>
    <button id="undoBtn" title="Afturkalla (Ctrl+Z)">↶ Afturkalla</button>
+   <button id="importBtn" title="Lesa inn vaktir sem starfsfólk hefur þegar valið (CSV eða Excel)">⤓ Lesa inn valdar vaktir</button>
   </div>
   <div class="kpis">
    <div class="${missing?'bad':'good'}"><b>${missing}</b><span>vaktir ómannaðar</span></div>
@@ -392,8 +466,9 @@ VIEWS.plan=()=>{
  <div class="legend">${C.shifts.map(s=>`<span class="lg" style="background:${s.color};color:${textColor(s.color)}"><b>${esc(s.code)}</b> ${esc(s.name)} ${esc(s.start)}–${esc(s.end)}</span>`).join('')}
   ${S.absTypes.map(a=>`<span class="lg" style="background:${a.color};color:${textColor(a.color)}"><b>${esc(a.code)}</b> ${esc(a.name)}</span>`).join('')}
   <span class="lg wishoff-lg">Ósk um frí</span><span class="lg major">★ Stórhátíð</span><span class="lg red">● Rauður dagur</span></div>
- <div class="gridwrap"><table class="pgrid"><thead><tr><th class="nm corner">${esc(VP.periodLabel(S.period))}</th>${head}<th class="sum" title="Fjöldi vakta">Vaktir</th><th class="sum" title="Unnar stundir + fjarvistir sem teljast til vinnuskyldu">Klst.</th><th class="sum">Skylda</th><th class="sum">Mism.</th></tr></thead>
+ <div class="gridwrap"><table class="pgrid"><thead><tr><th class="nm corner">${esc(VP.periodLabel(S.period))}</th>${head}<th class="sum" title="Fjöldi vakta">Vaktir</th><th class="sum" title="Unnar stundir + fjarvistir sem teljast til vinnuskyldu">Klst.</th><th class="sum">Skylda</th><th class="sum" title="Útistandandi: vinnuskylda − klst. (jákvætt = vantar tíma, neikvætt = umfram)">Útist.</th></tr></thead>
   <tbody>${rows}</tbody><tbody class="covb">${cov}</tbody></table></div>
+ ${st.hourly.length?`<p class="hint">Ekki í vaktaplani: ${st.hourly.map(h=>`${esc(h.name)} (${esc(VP.STATUS_NAMES[h.status].toLowerCase())})`).join(', ')}.</p>`:''}
  <section class="panel" style="margin-top:20px"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">Athugasemdir (${shown.length})</h2>
   <div class="seg small">${[['all','Allt'],['error','Mönnun'],['warn','Viðvaranir'],['info','Óskir']].map(([k,t])=>`<button data-wf="${k}" class="${warnFilter===k?'on':''}">${t}</button>`).join('')}</div></div>
   ${shown.length?`<ul class="warns">${shown.slice(0,200).map(w=>`<li class="${w.level}">${esc(w.msg)}</li>`).join('')}${shown.length>200?`<li>… og ${shown.length-200} til viðbótar</li>`:''}</ul>`:'<p class="muted" style="margin-top:10px">Engar athugasemdir. 👍</p>'}
@@ -410,6 +485,7 @@ AFTER.plan=()=>{
   $('#lockAll').onclick=()=>{pushUndo();for(const [k,v] of Object.entries(S.plan))if(v.s)S.locks[k]=true;save();render();};
   $('#unlockAll').onclick=()=>{pushUndo();S.locks={};save();render();};
   $('#undoBtn').onclick=doUndo;
+  $('#importBtn').onclick=()=>$('#importInput').click();
   $$('[data-wf]').forEach(b=>b.onclick=()=>{warnFilter=b.dataset.wf;render();});
   $$('[data-cell]').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();openPop(b);};b.onkeydown=cellKey;});
   $$('[data-need]').forEach(b=>b.onclick=async()=>{const [d,id]=b.dataset.need.split('|'),s=shiftById(id),C=VP.buildCtx(S),i=C.idx[d];
@@ -428,8 +504,8 @@ function setCell(key,val,{keepWish=true}={}){
 function cellKey(ev){
   const b=ev.currentTarget,key=b.dataset.cell,[eid,d]=key.split('|');
   const moves={ArrowLeft:[0,-1],ArrowRight:[0,1],ArrowUp:[-1,0],ArrowDown:[1,0]};
-  if(moves[ev.key]){ev.preventDefault();const ei=S.employees.findIndex(e=>e.id===eid),dates=VP.periodDates(S.period),di=dates.indexOf(d);
-    const [dy,dx]=moves[ev.key],e2=S.employees[ei+dy],d2=dates[di+dx];if(e2&&d2){const el=document.querySelector(`[data-cell="${e2.id}|${d2}"]`);el&&el.focus();}return;}
+  if(moves[ev.key]){ev.preventDefault();const ei=gridEmpIds.indexOf(eid),dates=VP.periodDates(S.period),di=dates.indexOf(d);
+    const [dy,dx]=moves[ev.key],e2=gridEmpIds[ei+dy],d2=dates[di+dx];if(e2&&d2){const el=document.querySelector(`[data-cell="${e2}|${d2}"]`);el&&el.focus();}return;}
   if(ev.key==='Delete'||ev.key==='Backspace'){ev.preventDefault();setCell(key,null);AFTER._focus=key;render();return;}
   if(ev.ctrlKey||ev.metaKey||ev.altKey||ev.key.length!==1)return;
   const ch=ev.key.toLowerCase(),s=S.shifts.find(x=>x.code.toLowerCase()===ch),a=!s&&S.absTypes.find(x=>x.code.toLowerCase()===ch);
@@ -474,12 +550,13 @@ VIEWS.utreikningar=()=>{
  <div class="kpis big">
   <div><b>${fmt(t.target)}</b><span>klst. vinnuskylda alls</span></div><div><b>${fmt(t.worked)}</b><span>klst. á vöktum</span></div>
   <div><b>${fmt(t.credit)}</b><span>klst. fjarvistir (reiknaðar)</span></div><div class="${t.have<t.need?'bad':'good'}"><b>${t.need?fmt(t.have/t.need*100,1):100}%</b><span>mönnun skv. þörf</span></div></div>
- <section class="panel"><h2>Vinnustundir og staða</h2><div class="tablewrap"><table class="data stat"><thead><tr><th>Starfsmaður</th><th class="num">Hlutf.</th><th class="num">Vinnu&shy;skylda</th><th class="num">Vaktir</th><th class="num">Á vöktum</th><th class="num">Fjarvistir</th><th class="num">Samtals</th><th class="num">Mismunur</th><th class="num">Flutt</th><th class="num">Staða</th><th style="min-width:120px"></th></tr></thead><tbody>
- ${st.emp.map(o=>`<tr><td><b>${esc(o.name)}</b></td><td class="num">${fmt(o.pct)}%</td><td class="num">${fmt(o.target)}</td><td class="num">${o.shifts}</td><td class="num">${fmt(o.worked)}</td><td class="num">${fmt(o.credit)}</td><td class="num">${fmt(o.total)}</td>
-   <td class="num ${Math.abs(o.diff)>(+R.hourTolerance||0)?'bad':''}">${fmtS(o.diff)}</td><td class="num">${fmtS(o.carry)}</td><td class="num"><b>${fmtS(o.balance)}</b></td>
+ <section class="panel"><h2>Vinnustundir og staða</h2><div class="tablewrap"><table class="data stat"><thead><tr><th>Starfsmaður</th><th class="num">Hlutf.</th><th class="num">Vinnu&shy;skylda</th><th class="num">Vaktir</th><th class="num">Á vöktum</th><th class="num">Fjarvistir</th><th class="num">Samtals</th><th class="num">Útistand&shy;andi</th><th class="num">Flutt</th><th class="num">Staða</th><th style="min-width:120px"></th></tr></thead><tbody>
+ ${st.emp.map(o=>`<tr><td><b>${esc(o.name)}</b></td><td class="num">${fmt(o.pctMax)}%</td><td class="num">${fmt(o.target)}</td><td class="num">${o.shifts}</td><td class="num">${fmt(o.worked)}</td><td class="num">${fmt(o.credit)}</td><td class="num">${fmt(o.total)}</td>
+   <td class="num ${o.outstanding<-(+R.hourTolerance||0)?'bad':''}">${fmt(o.outstanding)}</td><td class="num">${fmtS(o.carry)}</td><td class="num"><b>${fmtS(o.balance)}</b></td>
    <td><div class="bal"><span class="${o.balance<0?'neg':'pos'}" style="width:${Math.abs(o.balance)/max*50}%"></span></div></td></tr>`).join('')}
- </tbody><tfoot><tr><td>Samtals</td><td></td><td class="num">${fmt(t.target)}</td><td class="num">${st.emp.reduce((a,o)=>a+o.shifts,0)}</td><td class="num">${fmt(t.worked)}</td><td class="num">${fmt(t.credit)}</td><td class="num">${fmt(t.worked+t.credit)}</td><td class="num">${fmtS(t.worked+t.credit-t.target)}</td><td></td><td></td><td></td></tr></tfoot></table></div>
- <p class="hint">Samtals = stundir á vöktum + fjarvistir sem teljast til vinnuskyldu. Mismunur = samtals − vinnuskylda. Staða = mismunur + flutt staða frá fyrra tímabili.</p></section>
+ </tbody><tfoot><tr><td>Samtals</td><td></td><td class="num">${fmt(t.target)}</td><td class="num">${st.emp.reduce((a,o)=>a+o.shifts,0)}</td><td class="num">${fmt(t.worked)}</td><td class="num">${fmt(t.credit)}</td><td class="num">${fmt(t.worked+t.credit)}</td><td class="num">${fmt(t.target-t.worked-t.credit)}</td><td></td><td></td><td></td></tr></tfoot></table></div>
+ <p class="hint">Samtals = stundir á vöktum + fjarvistir sem teljast til vinnuskyldu. Útistandandi = vinnuskylda − samtals (jákvætt: tímar sem á eftir að raða, neikvætt: umfram). Staða = samtals − vinnuskylda + flutt staða frá fyrra tímabili. Vinnuskylda reiknast fyrir hvern virkan dag eftir starfshlutfalli þann dag, svo breytingar á tímabilinu skila sér.</p>
+ ${st.hourly.length?`<p class="hint">Ekki í vaktaplani: ${st.hourly.map(h=>`${esc(h.name)} (${esc(VP.STATUS_NAMES[h.status].toLowerCase())})`).join(', ')}.</p>`:''}</section>
  <section class="panel"><h2>Skipting vinnustunda og álag</h2><div class="tablewrap"><table class="data stat"><thead><tr><th>Starfsmaður</th>${catCols}<th class="num">Álags&shy;stundir</th><th class="num">Helgar</th><th class="num">Nætur</th><th class="num">Frídaga&shy;vaktir</th><th class="num">Óskir um frí</th></tr></thead><tbody>
  ${st.emp.map(o=>`<tr><td><b>${esc(o.name)}</b></td>${VP.CATS.map(c=>`<td class="num">${o.cats[c]?fmt(o.cats[c],2):'–'}</td>`).join('')}<td class="num"><b>${fmt(o.premium,2)}</b></td><td class="num" title="${o.weekendDays} helgardagar">${o.weekends}</td><td class="num">${o.nights}</td><td class="num">${o.holidayShifts}</td><td class="num">${o.wishOff?o.wishOffKept+'/'+o.wishOff:'–'}</td></tr>`).join('')}
  </tbody><tfoot><tr><td>Samtals</td>${VP.CATS.map(c=>`<td class="num">${fmt(t.cats[c],2)}</td>`).join('')}<td class="num">${fmt(st.emp.reduce((a,o)=>a+o.premium,0),2)}</td><td></td><td></td><td></td><td></td></tr></tfoot></table></div>
@@ -508,7 +585,7 @@ VIEWS.utgafa=()=>{
    <select id="weekSel"><option value="all">Allar vikur (ein vika á síðu)</option>${W.map((w,i)=>`<option value="${i}">Vika ${w.week}: ${esc(VP.shortDate(w.dates[0]))}–${esc(VP.shortDate(w.dates[w.dates.length-1]))}</option>`).join('')}</select>
    <button class="primary" data-pdf="week">Sækja PDF</button></div>
   <div class="card"><h3>Einstaklingsplan</h3><p>Vaktir eins starfsmanns með tímum, frídögum og stundauppgjöri.</p>
-   <select id="empSel"><option value="all">Allir starfsmenn (einn á síðu)</option>${S.employees.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')}</select>
+   <select id="empSel"><option value="all">Allir starfsmenn (einn á síðu)</option>${VP.buildCtx(S).emps.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')}</select>
    <button class="primary" data-pdf="person">Sækja PDF</button></div>
   <div class="card"><h3>JSON</h3><p>Öll gögn: vaktir, starfsfólk, frídagar, óskir, planið og reglur. Hægt að opna aftur hér eða nota í önnur kerfi.</p>
    <div class="toolbar"><button class="primary" data-act="save">Sækja JSON</button><button data-act="open">Opna JSON</button></div>
@@ -524,7 +601,7 @@ AFTER.utgafa=()=>{
     try{
       if(kind==='full')await VPPDF.full(S,{stats:$('#pdfStats').checked});
       if(kind==='week'){const v=$('#weekSel').value,W=weeksOfPeriod();await VPPDF.week(S,v==='all'?W:[W[+v]]);}
-      if(kind==='person'){const v=$('#empSel').value;await VPPDF.person(S,v==='all'?S.employees.map(e=>e.id):[v]);}
+      if(kind==='person'){const v=$('#empSel').value;await VPPDF.person(S,v==='all'?VP.buildCtx(S).emps.map(e=>e.id):[v]);}
     }catch(err){console.error(err);toast('Villa: '+err.message);}
     b.disabled=false;b.textContent=old;});
   $$('[data-json]').forEach(b=>b.onclick=()=>{
@@ -533,18 +610,18 @@ AFTER.utgafa=()=>{
       shift:v&&v.s?sh(v.s):null,absence:v&&v.a&&C.abs[v.a]?C.abs[v.a].name:null,wish:S.wishes[K(e.id,d)]||null};};
     if(b.dataset.json==='week'){const v=$('#weekSel').value,W=weeksOfPeriod(),ws=v==='all'?W:[W[+v]];
       const data={workplace:S.workplace,period:VP.periodRange(S.period.year,S.period.month),weeks:ws.map(w=>({week:w.week,from:w.dates[0],to:w.dates[w.dates.length-1],
-        days:w.dates.map(d=>({date:d,weekday:VP.DAYS[VP.dow(d)],holiday:C.info(d).hol||null,shifts:C.shifts.map(s=>({code:s.code,name:s.name,start:s.start,end:s.end,
-          staff:S.employees.filter(e=>(S.plan[K(e.id,d)]||{}).s===s.id).map(e=>e.name)}))}))}))};
+        days:w.dates.map(d=>({date:d,weekday:VP.DAYS[VP.dow(d)],holiday:C.info(d).hol||null,shifts:C.shifts.filter(s=>!s.countsAs).map(s=>({code:s.code,name:s.name,start:s.start,end:s.end,
+          staff:C.emps.filter(e=>{const v=S.plan[K(e.id,d)];return v&&v.s&&C.shift[v.s]&&VP.covId(C,v.s)===s.id;}).map(e=>{const v=S.plan[K(e.id,d)];return v.s===s.id?e.name:`${e.name} (${C.shift[v.s].start}–${C.shift[v.s].end})`;})}))}))}))};
       download(fileSlug()+(v==='all'?'-vikur':'-vika-'+ws[0].week)+'.json',JSON.stringify(data,null,2),'application/json');}
-    else{const v=$('#empSel').value,ids=v==='all'?S.employees.map(e=>e.id):[v];
+    else{const v=$('#empSel').value,ids=v==='all'?C.emps.map(e=>e.id):[v];
       const data={workplace:S.workplace,period:VP.periodRange(S.period.year,S.period.month),employees:ids.map(id=>{const e=empById(id),o=st.emp.find(x=>x.id===id);
-        return {name:e.name,title:e.title,pct:e.pct,summary:{target:o.target,worked:VP.round2(o.worked),absenceCredit:VP.round2(o.credit),diff:VP.round2(o.diff),carry:o.carry,balance:VP.round2(o.balance),
+        return {name:e.name,title:e.title,pct:e.pct,summary:{target:o.target,worked:VP.round2(o.worked),absenceCredit:VP.round2(o.credit),outstanding:VP.round2(o.outstanding),diff:VP.round2(o.diff),carry:o.carry,balance:VP.round2(o.balance),
           hoursByCategory:Object.fromEntries(VP.CATS.map(c=>[VP.CAT_NAMES[c],VP.round2(o.cats[c])])),premiumHours:VP.round2(o.premium)},days:C.dates.map(d=>entry(e,d))};})};
       download(fileSlug()+(v==='all'?'-starfsmenn':'-'+(empById(v).name||'starfsmadur').toLowerCase().replace(/ð/g,'d').replace(/þ/g,'th').replace(/æ/g,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-'))+'.json',JSON.stringify(data,null,2),'application/json');}
   });
   $('#nextPeriod').onclick=async()=>{
     if(!await ask('Stofna næsta tímabil? Planið fyrir núverandi tímabil helst í skránni en staða starfsfólks flyst yfir sem „flutt staða“.'))return;
-    pushUndo();const st=VP.stats(S);S.employees.forEach(e=>{const o=st.emp.find(x=>x.id===e.id);e.carry=VP.round2(o.balance);});
+    pushUndo();const st=VP.stats(S);S.employees.forEach(e=>{const o=st.emp.find(x=>x.id===e.id);if(o)e.carry=VP.round2(o.balance);});
     let {year:y,month:m}=S.period;m++;if(m>12){m=1;y++;}S.locks={};lastGen=null;setPeriod({year:y,month:m});step=5;render();toast('Nýtt tímabil: '+VP.periodLabel(S.period));};
 };
 
@@ -574,6 +651,7 @@ document.addEventListener('click',ev=>{
   else if(t.dataset.act==='open')$('#fileInput').click();
   else if(t.dataset.act==='pdf')VPPDF.full(S,{stats:true}).catch(e=>toast('Villa: '+e.message));
 });
+$('#importInput').onchange=ev=>{const f=ev.target.files[0];if(f)importFile(f);ev.target.value='';};
 $('#fileInput').onchange=ev=>{const f=ev.target.files[0];if(f)openJson(f);ev.target.value='';};
 document.addEventListener('dragover',ev=>ev.preventDefault());
 document.addEventListener('drop',ev=>{ev.preventDefault();const f=ev.dataTransfer.files[0];if(f)openJson(f);});

@@ -23,6 +23,22 @@ const DAYS_SHORT=['mán','þri','mið','fim','fös','lau','sun'];
 const DAYS_1=['M','Þ','M','F','F','L','S'];
 const CATS=['day','evening','night','weekend','red','major'];
 const CAT_NAMES={day:'Dagvinna',evening:'Kvöld',night:'Nótt',weekend:'Helgar',red:'Rauðir dagar',major:'Stórhátíðir'};
+/* Flokkar vakta sem starfsfólk velur sér (óskir) */
+const PREF_CATS=[['morning','Morgunvaktir'],['evening','Kvöldvaktir'],['weekendMorning','Morgunvaktir um helgar'],['weekendMid','Millivaktir um helgar'],['weekendEvening','Kvöldvaktir um helgar'],['night','Næturvaktir']];
+const PREF_NAME=Object.fromEntries(PREF_CATS);
+const STATUS_NAMES={active:'Í starfi',hourly:'Tímavinna',leave:'Í leyfi'};
+/* Giskar á flokk út frá tíma og hvort dagurinn er helgi */
+function guessCat(m0,m1,weekend){
+  if(m1>1440||m0>=21*60||m0<5*60)return 'night';
+  if(weekend)return m0<11*60?'weekendMorning':m0<14*60?'weekendMid':'weekendEvening';
+  return m0<12*60?'morning':'evening';
+}
+/* Starfshlutfall og staða starfsmanns á tilteknum degi (breytingar gilda frá dagsetningu) */
+function empOn(e,date){
+  let pct=+e.pct||0,status=e.status||'active';
+  for(const c of (e.changes||[]).slice().sort((a,b)=>a.from<b.from?-1:1)){if(c.from>date)break;if(c.pct!==''&&c.pct!=null)pct=+c.pct;if(c.status)status=c.status;}
+  return {pct,status};
+}
 
 function isoWeek(s){
   const d=parse(s),t=new Date(d.getTime());t.setUTCDate(t.getUTCDate()+3-((d.getUTCDay()+6)%7));
@@ -90,7 +106,10 @@ function buildCtx(state){
   const shifts=(state.shifts||[]).map(s=>({...s,...shiftTimes(s)}));
   const shift={};shifts.forEach(s=>shift[s.id]=s);
   const abs={};(state.absTypes||[]).forEach(a=>abs[a.id]=a);
-  const C={state,R,dates,n,idx,hol,infos,info,shifts,shift,abs,emps:state.employees||[],
+  const allEmps=state.employees||[],empDays={};
+  allEmps.forEach(e=>empDays[e.id]=dates.map(d=>empOn(e,d)));
+  const emps=allEmps.filter(e=>empDays[e.id].some(x=>x.status==='active'));
+  const C={state,R,dates,n,idx,hol,infos,info,shifts,shift,abs,emps,allEmps,empDays,
     dayStart:toMin(R.dayStart)??480,dayEnd:toMin(R.dayEnd)??1020,eveEnd:toMin(R.eveningEnd)??1440,
     rest:(+R.minRest||0)*60,maxConsec:+R.maxConsec||99,maxOver:R.maxOver===''||R.maxOver==null?999:+R.maxOver,
     hardWish:R.hardWishes!==false,daily:(+R.weekly||40)/5};
@@ -106,12 +125,24 @@ function buildCtx(state){
   shifts.forEach(s=>s.isNight=C.night(s));
   return C;
 }
+const dailyOf=(C,e)=>(e.weekly!==''&&e.weekly!=null&&+e.weekly>0?+e.weekly:(+C.R.weekly||40))/5;
+/* Vinnuskylda: summa yfir virka daga af (vikustundir/5 × starfshlutfall þann dag), aðeins dagar í starfi (ekki tímavinna/leyfi) */
 function targetHours(C,e){
   if(e.fixedTarget!==''&&e.fixedTarget!=null&&!isNaN(+e.fixedTarget))return +e.fixedTarget;
-  return round2(C.effWorkdays*C.daily*(+e.pct||0)/100);
+  const D=C.empDays[e.id]&&C.allEmps.includes(e)?C.empDays[e.id]:C.dates.map(d=>empOn(e,d)),dl=dailyOf(C,e);
+  return round2(D.reduce((s,x,i)=>s+(x.status==='active'?C.dayCredit[i]*dl*x.pct/100:0),0));
 }
 /* Hve mikið af fjarvistardegi telst til vinnuskyldu (klst.) */
-function absenceCredit(C,e,i,absId){const a=C.abs[absId];if(!a||!a.credit)return 0;return C.dayCredit[i]*C.daily*(+e.pct||0)/100;}
+function absenceCredit(C,e,i,absId){const a=C.abs[absId];if(!a||!a.credit)return 0;const x=(C.empDays[e.id]||[])[i]||empOn(e,C.dates[i]);
+  return x.status==='active'?C.dayCredit[i]*dailyOf(C,e)*x.pct/100:0;}
+/* Vaktir sem starfsmaður má taka: eftir óskum (flokkum), annars eftir lista, annars allar */
+function allowedIds(C,e){
+  if(e.prefs&&e.prefs.length){const P=new Set(e.prefs);return new Set(C.shifts.filter(s=>{const m=C.shift[covId(C,s.id)];const c=s.cat||(m&&m.cat);return !c||P.has(c);}).map(s=>s.id));}
+  if(e.allowed&&e.allowed.length)return new Set(e.allowed);
+  return new Set(C.shifts.map(s=>s.id));
+}
+/* Afbrigði vaktar (t.d. 08–13 í stað 08–16) telst með aðalvaktinni í mönnun */
+function covId(C,id){const s=C.shift[id];return s&&s.countsAs&&s.countsAs!==id&&C.shift[s.countsAs]?s.countsAs:id;}
 
 /* ---------- Flokkun mínútna vaktar eftir tíma og degi ---------- */
 function catOfMinute(C,m,f){
@@ -143,6 +174,7 @@ function shiftCats(C,date,shId){
 
 /* ---------- Mönnunarþörf ---------- */
 function needFor(C,i,sh){
+  if(sh.countsAs&&sh.countsAs!==sh.id&&C.shift[sh.countsAs])return 0;
   const d=C.dates[i],ov=(C.state.needOverride||{})[d+'|'+sh.id];
   if(ov!==undefined&&ov!==''&&ov!==null)return +ov||0;
   const f=C.infos[i],dem=sh.demand||[];
@@ -163,12 +195,13 @@ function prepare(C){
   const wishes=E.map(e=>C.dates.map(d=>(S.wishes||{})[e.id+'|'+d]||null));
   const target=E.map(e=>targetHours(C,e));
   const credit=E.map((e,ei)=>C.dates.reduce((s,d,i)=>{const v=S.plan[e.id+'|'+d];return s+(v&&v.a?absenceCredit(C,e,i,v.a):0);},0));
-  const pctf=E.map(e=>Math.max((+e.pct||0)/100,0.05));
-  const allowed=E.map(e=>new Set((e.allowed&&e.allowed.length?e.allowed:C.shifts.map(s=>s.id))));
+  const pctf=E.map(e=>Math.max(C.empDays[e.id].reduce((a,x)=>Math.max(a,x.status==='active'?x.pct:0),0)/100,0.05));
+  const allowed=E.map(e=>allowedIds(C,e));
+  const avail=E.map(e=>C.empDays[e.id].map(x=>x.status==='active'));
   const noDays=E.map(e=>new Set(e.noDays||[]));
   const nightOk=E.map((e,ei)=>C.shifts.some(s=>s.isNight&&allowed[ei].has(s.id)));
   const need=C.dates.map((d,i)=>C.shifts.map(s=>needFor(C,i,s)));
-  return {wishes,target,credit,pctf,allowed,noDays,nightOk,need};
+  return {wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need};
 }
 function runOnce(C,P,rnd,noise,pace){
   const S=C.state,E=C.emps,N=C.n,SH=C.shifts,shIdx={};SH.forEach((s,j)=>shIdx[s.id]=j);
@@ -176,11 +209,11 @@ function runOnce(C,P,rnd,noise,pace){
     if(v.a)return {a:v.a};if(v.s&&S.locks[k]&&C.shift[v.s])return {s:v.s,lock:true};return null;}));
   const hours=P.credit.slice(),wk=E.map(()=>0),nt=E.map(()=>0),cnt=C.dates.map(()=>SH.map(()=>0));
   const isWk=i=>C.infos[i].weekend||!!C.infos[i].hol;
-  grid.forEach((row,ei)=>row.forEach((c,i)=>{if(c&&c.s){const s=C.shift[c.s];hours[ei]+=s.hours;cnt[i][shIdx[c.s]]++;if(isWk(i))wk[ei]++;if(s.isNight)nt[ei]++;}}));
+  grid.forEach((row,ei)=>row.forEach((c,i)=>{if(c&&c.s){const s=C.shift[c.s];hours[ei]+=s.hours;cnt[i][shIdx[covId(C,c.s)]]++;if(isWk(i))wk[ei]++;if(s.isNight)nt[ei]++;}}));
   let unfilled=0,softViol=0;const holes=[];
   const can=(ei,i,sh,tol)=>{
     const row=grid[ei];if(row[i])return false;
-    if(!P.allowed[ei].has(sh.id)||P.noDays[ei].has(C.infos[i].dow))return false;
+    if(!P.avail[ei][i]||!P.allowed[ei].has(sh.id)||P.noDays[ei].has(C.infos[i].dow))return false;
     const w=P.wishes[ei][i];if(w&&w.off&&C.hardWish)return false;
     const st=i*1440+sh.m0,en=i*1440+sh.m1;
     for(let j=Math.max(0,i-2);j<i;j++){const p=row[j];if(p&&p.s&&j*1440+C.shift[p.s].m1+C.rest>st)return false;}
@@ -207,7 +240,7 @@ function runOnce(C,P,rnd,noise,pace){
     if(f.dow===5&&i<N-1&&row[i+1]&&row[i+1].s)s-=10;
     return s+rnd()*noise;
   };
-  const assign=(ei,i,sh)=>{grid[ei][i]={s:sh.id};hours[ei]+=sh.hours;cnt[i][shIdx[sh.id]]++;if(isWk(i))wk[ei]++;if(sh.isNight)nt[ei]++;
+  const assign=(ei,i,sh)=>{grid[ei][i]={s:sh.id};hours[ei]+=sh.hours;cnt[i][shIdx[covId(C,sh.id)]]++;if(isWk(i))wk[ei]++;if(sh.isNight)nt[ei]++;
     const w=P.wishes[ei][i];if(w&&w.off)softViol++;};
   for(let i=0;i<N;i++){
     const order=SH.map((sh,j)=>{const rem=P.need[i][j]-cnt[i][j];return {sh,j,rem,el:rem>0?E.reduce((a,_,ei)=>a+(can(ei,i,sh)?1:0),0):0};})
@@ -261,7 +294,8 @@ function generate(state,opts={}){
   const plan={};
   C.emps.forEach((e,ei)=>best.grid[ei].forEach((c,i)=>{if(c)plan[e.id+'|'+C.dates[i]]=c.a?{a:c.a}:{s:c.s};}));
   // halda færslum utan tímabils óbreyttum
-  for(const [k,v] of Object.entries(state.plan||{})){const d=k.split('|')[1];if(C.idx[d]==null)plan[k]=v;}
+  const inPlan=new Set(C.emps.map(e=>e.id));
+  for(const [k,v] of Object.entries(state.plan||{})){const [eid,d]=k.split('|');if(C.idx[d]==null||!inPlan.has(eid))plan[k]=v;}
   return {plan,unfilled:best.unfilled,holes:best.holes.map(h=>({date:C.dates[h.i],shift:h.shift,missing:h.missing})),runs:tried,score:best.score};
 }
 
@@ -283,32 +317,35 @@ function stats(state){
       if(w&&w.s){o.wishShift++;if(v&&v.s===w.s)o.wishShiftKept++;}
     });
     o.weekends=wkSet.size;
-    o.total=o.worked+o.credit;o.diff=o.total-o.target;o.balance=o.diff+o.carry;
+    o.total=o.worked+o.credit;o.diff=o.total-o.target;o.balance=o.diff+o.carry;o.outstanding=o.target-o.total;
+    const D=C.empDays[e.id];o.status=D.every(x=>x.status===D[0].status)?D[0].status:'mixed';o.pctNow=D[D.length-1].pct;o.pctMax=Math.max(...D.map(x=>x.status==='active'?x.pct:0));
     const R=S.rules.rates||{};o.premium=['evening','night','weekend','red','major'].reduce((s,c)=>s+o.cats[c]*(+R[c]||0)/100,0);
     return o;
   });
   const days=C.dates.map((d,i)=>{
     const row={date:d,info:C.infos[i],shifts:{},staff:0,hours:0};
     C.shifts.forEach(sh=>{row.shifts[sh.id]={have:0,need:needFor(C,i,sh),names:[]};});
-    C.emps.forEach(e=>{const v=S.plan[e.id+'|'+d];if(v&&v.s&&row.shifts[v.s]){row.shifts[v.s].have++;row.shifts[v.s].names.push(e.name);row.staff++;row.hours+=C.shift[v.s].hours;}});
+    C.emps.forEach(e=>{const v=S.plan[e.id+'|'+d];if(v&&v.s&&C.shift[v.s]){const x=row.shifts[covId(C,v.s)];x.have++;x.names.push(e.name);row.staff++;row.hours+=C.shift[v.s].hours;}});
     return row;
   });
   const tot={target:0,worked:0,credit:0,need:0,have:0,cats:Object.fromEntries(CATS.map(c=>[c,0]))};
   emp.forEach(o=>{tot.target+=o.target;tot.worked+=o.worked;tot.credit+=o.credit;for(const c of CATS)tot.cats[c]+=o.cats[c];});
   days.forEach(r=>Object.values(r.shifts).forEach(x=>{tot.need+=x.need;tot.have+=Math.min(x.have,x.need);}));
-  return {C,emp,days,tot,workdays:C.workdays,holReduction:C.holReduction,effWorkdays:C.effWorkdays};
+  const hourly=C.allEmps.filter(e=>!C.emps.includes(e)).map(e=>({id:e.id,name:e.name,status:C.empDays[e.id][C.n-1].status}));
+  return {C,emp,days,tot,hourly,workdays:C.workdays,holReduction:C.holReduction,effWorkdays:C.effWorkdays};
 }
 
 /* ---------- Yfirferð ---------- */
 function validate(state){
   const C=buildCtx(state),S=state,out=[],N=C.n;
   C.dates.forEach((d,i)=>C.shifts.forEach(sh=>{
-    const need=needFor(C,i,sh);let have=0;C.emps.forEach(e=>{const v=S.plan[e.id+'|'+d];if(v&&v.s===sh.id)have++;});
+    if(sh.countsAs&&C.shift[sh.countsAs]&&sh.countsAs!==sh.id)return;
+    const need=needFor(C,i,sh);let have=0;C.emps.forEach(e=>{const v=S.plan[e.id+'|'+d];if(v&&v.s&&C.shift[v.s]&&covId(C,v.s)===sh.id)have++;});
     if(have<need)out.push({level:'error',type:'under',date:d,shift:sh.id,msg:`${dateLabel(d)}: vantar ${need-have} á ${sh.name} (${have}/${need})`});
     else if(have>need)out.push({level:'info',type:'over',date:d,shift:sh.id,msg:`${dateLabel(d)}: ${have-need} umfram á ${sh.name} (${have}/${need})`});
   }));
   C.emps.forEach(e=>{
-    const row=C.dates.map(d=>S.plan[e.id+'|'+d]||null),allowed=e.allowed&&e.allowed.length?new Set(e.allowed):null,noD=new Set(e.noDays||[]);
+    const row=C.dates.map(d=>S.plan[e.id+'|'+d]||null),allowed=allowedIds(C,e),noD=new Set(e.noDays||[]),D=C.empDays[e.id];
     let run=0,runStart=0;
     row.forEach((c,i)=>{
       const d=C.dates[i],w=(S.wishes||{})[e.id+'|'+d];
@@ -318,7 +355,8 @@ function validate(state){
         if(run===C.maxConsec+1)out.push({level:'warn',type:'consec',emp:e.id,date:C.dates[runStart],msg:`${e.name}: fleiri en ${C.maxConsec} vinnudagar í röð frá ${dateLabel(C.dates[runStart])}`});
         for(let j=i+1;j<=Math.min(N-1,i+2);j++){const q=row[j];if(q&&q.s&&C.shift[q.s]){const gap=(j*1440+C.shift[q.s].m0)-(i*1440+sh.m1);
           if(gap<C.rest)out.push({level:'warn',type:'rest',emp:e.id,date:d,msg:`${e.name}: aðeins ${round2(gap/60)} klst. hvíld milli ${sh.code} (${dateLabel(d)}) og ${C.shift[q.s].code} (${dateLabel(C.dates[j])})`});break;}}
-        if(allowed&&!allowed.has(c.s))out.push({level:'warn',type:'allowed',emp:e.id,date:d,msg:`${e.name}: ${sh.name} ${dateLabel(d)} er ekki á lista yfir vaktir starfsmanns`});
+        if(D[i].status!=='active')out.push({level:'warn',type:'status',emp:e.id,date:d,msg:`${e.name} er á vakt ${dateLabel(d)} en er skráð í ${STATUS_NAMES[D[i].status].toLowerCase()} þann dag`});
+        if(!allowed.has(c.s))out.push({level:'warn',type:'allowed',emp:e.id,date:d,msg:`${e.name}: ${sh.name} ${dateLabel(d)} er ekki á lista yfir vaktir starfsmanns`});
         if(noD.has(C.infos[i].dow))out.push({level:'warn',type:'noday',emp:e.id,date:d,msg:`${e.name} vinnur að jafnaði ekki á ${DAYS[C.infos[i].dow]}um (${dateLabel(d)})`});
         if(w&&w.off)out.push({level:'warn',type:'wish',emp:e.id,date:d,msg:`${e.name}: á vakt þrátt fyrir ósk um frí ${dateLabel(d)}`});
       }else run=0;
@@ -330,7 +368,91 @@ function validate(state){
   return out;
 }
 
-const API={fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
+/* ---------- Innlestur á völdum vöktum (CSV/Excel) ----------
+   Tafla þar sem ein lína er starfsmaður og hver dálkur dagur (t.d. „16.11 mán.“) og reitir eru tímar („08:00-16:00“),
+   kóðar vakta eða kóðar fjarvista. Innlesnar vaktir eru læstar svo röðunin raðar aðeins á það sem eftir er. */
+function parseCsv(text){
+  text=String(text||'').replace(/^﻿/,'');
+  const first=text.split(/\r?\n/).filter(l=>l.trim()).slice(0,5).join('\n');
+  const cnt=c=>(first.match(new RegExp(c==='\t'?'\\t':'\\'+c,'g'))||[]).length;
+  const delim=['\t',';',','].sort((a,b)=>cnt(b)-cnt(a))[0];
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}
+    else if(ch==='"')q=true;
+    else if(ch===delim){row.push(cur);cur='';}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cur);rows.push(row);row=[];cur='';}
+    else cur+=ch;}
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
+const normName=s=>String(s||'').normalize('NFC').toLowerCase().replace(/\s+/g,' ').trim();
+const hhmm=m=>pad(Math.floor(m/60)%24||(m>0&&m%1440===0?24:0))+':'+pad(m%60);
+function parseRange(v){
+  const m=String(v).trim().match(/^(\d{1,2})(?:[:.](\d{2}))?\s*[-–—]\s*(\d{1,2})(?:[:.](\d{2}))?$/);
+  if(!m)return null;const a=+m[1]*60+(+m[2]||0);let b=+m[3]*60+(+m[4]||0);
+  if(a>=1440||b>1440)return null;if(b<=a)b+=1440;return {m0:a,m1:b};
+}
+function importTable(state,rows,opts={}){
+  const uid=p=>p+Math.random().toString(36).slice(2,9);
+  rows=(rows||[]).map(r=>(r||[]).map(c=>c==null?'':String(c).trim()));
+  const rep={period:null,count:0,replaced:0,newEmps:[],newShifts:[],unknown:[],inactive:[]};
+  // tímabil úr skjalinu, t.d. „16.11.2026 - 15.12.2026“
+  for(const r of rows)for(const c of r){const m=c.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})\s*[-–]\s*(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+    if(m&&!rep.period&&+m[1]===16){rep.period={year:+m[3],month:+m[2]};}}
+  if(rep.period&&(rep.period.year!==state.period.year||rep.period.month!==state.period.month)&&opts.setPeriod!==false){
+    const custom=(state.holidays||[]).filter(h=>h.custom);state.period=rep.period;const {start,end}=periodRange(rep.period.year,rep.period.month);
+    const auto=holidaysForPeriod(rep.period),ad=new Set(auto.map(h=>h.date));
+    state.holidays=[...auto,...custom.filter(h=>h.date>=start&&h.date<=end&&!ad.has(h.date))].sort((a,b)=>a.date<b.date?-1:1);rep.periodChanged=true;}
+  const {start,end}=periodRange(state.period.year,state.period.month),sy=+start.slice(0,4),ey=+end.slice(0,4);
+  const dateOf=c=>{let m=c.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;
+    m=c.match(/^(\d{1,2})[.\/](\d{1,2})(?:[.\/](\d{2,4}))?(?![\d:])/);if(!m)return null;const d=+m[1],mo=+m[2];if(d<1||d>31||mo<1||mo>12)return null;
+    if(m[3]){let y=+m[3];if(y<100)y+=2000;return `${y}-${pad(mo)}-${pad(d)}`;}
+    for(const y of [sy,ey]){const x=`${y}-${pad(mo)}-${pad(d)}`;if(x>=start&&x<=end)return x;}return `${sy}-${pad(mo)}-${pad(d)}`;};
+  let hi=-1,best=0;rows.forEach((r,i)=>{const n=r.filter(c=>c&&!/\d{4}\s*[-–]/.test(c)&&dateOf(c)).length;if(n>best){best=n;hi=i;}});
+  if(hi<0||best<3)throw Error('Fann ekki línu með dagsetningum (t.d. „16.11 mán.“) í skjalinu.');
+  const cols={};rows[hi].forEach((c,j)=>{const d=c&&dateOf(c);if(d)cols[j]=d;});
+  const firstCol=Math.min(...Object.keys(cols).map(Number));
+  let nameCol=-1,nb=0;for(let j=0;j<firstCol;j++){const n=rows.slice(hi+1).filter(r=>r[j]&&/[a-zA-Z\u00C0-\u00FF]/.test(r[j])).length;if(n>nb){nb=n;nameCol=j;}}
+  if(nameCol<0)throw Error('Fann ekki dálk með nöfnum starfsfólks vinstra megin við dagsetningarnar.');
+  const byName={};(state.employees||[]).forEach(e=>byName[normName(e.name)]=e);
+  for(const r of rows.slice(hi+1)){
+    const name=r[nameCol];if(!name||!/[a-zA-Z\u00C0-\u00FF]/.test(name))continue;
+    let e=byName[normName(name)];
+    const cells=Object.entries(cols).filter(([j])=>r[j]);
+    if(!e){if(!cells.length&&opts.addEmpty===false)continue;
+      e={id:uid('e'),name,title:'',pct:0,status:'active',prefs:[],changes:[],allowed:[],noDays:[],carry:0,fixedTarget:'',weekly:'',note:'Bætt við úr innlestri. Skráðu starfshlutfall.'};
+      state.employees.push(e);byName[normName(name)]=e;rep.newEmps.push(name);}
+    for(const [j,d] of cells){
+      if(d<start||d>end)continue;
+      const v=r[j],k=e.id+'|'+d;let C=buildCtx(state);const i=C.idx[d],f=C.infos[i],wk=f.weekend||!!f.hol;
+      const t=parseRange(v);let val=null;
+      if(t){
+        const same=C.shifts.filter(s=>s.m0===t.m0&&s.m1===t.m1),cat=guessCat(t.m0,t.m1,wk);
+        let sh=same.find(s=>needFor(C,i,C.shift[covId(C,s.id)])>0)||same.find(s=>(s.cat||'')===cat);
+        if(!sh){
+          const mains=C.shifts.filter(s=>!s.countsAs&&s.cat===cat&&needFor(C,i,s)>0).sort((a,b)=>Math.abs(a.m0-t.m0)-Math.abs(b.m0-t.m0));
+          const main=mains[0]||null;let code=`${Math.floor(t.m0/60)}-${Math.floor(t.m1/60)%24}`;
+          const codes=new Set(state.shifts.map(s=>s.code));if(codes.has(code)){let n=2;while(codes.has(code+'·'+n))n++;code=code+'·'+n;}
+          const ns={id:uid('s'),code,name:(main?main.name:PREF_NAME[cat].replace(/ir( um helgar)?$/,'$1').replace(/vakt$/,'vakt')),start:hhmm(t.m0),end:hhmm(t.m1),break:0,
+            color:main?main.color:'#c9c3b6',demand:[0,0,0,0,0,0,0,'',''],max:'',cat,countsAs:main?main.id:''};
+          state.shifts.push(ns);rep.newShifts.push(`${ns.code}: ${hhmm(t.m0)}–${hhmm(t.m1)}`+(main?` (telst sem ${main.name})`:''));C=buildCtx(state);sh=C.shift[ns.id];
+        }
+        val={s:sh.id};
+      }else{
+        const lc=v.toLowerCase(),s2=state.shifts.find(s=>s.code.toLowerCase()===lc),a2=!s2&&(state.absTypes||[]).find(a=>a.code.toLowerCase()===lc||a.name.toLowerCase()===lc);
+        if(s2)val={s:s2.id};else if(a2)val={a:a2.id};
+      }
+      if(!val){rep.unknown.push(`${name} ${dateLabel(d)}: „${v}“`);continue;}
+      if(state.plan[k])rep.replaced++;
+      state.plan[k]=val;if(val.s)state.locks[k]=true;else delete state.locks[k];rep.count++;
+      if(val.s&&empOn(e,d).status!=='active')rep.inactive.push(`${name} ${dateLabel(d)}`);
+    }
+  }
+  return rep;
+}
+
+const API={PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
   MONTHS,DAYS,DAYS_SHORT,DAYS_1,CATS,CAT_NAMES,easter,icelandicHolidays,holidaysForPeriod,shiftTimes,buildCtx,targetHours,absenceCredit,
   shiftCats,needFor,generate,stats,validate};
 if(typeof module!=='undefined'&&module.exports)module.exports=API;else root.VP=API;
