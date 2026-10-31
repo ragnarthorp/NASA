@@ -225,7 +225,7 @@ function rng32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>
 function prepare(C){
   const S=C.state,E=C.emps;
   const wishes=E.map(e=>C.dates.map(d=>(S.wishes||{})[e.id+'|'+d]||null));
-  const target=E.map(e=>targetHours(C,e));
+  const target=E.map(e=>targetHours(C,e)-(S.rules.carryInTarget?(+e.carry||0):0));   // skuld (neikvæð staða) bætist við vinnuskyldu
   const credit=E.map((e,ei)=>C.dates.reduce((s,d,i)=>{const v=S.plan[e.id+'|'+d];return s+(v&&v.a?absenceCredit(C,e,i,v.a):0);},0));
   const pctf=E.map(e=>Math.max(C.empDays[e.id].reduce((a,x)=>Math.max(a,x.status==='active'?x.pct:0),0)/100,0.05));
   const allowed=E.map(e=>allowedIds(C,e));
@@ -246,7 +246,8 @@ function prepare(C){
   const scope=E.map(e=>e.priorityScope||'all');
   const nightPref=E.map(e=>prefLevel(e,'night')===2);
   const empOver=E.map(e=>e.maxOver===''||e.maxOver==null||isNaN(+e.maxOver)?null:+e.maxOver);
-  const weekCap=E.map(e=>e.maxWeekHours===''||e.maxWeekHours==null||!(+e.maxWeekHours>0)?null:+e.maxWeekHours);
+  const gCap=+S.rules.maxWeekHours>0?+S.rules.maxWeekHours:null;
+  const weekCap=E.map(e=>{const c=e.maxWeekHours===''||e.maxWeekHours==null||!(+e.maxWeekHours>0)?null:+e.maxWeekHours;return c!=null&&gCap!=null?Math.min(c,gCap):(c??gCap);});
   const weekKey=C.dates.map(d=>isoWeek(d));
   const d0=C.dates[0],PT=S.prevTail||{};
   const prev=E.map(e=>{const L=(PT[e.id]||[]).filter(x=>x.date<d0).sort((a,b)=>a.date<b.date?-1:1);if(!L.length)return null;
@@ -288,6 +289,8 @@ function runOnce(C,P,rnd,noise,pace){
     if(run>P.maxCon[ei])return false;
     if(P.maxWk[ei]!=null&&P.wkKey[i]!=null&&!wkSets[ei].has(P.wkKey[i])&&wkSets[ei].size+1>P.maxWk[ei])return false;
     if(hours[ei]+sh.hours>P.target[ei]+(tol??(P.empOver[ei]??C.maxOver))+1e-6)return false;
+    if(sh.m1>1440&&+C.R.maxNightsRow>0){let nr=1;for(let j=i-1;j>=0&&row[j]&&row[j].s&&C.shift[row[j].s].m1>1440;j--)nr++;
+      for(let j=i+1;j<N&&row[j]&&row[j].s&&C.shift[row[j].s].m1>1440;j++)nr++;if(nr>+C.R.maxNightsRow)return false;}
     if(P.weekCap[ei]!=null){const wk0=P.weekKey[i];let wh=sh.hours;for(let j=0;j<N;j++)if(P.weekKey[j]===wk0&&row[j]&&row[j].s)wh+=C.shift[row[j].s].hours;if(wh>P.weekCap[ei]+1e-6)return false;}
     if(pace&&tol==null&&hours[ei]+sh.hours>P.target[ei]*(i+1)/N+pace)return false;
     return true;
@@ -455,6 +458,11 @@ function validate(state){
       if(w&&w.s&&!(c&&c.s===w.s)&&C.shift[w.s])out.push({level:'info',type:'wishshift',emp:e.id,date:d,msg:`${e.name}: ósk um ${C.shift[w.s].name} ${dateLabel(d)} ekki uppfyllt`});
     });
   });
+  C.emps.forEach(e=>{const W={};let nr=0;
+    C.dates.forEach((d,i)=>{const v=S.plan[e.id+'|'+d];const sh=v&&v.s&&C.shift[v.s];if(sh){const k=isoWeek(d);W[k]=(W[k]||0)+sh.hours;}
+      if(sh&&sh.m1>1440){nr++;if(+S.rules.maxNightsRow>0&&nr===+S.rules.maxNightsRow+1)out.push({level:'warn',type:'nights',emp:e.id,date:d,msg:`${e.name}: fleiri en ${S.rules.maxNightsRow} næturvaktir í röð (${dateLabel(d)})`});}else nr=0;});
+    const cap=Math.min(+e.maxWeekHours>0?+e.maxWeekHours:1e9,+S.rules.maxWeekHours>0?+S.rules.maxWeekHours:1e9);
+    Object.entries(W).forEach(([k,h])=>{if(h>cap+1e-6)out.push({level:'warn',type:'week',emp:e.id,msg:`${e.name}: ${fmtNum(h)} klst. í viku ${k} (hámark ${fmtNum(cap)})`});});});
   const st=stats(state),tol=+S.rules.hourTolerance||4;
   st.emp.forEach(o=>{if(Math.abs(o.diff)>tol)out.push({level:'warn',type:'hours',emp:o.id,msg:`${o.name}: ${o.diff>0?'+':''}${fmtNum(o.diff)} klst. miðað við vinnuskyldu (${fmtNum(o.total)} af ${fmtNum(o.target)})`});});
   return out;

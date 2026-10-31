@@ -174,9 +174,12 @@ VIEWS.grunnur=()=>{
     <div class="field"><label>Lágmarkshvíld milli vakta (klst.)</label>${num('rules.minRest',R.minRest,'min="0" max="24" step="0.5"')}</div>
     <div class="field"><label>Hámark vinnudaga í röð</label>${num('rules.maxConsec',R.maxConsec,'min="1" max="14"')}</div>
     <div class="field"><label>Má fara mest yfir vinnuskyldu um (klst.)</label>${num('rules.maxOver',R.maxOver,'min="0" step="0.5"')}</div>
+    <div class="field"><label>Hámark klst. á viku (allir)</label>${num('rules.maxWeekHours',R.maxWeekHours,'min="0" step="1"')}</div>
+    <div class="field"><label>Hámark næturvakta í röð</label>${num('rules.maxNightsRow',R.maxNightsRow,'min="0" max="14"')}</div>
    </div>
    <label class="check"><input type="checkbox" data-k="rules.hardWishes" ${R.hardWishes?'checked':''}> Óskir um frí eru bindandi (annars reynir röðunin að virða þær en má víkja frá þeim)</label>
    <label class="check"><input type="checkbox" data-k="rules.fillUp" ${R.fillUp?'checked':''}> Fylla upp í vinnuskyldu með aukavöktum umfram lágmarksmönnun (að hámarki „hámark á vakt“ ef það er skráð)</label>
+   <label class="check"><input type="checkbox" data-k="rules.carryInTarget" ${R.carryInTarget?'checked':''}> Flutt staða telst með: sá sem skuldar vinnuskyldu frá fyrra tímabili fær fleiri vaktir (á undan tímavinnufólki) og sá sem á inni fær færri</label>
    <label class="check"><input type="checkbox" data-k="rules.useHourly" ${S.rules.useHourly?'checked':''}> Nota tímavinnufólk í vaktir sem ekki tekst að manna með föstu starfsfólki („Manna allar lausar vaktir“)</label>
    <label class="check"><input type="checkbox" data-k="rules.noAfterNight" ${S.rules.noAfterNight!==false?'checked':''}> Aldrei vakt sama dag og næturvakt lýkur (önnur næturvakt í röð er leyfð)</label>
    <label class="check"><input type="checkbox" data-k="rules.wishFirst" ${R.wishFirst!==false?'checked':''}> Úthluta óskum um vaktir fyrst. Ef fleiri óska eftir vakt en pláss er ræður forgangur starfsmanns, síðan hver hefur fengið hlutfallslega fæstar óskir uppfylltar.</label>
