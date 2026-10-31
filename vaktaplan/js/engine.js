@@ -267,7 +267,7 @@ function runOnce(C,P,rnd,noise,pace){
     const w=P.wishes[ei][i];if(w&&w.off)softViol++;if(w&&w.s===sh.id)granted[ei]++;};
   const free=(i,sh)=>P.need[i][shIdx[covId(C,sh.id)]]-cnt[i][shIdx[covId(C,sh.id)]];
   // 1) fastar vaktir (t.d. sjúkraliði á 8–16 alla virka daga)
-  for(let i=0;i<N;i++)E.forEach((e,ei)=>{const sh=P.fixed[ei];if(sh&&free(i,sh)>0&&can(ei,i,sh))assign(ei,i,sh);});
+  for(let i=0;i<N;i++)E.forEach((e,ei)=>{const sh=P.fixed[ei],w=P.wishes[ei][i];if(w&&(w.off||(w.s&&w.s!==(sh&&sh.id))))return;if(sh&&free(i,sh)>0&&can(ei,i,sh))assign(ei,i,sh);});
   // 2) óskir: úthlutað fyrst; ef fleiri óska en pláss er ræður forgangur, síðan hver hefur fengið hlutfallslega fæstar óskir
   if(C.R.wishFirst!==false)for(let i=0;i<N;i++){
     const L=[];E.forEach((e,ei)=>{const w=P.wishes[ei][i];if(w&&w.s&&C.shift[w.s]&&!grid[ei][i])L.push({ei,sh:C.shift[w.s],r:rnd()});});
@@ -491,7 +491,73 @@ function importTable(state,rows,opts={}){
   return rep;
 }
 
-const API={PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
+/* ---------- Árekstrar í óskum ----------
+   Greint beint út frá óskum, mönnunarþörf, föstum/læstum vöktum og reglum, án þess að raða.
+   over: fleiri óska eftir vakt en pláss er; noslot: óskuð vakt er ekki í boði þann dag; rule: ósk brýtur reglu eða forsendu starfsmanns. */
+function wishConflicts(state){
+  const C=buildCtx(state),S=state,W=S.wishes||{},E=C.emps,over=[],noslot=[],rule=[],keys=new Set(),days=new Set(),free={};
+  const minRest=C.rest,hhh=x=>round2(x/60);
+  C.dates.forEach((d,i)=>{
+    const slots={},slot=id=>slots[id]||(slots[id]={date:d,main:id,need:needFor(C,i,C.shift[id]),taken:0,takenBy:[],wishers:[]});
+    E.forEach(e=>{
+      const k=e.id+'|'+d,w=W[k],v=S.plan[k],ws=w&&w.s&&C.shift[w.s]?w.s:null,act=C.empDays[e.id][i].status==='active';
+      if(v&&v.s&&C.shift[v.s]&&(S.locks[k]||(ws&&v.s===ws))){const sl=slot(covId(C,v.s));sl.taken++;sl.takenBy.push(e.name);
+        if(ws)slot(covId(C,ws)).wishers.push({e,key:k,ws,granted:v.s===ws});return;}
+      if(!ws){const f=e.fixedShift&&C.shift[e.fixedShift];
+        if(f&&act&&!(w&&w.off)&&!(v&&v.a)&&!(e.noDays||[]).includes(C.infos[i].dow)&&needFor(C,i,C.shift[covId(C,f.id)])>0){const sl=slot(covId(C,f.id));sl.taken++;sl.takenBy.push(e.name+' (föst vakt)');}
+        return;}
+      if(!act)return;
+      if(ws===e.fixedShift&&!(v&&v.a)){const sl=slot(covId(C,ws));sl.taken++;sl.takenBy.push(e.name+' (föst vakt)');sl.wishers.push({e,key:k,ws,granted:true,fixed:true});return;}
+      slot(covId(C,ws)).wishers.push({e,key:k,ws,granted:false});
+    });
+    free[d]={};C.shifts.forEach(x=>{if(!x.countsAs)free[d][x.id]=needFor(C,i,x);});
+    Object.values(slots).forEach(sl=>{free[d][sl.main]=sl.need-sl.taken-sl.wishers.filter(x=>!x.granted).length;});
+    Object.values(slots).forEach(sl=>{
+      const pend=sl.wishers.filter(x=>!x.granted),avail=sl.need-sl.taken;
+      if(!pend.length)return;
+      if(sl.need<=0){pend.forEach(x=>{noslot.push({date:d,main:sl.main,emp:x.e.id,name:x.e.name,key:x.key,ws:x.ws});keys.add(x.key);days.add(d);});return;}
+      if(pend.length>Math.max(0,avail)){over.push({...sl,avail:Math.max(0,avail),pending:pend.length});pend.forEach(x=>keys.add(x.key));days.add(d);}
+    });
+  });
+  // reglur og forsendur hvers starfsmanns
+  E.forEach(e=>{
+    const D=C.empDays[e.id],lvl=s=>prefLevel(e,shiftCat(C,s)),tgt=targetHours(C,e),maxCon=e.maxConsec===''||e.maxConsec==null||!(+e.maxConsec>0)?C.maxConsec:+e.maxConsec;
+    const row=C.dates.map(d=>{const k=e.id+'|'+d,w=W[k],v=S.plan[k];
+      if(w&&w.s&&C.shift[w.s])return {k,s:C.shift[w.s],wish:true,abs:v&&v.a};
+      if(v&&v.s&&C.shift[v.s]&&S.locks[k])return {k,s:C.shift[v.s],wish:false};return null;});
+    const add=(i,reason,fix)=>{const x=row[i];rule.push({date:C.dates[i],emp:e.id,name:e.name,key:x?x.k:null,ws:x&&x.s.id,reason,fix});if(x)keys.add(x.k);};
+    let hrs=0,run=0,wk=new Set();
+    row.forEach((x,i)=>{
+      if(!x){run=0;return;}
+      hrs+=x.s.hours;
+      if(x.wish){
+        if(D[i].status!=='active')add(i,`er í ${STATUS_NAMES[D[i].status].toLowerCase()} þennan dag`);
+        else if(x.abs)add(i,'er með skráða fjarvist þennan dag');
+        if(lvl(x.s)===0)add(i,`er merkt „Ekki“ við ${(PREF_NAME[shiftCat(C,x.s)]||'').toLowerCase()}`,'level');
+        if((e.noDays||[]).includes(C.infos[i].dow))add(i,`vinnur að jafnaði ekki á ${DAYS[C.infos[i].dow]}um`);
+      }
+      for(let j=i+1;j<=Math.min(C.n-1,i+2);j++){const y=row[j];if(y){const gap=(j*1440+y.s.m0)-(i*1440+x.s.m1);
+        if(gap<minRest&&(x.wish||y.wish))add(i,`aðeins ${hhh(gap)} klst. hvíld fram að ${y.s.code} ${dateLabel(C.dates[j])}`);break;}}
+      run++;if(run===maxCon+1)add(i,`fleiri en ${maxCon} vinnudagar í röð`);
+      if(C.infos[i].dow>=5)wk.add(isoWeek(C.dates[i]));
+    });
+    if(e.maxWeekends!==''&&e.maxWeekends!=null&&wk.size>+e.maxWeekends)rule.push({emp:e.id,name:e.name,reason:`óskar eftir ${wk.size} helgum en hámark er ${e.maxWeekends}`,fix:'emp'});
+    if(hrs>tgt+C.maxOver+1e-6)rule.push({emp:e.id,name:e.name,reason:`óskir eru ${fmtNum(hrs)} klst. en vinnuskylda ${fmtNum(tgt)} (+${fmtNum(C.maxOver)} leyfilegt umfram)`,fix:'emp'});
+  });
+  return {over,noslot,rule,keys,days,free,count:over.length+noslot.length+rule.length};
+}
+/* Veita ósk: setja vaktina inn læsta og losa ólæstar vaktir á sama plássi ef það yfirfyllist */
+function grantWish(state,key){
+  const w=(state.wishes||{})[key];if(!w||!w.s)return false;
+  state.plan[key]={s:w.s};state.locks[key]=true;
+  const C=buildCtx(state),d=key.split('|')[1],i=C.idx[d],main=covId(C,w.s),need=needFor(C,i,C.shift[main]);
+  const on=C.emps.map(e=>e.id+'|'+d).filter(k=>{const v=state.plan[k];return v&&v.s&&C.shift[v.s]&&covId(C,v.s)===main;});
+  let extra=on.length-need;
+  for(const k of on){if(extra<=0)break;if(k!==key&&!state.locks[k]){delete state.plan[k];extra--;}}
+  return true;
+}
+
+const API={wishConflicts,grantWish,PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
   MONTHS,DAYS,DAYS_SHORT,DAYS_1,CATS,CAT_NAMES,easter,icelandicHolidays,holidaysForPeriod,shiftTimes,buildCtx,targetHours,absenceCredit,
   shiftCats,needFor,generate,stats,validate};
 if(typeof module!=='undefined'&&module.exports)module.exports=API;else root.VP=API;

@@ -260,3 +260,23 @@ table.dayed input.ovr{font-weight:700;border-color:var(--accent)}
 .cell.granted{box-shadow:inset 0 -3px 0 var(--good)}
 .cell .ghosttxt{white-space:nowrap;font-size:10px;letter-spacing:-.02em}
 .st-off{background:var(--chipoff);color:var(--muted)}
+/* árekstrar í óskum */
+.panel.conf{border-color:var(--warn);border-left:5px solid var(--warn)}
+.panel.conf.ok{border-color:var(--line);border-left-color:var(--good)}
+.clist{max-height:460px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.clist h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:8px 0 0}
+.citem{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--card)}
+.ch{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.ch .acts{margin-left:auto}
+.acts{display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center}
+.acts .sel-sm{width:auto;min-width:110px}
+.cbad{color:var(--bad);font-weight:600;font-size:14px}
+.cwarn{color:var(--warn);font-weight:600;font-size:14px}
+ul.cws{list-style:none;margin:6px 0 0;padding:0}
+li.cw{display:flex;flex-wrap:wrap;gap:6px 12px;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:14px}
+li.cw.granted{color:var(--muted)}
+.tag.ok{background:var(--good);color:var(--card)}
+.linkbtn{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--accent);text-decoration:underline;cursor:pointer}
+.cell.wconf{outline:2px dashed var(--warn);outline-offset:-3px}
+.covc.conflict{background:var(--warn);color:var(--card);font-weight:700}
+.hm.cw8{color:var(--warn);font-size:11px}
