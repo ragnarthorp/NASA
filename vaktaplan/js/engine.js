@@ -219,12 +219,14 @@ function prepare(C){
   const maxCon=E.map(e=>e.maxConsec===''||e.maxConsec==null||!(+e.maxConsec>0)?C.maxConsec:+e.maxConsec);
   const asked=E.map((e,ei)=>wishes[ei].filter(w=>w&&w.s&&C.shift[w.s]).length);
   const wkKey=C.dates.map((d,i)=>C.infos[i].dow>=5?isoWeek(d):null);
-  return {wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
+  const B=S.blocks||{},blocked=E.map(e=>C.dates.map(d=>{const b=B[e.id+'|'+d];return b&&b.length?new Set(b):null;}));
+  return {blocked,wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
 }
 function runOnce(C,P,rnd,noise,pace){
   const S=C.state,E=C.emps,N=C.n,SH=C.shifts,shIdx={};SH.forEach((s,j)=>shIdx[s.id]=j);
   const grid=E.map(e=>C.dates.map(d=>{const k=e.id+'|'+d,v=S.plan[k];if(!v)return null;
-    if(v.a)return {a:v.a};if(v.s&&S.locks[k]&&C.shift[v.s])return {s:v.s,lock:true};return null;}));
+    if(v.a)return {a:v.a};const w=(S.wishes||{})[k];
+    if(v.s&&C.shift[v.s]&&(S.locks[k]||(w&&w.s===v.s)))return {s:v.s,lock:true};return null;}));  // uppfylltar óskir haldast alltaf
   const hours=P.credit.slice(),wk=E.map(()=>0),nt=E.map(()=>0),cnt=C.dates.map(()=>SH.map(()=>0));
   const isWk=i=>C.infos[i].weekend||!!C.infos[i].hol;
   grid.forEach((row,ei)=>row.forEach((c,i)=>{if(c&&c.s){const s=C.shift[c.s];hours[ei]+=s.hours;cnt[i][shIdx[covId(C,c.s)]]++;if(isWk(i))wk[ei]++;if(s.isNight)nt[ei]++;}}));
@@ -235,6 +237,7 @@ function runOnce(C,P,rnd,noise,pace){
   const can=(ei,i,sh,tol)=>{
     const row=grid[ei];if(row[i])return false;
     if(!P.avail[ei][i]||!P.allowed[ei].has(sh.id)||P.noDays[ei].has(C.infos[i].dow))return false;
+    if(P.blocked[ei][i]&&P.blocked[ei][i].has(covId(C,sh.id)))return false;
     const w=P.wishes[ei][i];if(w&&w.off&&C.hardWish)return false;
     const st=i*1440+sh.m0,en=i*1440+sh.m1;
     for(let j=Math.max(0,i-2);j<i;j++){const p=row[j];if(p&&p.s&&j*1440+C.shift[p.s].m1+C.rest>st)return false;}
@@ -394,6 +397,7 @@ function validate(state){
         for(let j=i+1;j<=Math.min(N-1,i+2);j++){const q=row[j];if(q&&q.s&&C.shift[q.s]){const gap=(j*1440+C.shift[q.s].m0)-(i*1440+sh.m1);
           if(gap<C.rest)out.push({level:'warn',type:'rest',emp:e.id,date:d,msg:`${e.name}: aðeins ${round2(gap/60)} klst. hvíld milli ${sh.code} (${dateLabel(d)}) og ${C.shift[q.s].code} (${dateLabel(C.dates[j])})`});break;}}
         if(D[i].status!=='active')out.push({level:'warn',type:'status',emp:e.id,date:d,msg:`${e.name} er á vakt ${dateLabel(d)} en er skráð í ${STATUS_NAMES[D[i].status].toLowerCase()} þann dag`});
+        const bl=(S.blocks||{})[e.id+'|'+d];if(bl&&bl.includes(covId(C,c.s)))out.push({level:'warn',type:'block',emp:e.id,date:d,msg:`${e.name}: ${sh.code} ${dateLabel(d)} var tekin út („raða aftur án“) en er komin aftur inn`});
         if(!allowed.has(c.s))out.push({level:'warn',type:'allowed',emp:e.id,date:d,msg:`${e.name}: ${sh.name} ${dateLabel(d)} er ekki á lista yfir vaktir starfsmanns`});
         if(noD.has(C.infos[i].dow))out.push({level:'warn',type:'noday',emp:e.id,date:d,msg:`${e.name} vinnur að jafnaði ekki á ${DAYS[C.infos[i].dow]}um (${dateLabel(d)})`});
         if(w&&w.off)out.push({level:'warn',type:'wish',emp:e.id,date:d,msg:`${e.name}: á vakt þrátt fyrir ósk um frí ${dateLabel(d)}`});
@@ -553,11 +557,24 @@ function grantWish(state,key){
   const C=buildCtx(state),d=key.split('|')[1],i=C.idx[d],main=covId(C,w.s),need=needFor(C,i,C.shift[main]);
   const on=C.emps.map(e=>e.id+'|'+d).filter(k=>{const v=state.plan[k];return v&&v.s&&C.shift[v.s]&&covId(C,v.s)===main;});
   let extra=on.length-need;
-  for(const k of on){if(extra<=0)break;if(k!==key&&!state.locks[k]){delete state.plan[k];extra--;}}
+  for(const k of on){if(extra<=0)break;const ow=(state.wishes||{})[k];if(k!==key&&!state.locks[k]&&!(ow&&ow.s===state.plan[k].s)){delete state.plan[k];extra--;}}
   return true;
 }
 
-const API={wishConflicts,grantWish,PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
+/* Manna lausar vaktir án þess að hrófla við því sem er komið: allar núverandi vaktir haldast.
+   1. umferð virðir hámark umfram vinnuskyldu; 2. umferð (relax) leyfir aukatíma ef enn vantar. */
+function fillPlan(state,opts={}){
+  const before=state.plan,mk=()=>{const T=JSON.parse(JSON.stringify(state));T.locks=T.locks||{};
+    for(const [k,v] of Object.entries(T.plan))if(v.s)T.locks[k]=true;T.rules={...T.rules,fillUp:false};return T;};
+  const T1=mk(),r1=generate(T1,{runs:opts.runs??160,ms:opts.ms??1000});
+  let plan=r1.plan,r=r1,extra=0;
+  if(r1.unfilled&&opts.relax!==false){const T2=mk();T2.plan=r1.plan;for(const [k,v] of Object.entries(T2.plan))if(v.s)T2.locks[k]=true;
+    T2.rules.maxOver=999;const r2=generate(T2,{runs:opts.runs??160,ms:opts.ms??1000});
+    extra=Object.keys(r2.plan).filter(k=>r2.plan[k].s&&!(r1.plan[k]&&r1.plan[k].s)).length;plan=r2.plan;r=r2;}
+  const added=Object.keys(plan).filter(k=>plan[k].s&&!(before[k]&&before[k].s===plan[k].s));
+  return {plan,added,overtime:extra,unfilled:r.unfilled,holes:r.holes};
+}
+const API={fillPlan,wishConflicts,grantWish,PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
   MONTHS,DAYS,DAYS_SHORT,DAYS_1,CATS,CAT_NAMES,easter,icelandicHolidays,holidaysForPeriod,shiftTimes,buildCtx,targetHours,absenceCredit,
   shiftCats,needFor,generate,stats,validate};
 if(typeof module!=='undefined'&&module.exports)module.exports=API;else root.VP=API;

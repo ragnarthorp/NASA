@@ -20,7 +20,7 @@ function normalize(s){
   s.absTypes=s.absTypes&&s.absTypes.length?s.absTypes:VPD.defaultAbsTypes();
   s.employees=(s.employees||[]).map(e=>newEmp(e));
   if(!Array.isArray(s.holidays))s.holidays=VP.holidaysForPeriod(s.period);
-  for(const k of ['plan','locks','wishes','needOverride'])if(!s[k]||typeof s[k]!=='object')s[k]={};
+  for(const k of ['plan','locks','wishes','needOverride','blocks'])if(!s[k]||typeof s[k]!=='object')s[k]={};
   return s;
 }
 function newEmp(e={}){
@@ -456,7 +456,52 @@ AFTER.oskir=()=>{
 };
 
 /* ---------- Skref 6: Vaktaplan ---------- */
-let lastGen=null,warnFilter='all',gridEmpIds=[],wconf=null,confOpen=true;
+let lastGen=null,warnFilter='all',gridEmpIds=[],wconf=null,confOpen=true;const picked=new Set();
+/* Vakt sem kom úr innlesinni ósk og er uppfyllt: má ekki færa við uppstokkun */
+const isWishKept=k=>{const w=S.wishes[k],v=S.plan[k];return !!(w&&w.s&&v&&v.s===w.s);};
+const blockCount=()=>{const C=VP.buildCtx(S);return Object.entries(S.blocks||{}).filter(([k,b])=>b&&b.length&&C.idx[k.split('|')[1]]!=null).length;};
+const slotLabel=(C,k)=>{const [eid,d]=k.split('|'),v=S.plan[k],e=empById(eid);return `${e?e.name:'?'} · ${v&&v.s&&C.shift[v.s]?C.shift[v.s].code+' ':''}${VP.dateLabel(d)}`;};
+/* Manna lausar vaktir: núverandi plan helst, aðeins bætt við */
+async function fillAll(){
+  const before=VP.stats(S),miss=before.days.reduce((a,r)=>a+Object.values(r.shifts).reduce((b,x)=>b+Math.max(0,x.need-x.have),0),0);
+  if(!miss){toast('Allar vaktir eru þegar mannaðar');return;}
+  const t0=performance.now();pushUndo();const r=VP.fillPlan(S);S.plan=r.plan;save();lastGen={runs:'',ms:performance.now()-t0,unfilled:r.unfilled};render();
+  const C=VP.buildCtx(S),L=[`${r.added.length} vaktir mannaðar af ${miss} sem vantaði.`];
+  if(r.overtime)L.push(r.overtime===1?'1 þeirra er umfram vinnuskyldu (aukatími), því annars var ekki hægt að manna hana.':`${r.overtime} þeirra eru umfram vinnuskyldu (aukatími), því annars var ekki hægt að manna þær.`);
+  if(r.unfilled)L.push(`Enn ómannaðar (${r.unfilled}), enginn laus sem uppfyllir hvíld, „Ekki“ og aðrar reglur: `+r.holes.map(h=>`${C.shift[h.shift].code} ${VP.dateLabel(h.date)}${h.missing>1?' ×'+h.missing:''}`).join(', ')+'.');
+  else L.push('Allar vaktir eru nú mannaðar. Nýju vaktirnar eru ólæstar svo hægt er að breyta þeim.');
+  await ask(L.join('\n\n'),{ok:'Í lagi',cancel:'Loka'});
+}
+/* Raða aftur án valinna vakta: bannið er munað, aðrar vaktir haldast, losuðum plássum er úthlutað aftur */
+async function replanWithout(keys){
+  const C=VP.buildCtx(S),kept=keys.filter(isWishKept),items=keys.filter(k=>!isWishKept(k)).map(k=>({k,v:S.plan[k]})).filter(x=>x.v&&x.v.s&&C.shift[x.v.s]);
+  if(!items.length){toast(kept.length?'Óskaðar vaktir eru fastar og eru ekki færðar. Notaðu „Hafna ósk“ ef breyta þarf.':'Veldu vakt (reit með vakt)');return;}
+  pushUndo();
+  items.forEach(({k,v})=>{const main=VP.covId(C,v.s);S.blocks[k]=[...new Set([...(S.blocks[k]||[]),main])];delete S.plan[k];delete S.locks[k];});
+  const r=VP.fillPlan(S);S.plan=r.plan;picked.clear();save();render();
+  const C2=VP.buildCtx(S),L=items.map(({k,v})=>{const [eid,d]=k.split('|'),main=VP.covId(C2,v.s),e=empById(eid);
+    const nk=r.added.find(a=>a.split('|')[1]===d&&VP.covId(C2,r.plan[a].s)===main);
+    return `• ${e.name}, ${C2.shift[v.s].code} ${VP.dateLabel(d)} → ${nk?empById(nk.split('|')[0]).name+(r.plan[nk].s!==v.s?' ('+C2.shift[r.plan[nk].s].code+')':''):'enginn laus, vaktin er ómönnuð'}`;});
+  const other=r.added.filter(a=>!items.some(({k,v})=>a.split('|')[1]===k.split('|')[1]&&VP.covId(C2,r.plan[a].s)===VP.covId(C2,v.s)));
+  if(other.length)L.push(`Auk þess ${other.length} aðrar vaktir mannaðar.`);
+  if(kept.length)L.push(`${kept.length} ${kept.length===1?'vakt var':'vaktir voru'} óskaðar og ${kept.length===1?'var ekki færð':'voru ekki færðar'}: ${kept.map(k=>slotLabel(C,k)).join('; ')}.`);
+  L.push('Óskaðar vaktir haldast alltaf. Viðkomandi verður ekki settur aftur á vaktirnar sem voru teknar út („Hreinsa bönn“ fjarlægir bannið).');
+  if(r.unfilled)L.push('Ef vakt stendur ómönnuð: smelltu á dagsetninguna til að breyta vöktum dagsins, eða á „Búa til vaktaplan“ til að endurraða öllum ólæstum vöktum. Óskaðar og læstar vaktir haldast og bönnin gilda áfram.');
+  await ask('Raðað aftur án '+(items.length===1?'vaktarinnar':items.length+' vakta')+':\n\n'+L.join('\n'),{ok:'Í lagi',cancel:'Loka'});
+}
+function pickBar(){
+  let bar=$('#pickBar');
+  if(!picked.size){if(bar)bar.remove();return;}
+  if(!bar){bar=document.createElement('div');bar.id='pickBar';bar.className='pickbar';document.body.appendChild(bar);}
+  const C=VP.buildCtx(S);
+  bar.innerHTML=`<span><b>${picked.size}</b> ${picked.size===1?'vakt valin':'vaktir valdar'}: ${esc([...picked].slice(0,4).map(k=>slotLabel(C,k)).join('; '))}${picked.size>4?' …':''}</span>
+    <span class="toolbar"><button class="primary" id="pbReplan">Raða aftur án ${picked.size===1?'hennar':'þeirra'}</button><button id="pbClear">Hætta við val</button></span>`;
+  bar.querySelector('#pbReplan').onclick=()=>replanWithout([...picked]);
+  bar.querySelector('#pbClear').onclick=()=>{picked.clear();$$('.cell.picked').forEach(c=>c.classList.remove('picked'));pickBar();};
+}
+function togglePick(key){if(!(S.plan[key]&&S.plan[key].s)){toast('Aðeins er hægt að velja reiti með vakt');return;}
+  if(isWishKept(key)){toast('Þetta er óskuð vakt og hún er föst. Notaðu „Hafna ósk“ ef breyta þarf.');return;}
+  picked.has(key)?picked.delete(key):picked.add(key);const el=document.querySelector(`[data-cell="${key}"]`);if(el)el.classList.toggle('picked',picked.has(key));pickBar();}
 function conflictsPanel(C){
   const c=wconf,sh=id=>C.shift[id],lbl=id=>{const x=sh(id);return x?`${x.code} (${x.start}–${x.end})`:'?';};
   if(!c)return '';
@@ -521,6 +566,8 @@ function cellHtml(e,d,C,i){
   if(w&&w.s){const s=C.shift[w.s];cls+=v&&v.s===w.s?' granted':' wishs';title.push((v&&v.s===w.s?'Ósk uppfyllt: ':'Ósk um ')+(s?s.name+' '+s.start+'–'+s.end:'vakt'));if(!txt&&s)txt=`<span class="ghosttxt">${esc(s.code)}?</span>`;}
   if(lock)cls+=' locked';
   if(wconf&&wconf.keys.has(k))cls+=' wconf';
+  if(picked.has(k))cls+=' picked';
+  const bl=(S.blocks||{})[k];if(bl&&bl.length){cls+=' blocked';title.push('Ekki: '+bl.map(id=>C.shift[id]?C.shift[id].code:'').join(', '));}
   const ed=C.empDays[e.id][i];if(ed.status!=='active'){cls+=' inactive';title.push(VP.STATUS_NAMES[ed.status]);}
   if(f.weekend)cls+=' wkend';if(f.hol)cls+=' '+f.hol.kind;
   return `<td class="${f.weekend?'wkend':''} ${f.hol?f.hol.kind:''}"><button class="${cls}" data-cell="${e.id}|${d}" style="${style}" title="${esc(e.name+' · '+VP.dateLabel(d)+(title.length?' · '+title.join(' · '):''))}">${txt&&txt.startsWith('<')?txt:esc(txt)}${lock?'<i class="lk"></i>':''}</button></td>`;
@@ -540,7 +587,7 @@ VIEWS.plan=()=>{
   const cov=C.shifts.filter(s=>!s.countsAs&&used.has(s.id)).map(s=>`<tr class="cov"><th class="nm"><span><span class="sw" style="background:${s.color}"></span>${esc(s.code)} · ${esc(s.name)}</span><small>mannað / þörf</small></th>
     ${st.days.map((r,i)=>{const x=r.shifts[s.id],ov=S.needOverride[r.date+'|'+s.id]!=null,oc=wconf.over.find(o=>o.date===r.date&&o.main===s.id);if(oc)return `<td><button class="covc conflict" data-cday="${r.date}" title="${esc(`${oc.pending} óska en ${oc.avail} laus pláss · smelltu til að breyta vöktum dagsins`)}">⚠ ${x.have}/${x.need}</button></td>`;return `<td class="${C.infos[i].weekend?'wkend':''} ${C.infos[i].hol?C.infos[i].hol.kind:''}"><button class="covc ${x.have<x.need?'under':x.have>x.need?'over':x.need?'ok':''} ${ov?'ovr':''}" data-need="${r.date}|${s.id}" title="${esc(s.name+' '+VP.dateLabel(r.date)+': '+x.have+' af '+x.need+(x.names.length?' · '+x.names.join(', '):'')+'. Smelltu til að breyta þörf.')}">${x.need||x.have?x.have+'/'+x.need:'·'}</button></td>`;}).join('')}<td colspan="4"></td></tr>`).join('');
   const shown=warn.filter(w=>w.type!=='over'&&(warnFilter==='all'||w.level===warnFilter));
-  return intro('Vaktaplan',`Smelltu á <b>Búa til vaktaplan</b> til að raða sjálfvirkt. Smelltu á reit til að breyta handvirkt, eða veldu reit og sláðu inn kóða vaktar (Delete tæmir, örvatakkar færa). Læstar vaktir (<i class="lk inline"></i>) haldast þegar raðað er aftur. Með <b>Lesa inn vaktaóskir</b> eru óskir starfsfólks lesnar úr CSV- eða Excel-skjali (ein lína á starfsmann, einn dálkur á dag, tímar eins og „08:00-16:00“). Óskir birtast sem „8-16?“. Röðunin úthlutar þeim fyrst og sanngjarnt, og raðar svo á það sem eftir er. <b>Smelltu á dag</b> í hausnum til að breyta vöktum þess dags.`)+`
+  return intro('Vaktaplan',`Smelltu á <b>Búa til vaktaplan</b> til að raða sjálfvirkt. Smelltu á reit til að breyta handvirkt, eða veldu reit og sláðu inn kóða vaktar (Delete tæmir, örvatakkar færa). Læstar vaktir (<i class="lk inline"></i>) haldast þegar raðað er aftur. Með <b>Lesa inn vaktaóskir</b> eru óskir starfsfólks lesnar úr CSV- eða Excel-skjali (ein lína á starfsmann, einn dálkur á dag, tímar eins og „08:00-16:00“). Óskir birtast sem „8-16?“. Röðunin úthlutar þeim fyrst og sanngjarnt, og raðar svo á það sem eftir er. <b>Smelltu á dag</b> í hausnum til að breyta vöktum þess dags. <b>Manna allar lausar vaktir</b> fyllir í það sem vantar án þess að breyta öðru. Til að losa óheppilega vakt: smelltu á hana og veldu <b>Raða aftur án þessarar vaktar</b>. Shift- eða Ctrl-smelltu til að velja nokkrar í einu. <b>Uppfylltar óskir eru fastar</b> og eru aldrei færðar við uppstokkun.`)+`
  <section class="panel planbar">
   <div class="toolbar">
    <button class="primary" id="genBtn">⚙ Búa til vaktaplan</button>
@@ -549,6 +596,8 @@ VIEWS.plan=()=>{
    <button id="undoBtn" title="Afturkalla (Ctrl+Z)">↶ Afturkalla</button>
    <button id="importBtn" title="Lesa inn vaktaóskir eða valdar vaktir starfsfólks (CSV eða Excel)">⤓ Lesa inn vaktaóskir</button>
    <button id="clearWishes" title="Fjarlægja allar óskir um vaktir á tímabilinu">Hreinsa óskir</button>
+   <button id="fillBtn" class="accent" title="Manna allar ómannaðar vaktir með lausu starfsfólki án þess að breyta því sem er komið">✚ Manna allar lausar vaktir</button>
+   ${blockCount()?`<button id="clearBlocks" title="Fjarlægja öll bönn úr „Raða aftur án“">Hreinsa bönn (${blockCount()})</button>`:''}
   </div>
   <div class="kpis">
    <div class="${missing?'bad':'good'}"><b>${missing}</b><span>vaktir ómannaðar</span></div>
@@ -594,7 +643,10 @@ AFTER.plan=()=>{
   $$('[data-clevel]').forEach(b=>b.onclick=()=>{const [eid,sid]=b.dataset.clevel.split('|'),e=empById(eid),C=VP.buildCtx(S),cat=VP.shiftCat(C,C.shift[sid]);pushUndo();e.prefLevels={...e.prefLevels,[cat]:1};save();rerender();toast(e.name+': „Má“ við '+VP.PREF_NAME[cat].toLowerCase());});
   $$('[data-cemp]').forEach(b=>b.onclick=()=>{selEmp=b.dataset.cemp;go(2);});
   $$('[data-wf]').forEach(b=>b.onclick=()=>{warnFilter=b.dataset.wf;render();});
-  $$('[data-cell]').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();openPop(b);};b.onkeydown=cellKey;});
+  $$('[data-cell]').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();if(ev.shiftKey||ev.ctrlKey||ev.metaKey){closePop();togglePick(b.dataset.cell);return;}openPop(b);};b.onkeydown=cellKey;});
+  $('#fillBtn').onclick=()=>{const b=$('#fillBtn');b.disabled=true;b.textContent='Manna…';setTimeout(()=>fillAll().catch(e=>{console.error(e);toast('Villa: '+e.message);}),30);};
+  const cb=$('#clearBlocks');if(cb)cb.onclick=async()=>{if(!await ask('Fjarlægja öll bönn? Röðunin getur þá sett fólk aftur á vaktir sem voru teknar út.'))return;pushUndo();S.blocks={};save();render();};
+  pickBar();
   $$('[data-need]').forEach(b=>b.onclick=async()=>{const [d,id]=b.dataset.need.split('|'),s=shiftById(id),C=VP.buildCtx(S),i=C.idx[d];
     const k=d+'|'+id,cur=S.needOverride[k];const def=VP.needFor({...C,state:{...S,needOverride:{}}},i,C.shift[id]);
     const v=await ask(`Mönnunarþörf á ${s.name} ${VP.dateLabel(d)}.\nSjálfgefið: ${def}. Skildu eftir autt til að nota sjálfgefið.`,{input:cur??'',ok:'Vista'});
@@ -630,7 +682,10 @@ function openPop(btn){
    <div class="pop-f">
     <label class="check"><input type="checkbox" id="pWish" ${w.off?'checked':''}> Ósk um frí</label>
     <label class="check"><input type="checkbox" id="pLock" ${S.locks[key]?'checked':''} ${v.s?'':'disabled'}> Læst</label>
-    <button class="small" id="pClear">Tæma reit</button></div>`;
+    <button class="small" id="pClear">Tæma reit</button></div>
+   ${v.s&&isWishKept(key)?`<div class="pop-r muted small">✓ Óskuð vakt, föst við uppstokkun. <button class="small" id="pDeclineWish">Hafna ósk</button></div>`:''}
+   ${v.s&&!isWishKept(key)?`<div class="pop-r"><button class="small primary" id="pReplan" title="Taka vaktina af ${esc(e.name)} og finna annan">Raða aftur án þessarar vaktar</button><button class="small" id="pPick" title="Velja fleiri vaktir (eða Shift/Ctrl-smella á reiti)">${picked.has(key)?'Afvelja':'Velja fleiri…'}</button></div>`:''}
+   ${(S.blocks[key]||[]).length?`<div class="pop-r muted small">Ekki sett á: ${esc(S.blocks[key].map(id=>C.shift[id]?C.shift[id].code:'?').join(', '))} <button class="small ghost" id="pUnblock">Fjarlægja bann</button></div>`:''}`;
   document.body.appendChild(popEl);
   const r=btn.getBoundingClientRect(),pw=popEl.offsetWidth,ph=popEl.offsetHeight;
   let x=r.left+window.scrollX,y=r.bottom+window.scrollY+4;
@@ -641,6 +696,10 @@ function openPop(btn){
   popEl.querySelectorAll('[data-ps]').forEach(b=>b.onclick=()=>{setCell(key,{s:b.dataset.ps});done();});
   popEl.querySelectorAll('[data-pa]').forEach(b=>b.onclick=()=>{setCell(key,{a:b.dataset.pa});done();});
   popEl.querySelector('#pClear').onclick=()=>{setCell(key,null);done();};
+  const pr=popEl.querySelector('#pReplan');if(pr)pr.onclick=()=>{closePop();replanWithout(picked.size&&picked.has(key)?[...picked]:[key]);};
+  const pp=popEl.querySelector('#pPick');if(pp)pp.onclick=()=>{closePop();togglePick(key);};
+  const pdw=popEl.querySelector('#pDeclineWish');if(pdw)pdw.onclick=()=>{pushUndo();delete S.wishes[key];delete S.plan[key];delete S.locks[key];save();done();toast('Ósk hafnað og vaktin tekin út');};
+  const pu=popEl.querySelector('#pUnblock');if(pu)pu.onclick=()=>{pushUndo();delete S.blocks[key];save();done();};
   popEl.querySelector('#pWish').onchange=ev=>{pushUndo();if(ev.target.checked)S.wishes[key]={off:true};else delete S.wishes[key];save();done();};
   popEl.querySelector('#pLock').onchange=ev=>{pushUndo();if(ev.target.checked)S.locks[key]=true;else delete S.locks[key];save();done();};
   popEl.addEventListener('keydown',ev=>{if(ev.key==='Escape'){closePop();btn.focus();}});

@@ -280,3 +280,9 @@ li.cw.granted{color:var(--muted)}
 .cell.wconf{outline:2px dashed var(--warn);outline-offset:-3px}
 .covc.conflict{background:var(--warn);color:var(--card);font-weight:700}
 .hm.cw8{color:var(--warn);font-size:11px}
+button.accent{background:var(--good);color:var(--card);border-color:var(--good)}
+.pop-r{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.cell.picked{outline:3px solid var(--accent);outline-offset:-3px;filter:saturate(1.3)}
+.cell.blocked::after{content:"⊘";position:absolute;left:2px;top:0;font-size:9px;color:var(--bad);font-weight:700}
+.pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--card);border:1px solid var(--accent);
+  border-radius:14px;box-shadow:0 10px 30px var(--shadow);padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;max-width:min(860px,calc(100vw - 32px));font-size:14px}
