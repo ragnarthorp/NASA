@@ -58,6 +58,41 @@ const dayFill=f=>f.hol?(f.hol.kind==='major'?MAJ:RED):f.weekend?WK:null;
 const save=(w,name)=>window.VPDownload?window.VPDownload(name,w.doc.output('blob'),'application/pdf'):w.doc.save(name);
 const slug=S=>(S.workplace.name||'vaktaplan').toLowerCase().replace(/ð/g,'d').replace(/þ/g,'th').replace(/æ/g,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'')+'-'+VP.periodRange(S.period.year,S.period.month).start.slice(0,7);
 
+/* ---------- Veggplan: aðeins vaktir (engar óskir, fjarvistir eða útreikningar) ---------- */
+function drawWall(w,S,st){
+  const {doc,W,H,M}=w,C=st.C,n=C.n,E=C.emps;
+  w.font('bold',18,INK);w.text('Vaktaplan',M,M+6);
+  w.font('normal',11,MUTED);w.text(VP.periodLabel(S.period)+(S.workplace.name?'  ·  '+S.workplace.name+(S.workplace.unit?' · '+S.workplace.unit:''):''),M+38,M+6);
+  w.line(M,M+10,W-M,M+10,INK,0.5);
+  let y=M+14;
+  // skýring: aðeins vaktir og tímar þeirra
+  const seen=new Set(),used=st.usedShifts.filter(s=>{const k=s.code+'|'+s.start+'|'+s.end;if(seen.has(k))return false;seen.add(k);return true;});let x=M;const h=5;
+  used.forEach(s=>{w.font('bold',8);const cw=Math.max(7,doc.getTextWidth(s.code)+3);w.font('normal',8);const label=`${s.start}–${s.end}`;const lw=doc.getTextWidth(label)+4;
+    if(x+cw+lw>W-M){x=M;y+=h+1.5;}w.rect(x,y,cw,h,s.color,LINE);w.cellText(s.code,x,y,cw,h,{style:'bold',size:8,color:dark(s.color)?'#ffffff':INK});
+    w.font('normal',8,INK);w.text(label,x+cw+1.2,y+h*0.72);x+=cw+lw+2.5;});
+  const hol=S.holidays.filter(hh=>C.idx[hh.date]!=null);
+  if(hol.length){y+=h+2;w.font('normal',7.5,MUTED);w.text('Frídagar: '+hol.map(hh=>`${VP.shortDate(hh.date)} ${hh.name}${hh.kind==='major'?' *':''}`).join(' · ')+(hol.some(hh=>hh.kind==='major')?'   (* stórhátíðardagur)':''),M,y+3.5);y+=2;}
+  y+=h+3;
+  const nameW=46,dayW=(W-2*M-nameW)/n,headH=10,rowH=Math.max(5,Math.min(9,(H-14-y-headH)/Math.max(1,E.length))),fs=Math.min(9,rowH*1.25);
+  w.rect(M,y,nameW,headH,'#ffffff',LINE);
+  C.dates.forEach((d,i)=>{const f=C.infos[i],xx=M+nameW+i*dayW,fill=dayFill(f)||'#ffffff',tc=f.hol?(f.hol.kind==='major'?MAJT:REDT):INK;
+    w.rect(xx,y,dayW,headH,fill,LINE);w.font('normal',6.5,tc);w.text(VP.DAYS_SHORT[f.dow],xx+dayW/2,y+3.6,{align:'center'});
+    w.font('bold',8.5,tc);w.text(String(VP.parse(d).getUTCDate())+(f.hol&&f.hol.kind==='major'?'*':''),xx+dayW/2,y+8,{align:'center'});});
+  y+=headH;
+  E.forEach((e,ri)=>{
+    w.rect(M,y,nameW,rowH,ri%2?'#f7f9f8':'#ffffff',LINE);w.font('bold',Math.min(9,fs),INK);w.text(w.fit(e.name,nameW-2),M+1.2,y+rowH*0.64);
+    C.dates.forEach((d,i)=>{const xx=M+nameW+i*dayW,v=S.plan[e.id+'|'+d],f=C.infos[i];
+      if(v&&v.s&&C.shift[v.s]){const sh=C.shift[v.s];w.rect(xx,y,dayW,rowH,sh.color,LINE);
+        w.cellText(sh.code,xx,y,dayW,rowH,{style:'bold',size:sh.code.length>4?fs*0.68:sh.code.length>3?fs*0.78:fs,color:dark(sh.color)?'#ffffff':INK});}
+      else{const fl=dayFill(f);w.rect(xx,y,dayW,rowH,fl?light(fl,0.35):(ri%2?'#f7f9f8':'#ffffff'),LINE);}});
+    y+=rowH;});
+}
+async function wall(S){
+  const st=VP.stats(S),w=await writer(st.C.emps.length>34?'a3':'a4','landscape');
+  drawWall(w,S,st);w.footer(`${S.workplace.name||'Vaktaplan'} · ${VP.periodLabel(S.period)}`);
+  await save(w,slug(S)+'-veggplan.pdf');
+}
+
 /* ---------- Allt planið ---------- */
 async function full(S,opts={}){
   const st=VP.stats(S),C=st.C,n=C.n,E=C.emps;
@@ -65,6 +100,7 @@ async function full(S,opts={}){
   const w=await writer(big?'a3':'a4','landscape'),{doc,W,H,M}=w;
   const nameW=40,sumW=[10,12,12,12],sumT=sumW.reduce((a,b)=>a+b,0),dayW=(W-2*M-nameW-sumT)/n,headH=8.5;let rowH=5.4;
   const title='Vaktaplan',sub=VP.periodLabel(S.period);
+  if(opts.wall!==false){drawWall(w,S,st);doc.addPage();}   // fyrsta síða: veggplan til að hengja upp
   const usedMain=st.usedShifts.filter(s=>!s.countsAs);
   let y=header(w,S,title,sub);y=legend(w,S,C,y,{shifts:st.usedShifts});
   rowH=Math.max(3.8,Math.min(5.4,(H-12-y-headH-1-usedMain.length*4.2-8)/Math.max(1,E.length)));  // allt planið á eina síðu ef hægt er
@@ -222,5 +258,5 @@ async function person(S,ids){
   const one=ids.length===1&&S.employees.find(x=>x.id===ids[0]);
   await save(w,slug(S)+(one?'-'+(one.name||'starfsmadur').toLowerCase().replace(/ð/g,'d').replace(/þ/g,'th').replace(/æ/g,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-'):'-einstaklingar')+'.pdf');
 }
-window.VPPDF={full,week,person};
+window.VPPDF={full,week,person,wall};
 })();

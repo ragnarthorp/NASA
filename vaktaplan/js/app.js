@@ -789,9 +789,12 @@ VIEWS.utgafa=()=>{
   return intro('Útgáfa','Sæktu planið sem PDF til að prenta eða senda, eða sem JSON-skrá til að geyma og opna síðar.')+`
  ${!planned?'<div class="alert">Planið er tómt. Farðu í skrefið Vaktaplan og búðu það til fyrst.</div>':missing?`<div class="alert">Athugið: ${missing} vaktir eru enn ómannaðar.</div>`:''}
  <div class="cards">
-  <div class="card"><h3>Allt planið</h3><p>Allt tímabilið á einni síðu (A4 langsnið, eða A3 ef þarf) með skýringum, mönnun og útreikningum fyrir hvern starfsmann.</p>
+  <div class="card"><h3>Allt planið</h3><p>Veggplan (aðeins vaktir) á fyrstu síðu, síðan allt tímabilið með mönnun og loks útreikningar fyrir hvern starfsmann.</p>
+   <label class="check"><input type="checkbox" id="pdfWall" checked> Veggplan sem fyrsta síða (aðeins vaktir, til að hengja upp)</label>
    <label class="check"><input type="checkbox" id="pdfStats" checked> Taka með útreikninga</label>
    <button class="primary" data-pdf="full">Sækja PDF</button></div>
+  <div class="card"><h3>Veggplan</h3><p>Ein síða með starfsfólki, dögum og vöktum. Engar óskir, fjarvistir, útreikningar eða annað. Til að hengja upp á vegg.</p>
+   <button class="primary" data-pdf="wall">Sækja PDF</button></div>
   <div class="card"><h3>Vikuplan</h3><p>Ein vika á síðu: hverjir eru á hvaða vakt hvern dag, með tímum og vikustundum.</p>
    <select id="weekSel"><option value="all">Allar vikur (ein vika á síðu)</option>${W.map((w,i)=>`<option value="${i}">Vika ${w.week}: ${esc(VP.shortDate(w.dates[0]))}–${esc(VP.shortDate(w.dates[w.dates.length-1]))}</option>`).join('')}</select>
    <button class="primary" data-pdf="week">Sækja PDF</button></div>
@@ -810,7 +813,8 @@ AFTER.utgafa=()=>{
   $$('[data-pdf]').forEach(b=>b.onclick=async()=>{
     const kind=b.dataset.pdf,old=b.textContent;b.disabled=true;b.textContent='Bý til PDF…';
     try{
-      if(kind==='full')await VPPDF.full(S,{stats:$('#pdfStats').checked});
+      if(kind==='full')await VPPDF.full(S,{stats:$('#pdfStats').checked,wall:$('#pdfWall').checked});
+      if(kind==='wall')await VPPDF.wall(S);
       if(kind==='week'){const v=$('#weekSel').value,W=weeksOfPeriod();await VPPDF.week(S,v==='all'?W:[W[+v]]);}
       if(kind==='person'){const v=$('#empSel').value;await VPPDF.person(S,v==='all'?VP.buildCtx(S).emps.map(e=>e.id):[v]);}
     }catch(err){console.error(err);toast('Villa: '+err.message);}
@@ -864,7 +868,7 @@ document.addEventListener('click',ev=>{
   else if(t.dataset.go!=null)go(+t.dataset.go);
   else if(t.dataset.act==='save')saveJson();
   else if(t.dataset.act==='open')$('#fileInput').click();
-  else if(t.dataset.act==='pdf')VPPDF.full(S,{stats:true}).catch(e=>toast('Villa: '+e.message));
+  else if(t.dataset.act==='pdf')VPPDF.full(S,{stats:true,wall:true}).catch(e=>toast('Villa: '+e.message));
 });
 $('#importInput').onchange=ev=>{const f=ev.target.files[0];if(f)importFile(f);ev.target.value='';};
 $('#fileInput').onchange=ev=>{const f=ev.target.files[0];if(f)openJson(f);ev.target.value='';};
