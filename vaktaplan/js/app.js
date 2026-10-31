@@ -126,7 +126,7 @@ function renderStepper(){
 }
 function render(){
   renderStepper();
-  $('#periodBadge').textContent=VP.periodLabel(S.period);
+  $('#periodBadge').textContent=VP.periodLabel(S.period)+(S.approved?' · ✓ staðfest':'');
   $('#wpName').textContent=S.workplace.name||'Vaktaplan';
   const v=$('#view');closePop();
   v.innerHTML=VIEWS[STEPS[step].id]();
@@ -805,6 +805,8 @@ VIEWS.utgafa=()=>{
    <div class="toolbar"><button class="primary" data-act="save">Sækja JSON</button><button data-act="open">Opna JSON</button></div>
    <details><summary>JSON fyrir vikuplan eða einstakling</summary>
     <div class="toolbar" style="margin-top:8px"><button data-json="week">Vika (valin að ofan)</button><button data-json="person">Starfsmaður (valinn að ofan)</button></div></details></div>
+  <div class="card"><h3>${S.approved?'✓ Staðfest vaktaplan':'Staðfesta plan'}</h3><p>${S.approved?`Staðfest ${esc(S.approved.date)}. Allar vaktir eru læstar og PDF-skjölin merkt sem staðfest vaktaplan. Ef breyta þarf: aflétta staðfestingu, breyta og staðfesta aftur.`:'Þegar þú ert sátt/ur: allar vaktir læsast og PDF-skjölin eru merkt „Staðfest vaktaplan“ í stað „Tillaga“.'}</p>
+   <button class="${S.approved?'':'primary'}" id="approveBtn">${S.approved?'Aflétta staðfestingu':'Staðfesta vaktaplan'}</button></div>
   <div class="card"><h3>Næsta tímabil</h3><p>Stofnar nýtt tímabil með sömu vöktum, starfsfólki, forsendum og reglum. Staða hvers starfsmanns flyst yfir sem „flutt staða“. Síðan eru óskir fyrir nýja mánuðinn lesnar inn og planið búið til á sama hátt.</p>
    <button id="nextPeriod">Stofna næsta tímabil</button></div>
  </div>`+navBtns();
@@ -834,6 +836,11 @@ AFTER.utgafa=()=>{
           hoursByCategory:Object.fromEntries(VP.CATS.map(c=>[VP.CAT_NAMES[c],VP.round2(o.cats[c])])),premiumHours:VP.round2(o.premium)},days:C.dates.map(d=>entry(e,d))};})};
       download(fileSlug()+(v==='all'?'-starfsmenn':'-'+(empById(v).name||'starfsmadur').toLowerCase().replace(/ð/g,'d').replace(/þ/g,'th').replace(/æ/g,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-'))+'.json',JSON.stringify(data,null,2),'application/json');}
   });
+  $('#approveBtn').onclick=async()=>{
+    if(S.approved){pushUndo();S.approved=null;save();render();toast('Staðfesting afnumin');return;}
+    const st=VP.stats(S),miss=st.days.reduce((a,r)=>a+Object.values(r.shifts).reduce((b,x)=>b+Math.max(0,x.need-x.have),0),0);
+    if(!await ask(`Staðfesta vaktaplan ${VP.periodLabel(S.period)}?${miss?`\n\nAthugið: ${miss} vaktir eru enn ómannaðar.`:''}\n\nAllar vaktir læsast og PDF-skjölin verða merkt „Staðfest vaktaplan“.`,{ok:'Staðfesta'}))return;
+    pushUndo();for(const [k,v] of Object.entries(S.plan))if(v.s)S.locks[k]=true;S.approved={date:VP.todayLabel(),period:{...S.period}};save();render();toast('Vaktaplan staðfest');};
   $('#nextPeriod').onclick=async()=>{
     const ch=await choose(`Stofna næsta tímabil eftir ${VP.periodLabel(S.period)}? Starfsfólk, forsendur, vaktaskipulag og reglur fylgja með og staða hvers starfsmanns flyst yfir sem „flutt staða“. Síðan lestu inn óskir fyrir nýja tímabilið.`,
       [['save','Sækja JSON af þessu plani og stofna næsta'],['go','Stofna næsta án þess að sækja']]);
@@ -841,7 +848,7 @@ AFTER.utgafa=()=>{
     pushUndo();const st=VP.stats(S);S.employees.forEach(e=>{const o=st.emp.find(x=>x.id===e.id);if(o)e.carry=VP.round2(o.balance);});
     {const C0=VP.buildCtx(S),last=C0.dates.slice(-7);S.prevTail={};   // síðustu 7 dagar fylgja yfir mánaðamótin
       C0.emps.forEach(e=>last.forEach(d=>{const v=S.plan[e.id+'|'+d];if(v&&v.s&&C0.shift[v.s]){(S.prevTail[e.id]=S.prevTail[e.id]||[]).push({date:d,m0:C0.shift[v.s].m0,m1:C0.shift[v.s].m1});}}));}
-    let {year:y,month:m}=S.period;m++;if(m>12){m=1;y++;}S.locks={};lastGen=null;picked.clear();setPeriod({year:y,month:m});step=5;try{localStorage.setItem(STEP_KEY,step);}catch(e){}render();toast('Nýtt tímabil: '+VP.periodLabel(S.period)+'. Næst: Lesa inn vaktaóskir');};
+    let {year:y,month:m}=S.period;m++;if(m>12){m=1;y++;}S.locks={};S.approved=null;lastGen=null;picked.clear();setPeriod({year:y,month:m});step=5;try{localStorage.setItem(STEP_KEY,step);}catch(e){}render();toast('Nýtt tímabil: '+VP.periodLabel(S.period)+'. Næst: Lesa inn vaktaóskir');};
 };
 
 /* ---------- Almennt ---------- */

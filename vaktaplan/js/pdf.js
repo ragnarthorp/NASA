@@ -41,7 +41,7 @@ function header(w,S,title,sub){
   const {doc,W,M}=w;
   w.font('bold',15,INK);w.text(title,M,M+5);
   w.font('normal',9,MUTED);w.text([S.workplace.name,S.workplace.unit].filter(Boolean).join(' · ')+(sub?'  ·  '+sub:''),M,M+10.5);
-  w.font('normal',8,MUTED);w.text('Útbúið '+VP.todayLabel()+(S.workplace.manager?' · '+S.workplace.manager:''),W-M,M+5,{align:'right'});
+  w.font(S.approved?'bold':'normal',8,S.approved?INK:MUTED);w.text((S.approved?'Staðfest vaktaplan '+S.approved.date:'Tillaga · útbúið '+VP.todayLabel())+(S.workplace.manager?' · '+S.workplace.manager:''),W-M,M+5,{align:'right'});
   w.line(M,M+13,W-M,M+13,INK,0.4);
   return M+17;
 }
@@ -63,6 +63,7 @@ function drawWall(w,S,st){
   const {doc,W,H,M}=w,C=st.C,n=C.n,E=C.emps;
   w.font('bold',18,INK);w.text('Vaktaplan',M,M+6);
   w.font('normal',11,MUTED);w.text(VP.periodLabel(S.period)+(S.workplace.name?'  ·  '+S.workplace.name+(S.workplace.unit?' · '+S.workplace.unit:''):''),M+38,M+6);
+  if(S.approved){w.font('normal',8,MUTED);w.text('Staðfest '+S.approved.date+(S.workplace.manager?' · '+S.workplace.manager:''),W-M,M+6,{align:'right'});}
   w.line(M,M+10,W-M,M+10,INK,0.5);
   let y=M+14;
   // skýring: aðeins vaktir og tímar þeirra
