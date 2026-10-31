@@ -38,7 +38,28 @@ function pushUndo(){undo.push(JSON.stringify(S));if(undo.length>40)undo.shift();
 function doUndo(){if(!undo.length)return;S=normalize(JSON.parse(undo.pop()));save();render();toast('Síðasta breyting afturkölluð');}
 function updUndo(){const b=$('#undoBtn');if(b)b.disabled=!undo.length;}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
-function download(name,data,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+async function download(name,data,type){
+  const blob=data instanceof Blob?data:new Blob([data],{type});
+  const dl=window.claude&&window.claude.use?await window.claude.use('downloads').catch(()=>null):null;
+  if(dl){try{await dl.save({filename:name,data:blob});toast('Vistað: '+name);}catch(e){if(e&&e.code!=='declined')toast('Ekki tókst að vista skrána ('+(e.code||e.message)+')');}return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+window.VPDownload=download;
+/* Staðfesting í síðunni sjálfri (confirm/prompt virka ekki alls staðar). Skilar true/false, eða texta/null ef input er gefið. */
+function ask(msg,{ok='Já, halda áfram',cancel='Hætta við',input=null}={}){
+  return new Promise(res=>{
+    const back=document.createElement('div');back.className='dlg-back';
+    back.innerHTML=`<div class="dlg" role="dialog" aria-modal="true"><p>${esc(msg).replace(/\n/g,'<br>')}</p>${input!=null?`<input id="dlgIn" value="${esc(input)}">`:''}
+      <div class="toolbar"><button id="dlgNo">${esc(cancel)}</button><button id="dlgOk" class="primary">${esc(ok)}</button></div></div>`;
+    document.body.appendChild(back);
+    const close=v=>{back.remove();res(v);};
+    back.querySelector('#dlgOk').onclick=()=>close(input!=null?back.querySelector('#dlgIn').value:true);
+    back.querySelector('#dlgNo').onclick=()=>close(input!=null?null:false);
+    back.addEventListener('click',e=>{if(e.target===back)close(input!=null?null:false);});
+    back.addEventListener('keydown',e=>{if(e.key==='Escape')close(input!=null?null:false);if(e.key==='Enter'&&input!=null)back.querySelector('#dlgOk').click();});
+    (back.querySelector('#dlgIn')||back.querySelector('#dlgOk')).focus();
+  });
+}
 function setPath(path,val){const ks=path.split('.');let o=S;for(let i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=val;}
 function getPath(path){return path.split('.').reduce((o,k)=>o==null?o:o[k],S);}
 const K=(e,d)=>e+'|'+d;
@@ -124,8 +145,8 @@ AFTER.grunnur=()=>{
   $('#periodSel').onchange=e=>{const [y,m]=e.target.value.split('-').map(Number);setPeriod({year:y,month:m});};
   $('#pPrev').onclick=()=>{let {year:y,month:m}=S.period;m--;if(m<1){m=12;y--;}setPeriod({year:y,month:m});};
   $('#pNext').onclick=()=>{let {year:y,month:m}=S.period;m++;if(m>12){m=1;y++;}setPeriod({year:y,month:m});};
-  $('#loadSample').onclick=()=>{if(!confirm('Skipta núverandi gögnum út fyrir sýnidæmi?'))return;pushUndo();S=normalize(VPD.sampleState());save();render();toast('Sýnidæmi hlaðið');};
-  $('#startBlank').onclick=()=>{if(!confirm('Eyða öllum vöktum, starfsfólki og plani?'))return;pushUndo();
+  $('#loadSample').onclick=async()=>{if(!await ask('Skipta núverandi gögnum út fyrir sýnidæmi?'))return;pushUndo();S=normalize(VPD.sampleState());save();render();toast('Sýnidæmi hlaðið');};
+  $('#startBlank').onclick=async()=>{if(!await ask('Eyða öllum vöktum, starfsfólki og plani?'))return;pushUndo();
     S=normalize({workplace:{name:'',unit:'',manager:''},period:S.period,rules:S.rules,shifts:[],employees:[],absTypes:VPD.defaultAbsTypes()});save();render();};
 };
 function setPeriod(p){
@@ -168,7 +189,7 @@ function weekDemandSummary(){
 AFTER.vaktir=()=>{
   $('#addShift').onclick=()=>{const i=S.shifts.length;S.shifts.push({id:VPD.uid('s'),code:String.fromCharCode(65+i%26),name:'Ný vakt',start:'08:00',end:'16:00',break:0,
     color:VPD.SHIFT_COLORS[i%VPD.SHIFT_COLORS.length],demand:[1,1,1,1,1,1,1,'',''],max:''});save();render();};
-  $$('[data-delshift]').forEach(b=>b.onclick=()=>{const s=S.shifts[+b.dataset.delshift];if(!confirm(`Eyða vaktinni „${s.name}“? Hún verður líka fjarlægð úr planinu.`))return;
+  $$('[data-delshift]').forEach(b=>b.onclick=async()=>{const s=S.shifts[+b.dataset.delshift];if(!await ask(`Eyða vaktinni „${s.name}“? Hún verður líka fjarlægð úr planinu.`))return;
     pushUndo();S.shifts.splice(+b.dataset.delshift,1);for(const [k,v] of Object.entries(S.plan))if(v.s===s.id)delete S.plan[k];
     S.employees.forEach(e=>e.allowed=e.allowed.filter(x=>x!==s.id));save();render();});
 };
@@ -207,7 +228,7 @@ AFTER.starfsfolk=()=>{
     e.allowed=a.length===S.shifts.length?[]:a;if(!a.length){toast('Starfsmaður þarf að mega taka a.m.k. eina vakt');e.allowed=[id];}save();render();});
   $$('[data-noday]').forEach(b=>b.onclick=()=>{const [i,j]=b.dataset.noday.split('|').map(Number),e=S.employees[i];
     e.noDays=e.noDays.includes(j)?e.noDays.filter(x=>x!==j):[...e.noDays,j].sort();save();render();});
-  $$('[data-delemp]').forEach(b=>b.onclick=()=>{const e=S.employees[+b.dataset.delemp];if(!confirm(`Eyða ${e.name||'starfsmanni'} úr planinu?`))return;pushUndo();
+  $$('[data-delemp]').forEach(b=>b.onclick=async()=>{const e=S.employees[+b.dataset.delemp];if(!await ask(`Eyða ${e.name||'starfsmanni'} úr planinu?`))return;pushUndo();
     S.employees.splice(+b.dataset.delemp,1);for(const m of [S.plan,S.locks,S.wishes])for(const k of Object.keys(m))if(k.startsWith(e.id+'|'))delete m[k];save();render();});
   $$('[data-mv]').forEach(b=>b.onclick=()=>{const [i,d]=b.dataset.mv.split('|').map(Number),j=i+d;if(j<0||j>=S.employees.length)return;
     [S.employees[i],S.employees[j]]=[S.employees[j],S.employees[i]];save();render();});
@@ -256,7 +277,7 @@ AFTER.dagatal=()=>{
   if(n)n.oninput=()=>{const h=S.holidays.find(x=>x.date===selDay);h.name=n.value;h.custom=true;save();};
   if(n)n.onchange=()=>render();
   if(f)f.onchange=()=>{const h=S.holidays.find(x=>x.date===selDay);h.from=f.value;h.custom=true;save();render();};
-  $('#resetHol').onclick=()=>{if(!confirm('Endurheimta sjálfgefna íslenska frídaga fyrir tímabilið? Eigin breytingar hverfa.'))return;S.holidays=VP.holidaysForPeriod(S.period);save();render();};
+  $('#resetHol').onclick=async()=>{if(!await ask('Endurheimta sjálfgefna íslenska frídaga fyrir tímabilið? Eigin breytingar hverfa.'))return;S.holidays=VP.holidaysForPeriod(S.period);save();render();};
 };
 
 /* ---------- Skref 5: Óskir og fjarvistir ---------- */
@@ -323,7 +344,7 @@ AFTER.oskir=()=>{
     for(let d=x.from;d<=x.to;d=VP.addDays(d,1)){const k=K(x.e.id,d);if(x.kind==='a'){if(S.plan[k]&&S.plan[k].a===x.id)delete S.plan[k];}else delete S.wishes[k];}
     save();render();});
   $('#addAbs').onclick=()=>{S.absTypes.push({id:VPD.uid('a'),code:'X',name:'Ný fjarvist',color:'#dddddd',credit:false});save();render();};
-  $$('[data-delabs]').forEach(b=>b.onclick=()=>{const a=S.absTypes[+b.dataset.delabs];if(!confirm(`Eyða tegundinni „${a.name}“ og öllum skráningum hennar?`))return;pushUndo();
+  $$('[data-delabs]').forEach(b=>b.onclick=async()=>{const a=S.absTypes[+b.dataset.delabs];if(!await ask(`Eyða tegundinni „${a.name}“ og öllum skráningum hennar?`))return;pushUndo();
     S.absTypes.splice(+b.dataset.delabs,1);for(const [k,v] of Object.entries(S.plan))if(v.a===a.id)delete S.plan[k];save();render();});
 };
 
@@ -391,9 +412,9 @@ AFTER.plan=()=>{
   $('#undoBtn').onclick=doUndo;
   $$('[data-wf]').forEach(b=>b.onclick=()=>{warnFilter=b.dataset.wf;render();});
   $$('[data-cell]').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();openPop(b);};b.onkeydown=cellKey;});
-  $$('[data-need]').forEach(b=>b.onclick=()=>{const [d,id]=b.dataset.need.split('|'),s=shiftById(id),C=VP.buildCtx(S),i=C.idx[d];
+  $$('[data-need]').forEach(b=>b.onclick=async()=>{const [d,id]=b.dataset.need.split('|'),s=shiftById(id),C=VP.buildCtx(S),i=C.idx[d];
     const k=d+'|'+id,cur=S.needOverride[k];const def=VP.needFor({...C,state:{...S,needOverride:{}}},i,C.shift[id]);
-    const v=prompt(`Mönnunarþörf á ${s.name} ${VP.dateLabel(d)}.\nSjálfgefið: ${def}. Skildu eftir autt til að nota sjálfgefið.`,cur??'');
+    const v=await ask(`Mönnunarþörf á ${s.name} ${VP.dateLabel(d)}.\nSjálfgefið: ${def}. Skildu eftir autt til að nota sjálfgefið.`,{input:cur??'',ok:'Vista'});
     if(v===null)return;pushUndo();if(v.trim()==='')delete S.needOverride[k];else S.needOverride[k]=Math.max(0,parseInt(v)||0);save();render();});
   const gw=$('.gridwrap');if(gw&&AFTER._scroll!=null){gw.scrollLeft=AFTER._scroll;}if(gw)gw.onscroll=()=>AFTER._scroll=gw.scrollLeft;
   if(AFTER._focus){const el=document.querySelector(`[data-cell="${AFTER._focus}"]`);el&&el.focus();AFTER._focus=null;}
@@ -521,8 +542,8 @@ AFTER.utgafa=()=>{
           hoursByCategory:Object.fromEntries(VP.CATS.map(c=>[VP.CAT_NAMES[c],VP.round2(o.cats[c])])),premiumHours:VP.round2(o.premium)},days:C.dates.map(d=>entry(e,d))};})};
       download(fileSlug()+(v==='all'?'-starfsmenn':'-'+(empById(v).name||'starfsmadur').toLowerCase().replace(/ð/g,'d').replace(/þ/g,'th').replace(/æ/g,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-'))+'.json',JSON.stringify(data,null,2),'application/json');}
   });
-  $('#nextPeriod').onclick=()=>{
-    if(!confirm('Stofna næsta tímabil? Planið fyrir núverandi tímabil helst í skránni en staða starfsfólks flyst yfir sem „flutt staða“.'))return;
+  $('#nextPeriod').onclick=async()=>{
+    if(!await ask('Stofna næsta tímabil? Planið fyrir núverandi tímabil helst í skránni en staða starfsfólks flyst yfir sem „flutt staða“.'))return;
     pushUndo();const st=VP.stats(S);S.employees.forEach(e=>{const o=st.emp.find(x=>x.id===e.id);e.carry=VP.round2(o.balance);});
     let {year:y,month:m}=S.period;m++;if(m>12){m=1;y++;}S.locks={};lastGen=null;setPeriod({year:y,month:m});step=5;render();toast('Nýtt tímabil: '+VP.periodLabel(S.period));};
 };

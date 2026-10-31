@@ -1,7 +1,8 @@
 'use strict';
 /* Vaktaplan · PDF-útgáfa með jsPDF (../vendor/jspdf.umd.min.js) og íslenskum leturgerðum (../vendor/pdf-fonts.js). */
 (function(){
-const FONT_SRC='../vendor/pdf-fonts.js';
+/* Leturgerðirnar liggja við hliðina á jsPDF-skránni, hvar sem hún er. */
+const FONT_SRC=(()=>{const j=[...document.scripts].find(s=>/jspdf\.umd(\.min)?\.js/.test(s.src));return j?j.src.replace(/jspdf\.umd(\.min)?\.js.*$/,'pdf-fonts.js'):'../vendor/pdf-fonts.js';})();
 function loadFonts(){
   if(window.NASA_PDF_FONTS)return Promise.resolve(true);
   return new Promise(ok=>{const s=document.createElement('script');s.src=FONT_SRC;s.onload=()=>ok(!!window.NASA_PDF_FONTS);s.onerror=()=>ok(false);document.head.appendChild(s);});
@@ -54,7 +55,7 @@ function legend(w,S,C,y,{abs=true,hol=true}={}){
   return y+h+3;
 }
 const dayFill=f=>f.hol?(f.hol.kind==='major'?MAJ:RED):f.weekend?WK:null;
-const save=(w,name)=>w.doc.save(name);
+const save=(w,name)=>window.VPDownload?window.VPDownload(name,w.doc.output('blob'),'application/pdf'):w.doc.save(name);
 const slug=S=>(S.workplace.name||'vaktaplan').toLowerCase().replace(/ð/g,'d').replace(/þ/g,'th').replace(/æ/g,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'')+'-'+VP.periodRange(S.period.year,S.period.month).start.slice(0,7);
 
 /* ---------- Allt planið ---------- */
@@ -105,7 +106,7 @@ async function full(S,opts={}){
     w.text(hol.map(h=>`${VP.dateLabel(h.date)} ${h.name}${h.from?' (frá kl. '+h.from+')':''} – ${h.kind==='major'?'stórhátíðardagur':'rauður dagur'}`).join('   ·   '),M+31,y,{maxWidth:W-2*M-31});}
   if(opts.stats)statsPages(w,S,st,title,sub);
   w.footer(`${S.workplace.name||'Vaktaplan'} · ${VP.periodLabel(S.period)}`);
-  save(w,slug(S)+'-heildarplan.pdf');
+  await save(w,slug(S)+'-heildarplan.pdf');
 }
 function statsPages(w,S,st,title,sub){
   const {doc,W,H,M}=w,R=S.rules,C=st.C;doc.addPage();let y=header(w,S,'Útreikningar',sub);
@@ -177,7 +178,7 @@ async function week(S,weeks){
     });
   });
   w.footer(`${S.workplace.name||'Vaktaplan'} · ${VP.periodLabel(S.period)}`);
-  save(w,slug(S)+(weeks.length===1?'-vika-'+weeks[0].week:'-vikuplan')+'.pdf');
+  await save(w,slug(S)+(weeks.length===1?'-vika-'+weeks[0].week:'-vikuplan')+'.pdf');
 }
 
 /* ---------- Einstaklingsplan ---------- */
@@ -217,7 +218,7 @@ async function person(S,ids){
   });
   w.footer(`${S.workplace.name||'Vaktaplan'} · ${VP.periodLabel(S.period)}`);
   const one=ids.length===1&&S.employees.find(x=>x.id===ids[0]);
-  save(w,slug(S)+(one?'-'+(one.name||'starfsmadur').toLowerCase().replace(/ð/g,'d').replace(/þ/g,'th').replace(/æ/g,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-'):'-einstaklingar')+'.pdf');
+  await save(w,slug(S)+(one?'-'+(one.name||'starfsmadur').toLowerCase().replace(/ð/g,'d').replace(/þ/g,'th').replace(/æ/g,'ae').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-'):'-einstaklingar')+'.pdf');
 }
 window.VPPDF={full,week,person};
 })();
