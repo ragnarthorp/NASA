@@ -7,11 +7,20 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
 ## Skrefin
 
 1. **Grunnur:** vinnustaður, tímabil, vinnustundir á viku í 100% starfi, reglur (lágmarkshvíld, hámark vinnudaga í röð, hve langt má fara yfir vinnuskyldu, hvort óskir um frí eru bindandi, uppfylling vinnuskyldu) og tímamörk og álagsprósentur.
-2. **Vaktir:** kóði, heiti, tími, ógreitt hlé, litur, flokkur (tengir vaktina við óskir starfsfólks), „telst sem“ (afbrigði, t.d. 08–13, sem telst með aðalvaktinni í mönnun) og mönnunarþörf fyrir hvern vikudag, rauða daga og stórhátíðardaga. Hámark á vakt er valfrjálst. Vakt sem lýkur fyrir upphafstíma nær yfir miðnætti og telst til upphafsdagsins.
+2. **Vaktir:** sjálfgefið er fast vaktaskipulag:
+   - **Virkir dagar:** 1×8–13 (3 á fimmtudögum), 1×8–16, 1×9–16, 1×14–21 og 2×16–23.
+   - **Helgar:** 2×9–16, 1×12–20 og 2×16–23.
+   - **Nætur:** 23–08, en 23–09 aðfaranótt laugardags og sunnudags.
+
+   Hverri vakt fylgir, heiti, tími, ógreitt hlé, litur, flokkur (tengir vaktina við óskir starfsfólks), „telst sem“ (afbrigði, t.d. 08–13, sem telst með aðalvaktinni í mönnun) og mönnunarþörf fyrir hvern vikudag, rauða daga og stórhátíðardaga. Hámark á vakt er valfrjálst. Vakt sem lýkur fyrir upphafstíma nær yfir miðnætti og telst til upphafsdagsins.
 3. **Starfsfólk:** innbyggður starfsmannalisti sem fylgir öllum tímabilum. Smellt er á starfsmann til að breyta:
    - **Starfshlutfall og staða:** í starfi, **tímavinna** (tilfallandi tímar, ekki í vaktaplani) eða í leyfi (ekki í vaktaplani).
    - **Breytingar frá dagsetningu:** t.d. „úr 30% í tímavinnu frá 15.11.“ Vinnuskyldan reiknast dag fyrir dag eftir hlutfallinu sem gildir hverju sinni.
-   - **Óskir um vaktir:** morgunvaktir, kvöldvaktir, morgunvaktir um helgar, millivaktir um helgar, kvöldvaktir um helgar og næturvaktir. Röðunin setur starfsmann aðeins á vaktir í völdum flokkum.
+   - **Óskir um vaktir:** fyrir hvern flokk (morgunvaktir, kvöldvaktir, morgunvaktir um helgar, millivaktir um helgar, kvöldvaktir um helgar og næturvaktir) er valið **Helst**, **Má** eða **Ekki**.
+   - **Forgangur** (hár, venjulegur eða lágur) ræður þegar óskir rekast á.
+   - **Föst vakt:** starfsmaður fær vaktina alla daga sem hún er í boði, nema annað sé ákveðið (t.d. sjúkraliði á 8–16).
+   - **Hámark helga** á tímabili og **hámark vinnudaga í röð**.
+   - Staðan **Ekki á vaktaplani** er t.d. fyrir forstöðumann.
    - Vikustundir (t.d. 40 fyrir dagvinnu), föst vinnuskylda, flutt staða og vikudagar sem viðkomandi vinnur ekki.
 
    Hægt er að líma inn lista (`Nafn; hlutfall; starfsheiti`, þar sem hlutfallið má vera 80, 80%, 0,8 eða TV). Listinn sýnir vinnuskyldu, tíma á vöktum og **útistandandi tíma** fyrir hvern starfsmann.
@@ -20,7 +29,7 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
    - **Rauðir dagar:** skírdagur, annar í páskum, sumardagurinn fyrsti, 1. maí, uppstigningardagur, annar í hvítasunnu, frídagur verslunarmanna og annar í jólum.
    Hægt er að breyta hvaða degi sem er, gefa honum heiti og láta hann gilda frá ákveðnum tíma.
 5. **Óskir og fjarvistir:** ósk um frí, ósk um ákveðna vakt og fjarvistir (orlof, veikindi, námskeið, launalaust leyfi og eigin tegundir) á dagabili.
-6. **Vaktaplan:** **innlestur á völdum vöktum** úr CSV- eða Excel-skjali (ein lína á starfsmann, einn dálkur á dag eins og „16.11 mán.“, reitir eins og „08:00-16:00“). Tímabilið er lesið úr skjalinu ef það er tilgreint. Innlesnar vaktir læsast, ný afbrigði vakta verða til sjálfkrafa og nýir starfsmenn bætast á listann. Síðan kemur sjálfvirk röðun og handvirkar breytingar í töflu (smella á reit eða slá inn kóða). Handvirkar vaktir læsast og haldast þegar raðað er aftur. Neðst sést mönnun á móti þörf (smelltu til að breyta þörf einstaks dags) og listi yfir athugasemdir.
+6. **Vaktaplan:** smelltu á dag í hausnum til að breyta vöktum þess dags: fjölda á hverri vakt, eða tilfallandi vakt með eigin tíma. **Innlestur á vaktaóskum** (eða fastra vakta) úr CSV- eða Excel-skjali (ein lína á starfsmann, einn dálkur á dag eins og „16.11 mán.“, reitir eins og „08:00-16:00“). Tímabilið er lesið úr skjalinu ef það er tilgreint. Innlesnar vaktir læsast, ný afbrigði vakta verða til sjálfkrafa og nýir starfsmenn bætast á listann. Síðan kemur sjálfvirk röðun og handvirkar breytingar í töflu (smella á reit eða slá inn kóða). Handvirkar vaktir læsast og haldast þegar raðað er aftur. Neðst sést mönnun á móti þörf (smelltu til að breyta þörf einstaks dags) og listi yfir athugasemdir.
 7. **Útreikningar:** vinnuskylda, unnar stundir, fjarvistir, mismunur og staða fyrir hvern starfsmann, skipting í dagvinnu, kvöld, nætur, helgar, rauða daga og stórhátíðir, álagsstundir og fjöldi vakta eftir tegund.
 8. **Útgáfa:** PDF fyrir allt planið, vikuplan (eina viku eða allar) og einstaklingsplan (einn eða alla), JSON fyrir öll gögnin eða valda viku eða starfsmann, og nýtt tímabil sem tekur stöðu starfsfólks með sér.
 
@@ -36,7 +45,7 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
 
 ## Sjálfvirk röðun
 
-Röðunin fer í gegnum tímabilið dag fyrir dag og setur á hverja vakt þann starfsmann sem á mest eftir af vinnuskyldu sinni hlutfallslega. Um leið virðir hún reglurnar: leyfðar vaktir, vikudaga sem starfsmaður vinnur ekki, fjarvistir, óskir, lágmarkshvíld, hámark vinnudaga í röð og hámark yfir vinnuskyldu. Hún jafnar líka helgar og nætur eftir starfshlutfalli, heldur helgum saman og forðast staka frídaga. Nokkur hundruð útgáfur eru prófaðar með mismunandi slembiþáttum og sú besta valin, þar sem ómannaðar vaktir vega þyngst. Læstar vaktir og fjarvistir haldast óbreyttar.
+Röðunin fer fram í þremur skrefum: 1) **fastar vaktir**, 2) **óskir um vaktir**, og ef fleiri óska eftir sömu vakt en pláss er ræður forgangur og síðan hver hefur fengið hlutfallslega fæstar óskir uppfylltar, 3) **það sem eftir er**. Í þriðja skrefinu fer röðunin í gegnum tímabilið dag fyrir dag og setur á hverja vakt þann starfsmann sem á mest eftir af vinnuskyldu sinni hlutfallslega, og tekur þá tillit til „Helst/Má/Ekki“. Um leið virðir hún reglurnar: leyfðar vaktir, vikudaga sem starfsmaður vinnur ekki, fjarvistir, óskir, lágmarkshvíld, hámark vinnudaga í röð og hámark yfir vinnuskyldu. Hún jafnar líka helgar og nætur eftir starfshlutfalli, heldur helgum saman og forðast staka frídaga. Nokkur hundruð útgáfur eru prófaðar með mismunandi slembiþáttum og sú besta valin. Þar vega ómannaðar vaktir þyngst, síðan óuppfylltar óskir og ójöfn dreifing uppfylltra óska. Læstar vaktir og fjarvistir haldast óbreyttar.
 
 ## Skrár
 

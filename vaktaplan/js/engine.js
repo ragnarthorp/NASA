@@ -26,7 +26,16 @@ const CAT_NAMES={day:'Dagvinna',evening:'Kvöld',night:'Nótt',weekend:'Helgar',
 /* Flokkar vakta sem starfsfólk velur sér (óskir) */
 const PREF_CATS=[['morning','Morgunvaktir'],['evening','Kvöldvaktir'],['weekendMorning','Morgunvaktir um helgar'],['weekendMid','Millivaktir um helgar'],['weekendEvening','Kvöldvaktir um helgar'],['night','Næturvaktir']];
 const PREF_NAME=Object.fromEntries(PREF_CATS);
-const STATUS_NAMES={active:'Í starfi',hourly:'Tímavinna',leave:'Í leyfi'};
+const STATUS_NAMES={active:'Í starfi',hourly:'Tímavinna',leave:'Í leyfi',off:'Ekki á vaktaplani'};
+const PREF_LEVELS=[[2,'Helst'],[1,'Má'],[0,'Ekki']];
+const PRIORITY_NAMES={1:'Hár',2:'Venjulegur',3:'Lágur'};
+/* Hve mikið starfsmaður vill vaktir í flokki: 2 = helst, 1 = má, 0 = ekki */
+function prefLevel(e,cat){
+  if(!cat)return 1;const L=e.prefLevels;
+  if(L&&Object.keys(L).length)return L[cat]??1;
+  if(e.prefs&&e.prefs.length)return e.prefs.includes(cat)?2:0;
+  return 1;
+}
 /* Giskar á flokk út frá tíma og hvort dagurinn er helgi */
 function guessCat(m0,m1,weekend){
   if(m1>1440||m0>=21*60||m0<5*60)return 'night';
@@ -136,10 +145,12 @@ function targetHours(C,e){
 function absenceCredit(C,e,i,absId){const a=C.abs[absId];if(!a||!a.credit)return 0;const x=(C.empDays[e.id]||[])[i]||empOn(e,C.dates[i]);
   return x.status==='active'?C.dayCredit[i]*dailyOf(C,e)*x.pct/100:0;}
 /* Vaktir sem starfsmaður má taka: eftir óskum (flokkum), annars eftir lista, annars allar */
+function shiftCat(C,s){const m=C.shift[covId(C,s.id)];return s.cat||(m&&m.cat)||'';}
 function allowedIds(C,e){
-  if(e.prefs&&e.prefs.length){const P=new Set(e.prefs);return new Set(C.shifts.filter(s=>{const m=C.shift[covId(C,s.id)];const c=s.cat||(m&&m.cat);return !c||P.has(c);}).map(s=>s.id));}
-  if(e.allowed&&e.allowed.length)return new Set(e.allowed);
-  return new Set(C.shifts.map(s=>s.id));
+  let ids=C.shifts.filter(s=>prefLevel(e,shiftCat(C,s))>0).map(s=>s.id);
+  const hasPref=(e.prefLevels&&Object.keys(e.prefLevels).length)||(e.prefs&&e.prefs.length);
+  if(!hasPref&&e.allowed&&e.allowed.length)ids=ids.filter(id=>e.allowed.includes(id));
+  return new Set(ids);
 }
 /* Afbrigði vaktar (t.d. 08–13 í stað 08–16) telst með aðalvaktinni í mönnun */
 function covId(C,id){const s=C.shift[id];return s&&s.countsAs&&s.countsAs!==id&&C.shift[s.countsAs]?s.countsAs:id;}
@@ -201,7 +212,14 @@ function prepare(C){
   const noDays=E.map(e=>new Set(e.noDays||[]));
   const nightOk=E.map((e,ei)=>C.shifts.some(s=>s.isNight&&allowed[ei].has(s.id)));
   const need=C.dates.map((d,i)=>C.shifts.map(s=>needFor(C,i,s)));
-  return {wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need};
+  const lvl=E.map(e=>C.shifts.map(s=>prefLevel(e,shiftCat(C,s))));
+  const prio=E.map(e=>+e.priority||2);
+  const fixed=E.map(e=>e.fixedShift&&C.shift[e.fixedShift]?C.shift[e.fixedShift]:null);
+  const maxWk=E.map(e=>e.maxWeekends===''||e.maxWeekends==null?null:+e.maxWeekends);
+  const maxCon=E.map(e=>e.maxConsec===''||e.maxConsec==null||!(+e.maxConsec>0)?C.maxConsec:+e.maxConsec);
+  const asked=E.map((e,ei)=>wishes[ei].filter(w=>w&&w.s&&C.shift[w.s]).length);
+  const wkKey=C.dates.map((d,i)=>C.infos[i].dow>=5?isoWeek(d):null);
+  return {wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
 }
 function runOnce(C,P,rnd,noise,pace){
   const S=C.state,E=C.emps,N=C.n,SH=C.shifts,shIdx={};SH.forEach((s,j)=>shIdx[s.id]=j);
@@ -210,7 +228,10 @@ function runOnce(C,P,rnd,noise,pace){
   const hours=P.credit.slice(),wk=E.map(()=>0),nt=E.map(()=>0),cnt=C.dates.map(()=>SH.map(()=>0));
   const isWk=i=>C.infos[i].weekend||!!C.infos[i].hol;
   grid.forEach((row,ei)=>row.forEach((c,i)=>{if(c&&c.s){const s=C.shift[c.s];hours[ei]+=s.hours;cnt[i][shIdx[covId(C,c.s)]]++;if(isWk(i))wk[ei]++;if(s.isNight)nt[ei]++;}}));
-  let unfilled=0,softViol=0;const holes=[];
+  let unfilled=0,softViol=0;const holes=[],granted=E.map(()=>0);
+  const wkSets=E.map(()=>new Map());
+  const addWk=(ei,i,dlt)=>{const k=P.wkKey[i];if(k==null)return;const m=wkSets[ei];m.set(k,(m.get(k)||0)+dlt);if(!m.get(k))m.delete(k);};
+  grid.forEach((row,ei)=>row.forEach((c,i)=>{if(c&&c.s)addWk(ei,i,1);}));
   const can=(ei,i,sh,tol)=>{
     const row=grid[ei];if(row[i])return false;
     if(!P.avail[ei][i]||!P.allowed[ei].has(sh.id)||P.noDays[ei].has(C.infos[i].dow))return false;
@@ -219,7 +240,8 @@ function runOnce(C,P,rnd,noise,pace){
     for(let j=Math.max(0,i-2);j<i;j++){const p=row[j];if(p&&p.s&&j*1440+C.shift[p.s].m1+C.rest>st)return false;}
     for(let j=i+1;j<=Math.min(N-1,i+2);j++){const q=row[j];if(q&&q.s&&en+C.rest>j*1440+C.shift[q.s].m0)return false;}
     let run=1;for(let j=i-1;j>=0&&row[j]&&row[j].s;j--)run++;for(let j=i+1;j<N&&row[j]&&row[j].s;j++)run++;
-    if(run>C.maxConsec)return false;
+    if(run>P.maxCon[ei])return false;
+    if(P.maxWk[ei]!=null&&P.wkKey[i]!=null&&!wkSets[ei].has(P.wkKey[i])&&wkSets[ei].size+1>P.maxWk[ei])return false;
     if(hours[ei]+sh.hours>P.target[ei]+(tol??C.maxOver)+1e-6)return false;
     if(pace&&tol==null&&hours[ei]+sh.hours>P.target[ei]*(i+1)/N+pace)return false;
     return true;
@@ -230,6 +252,7 @@ function runOnce(C,P,rnd,noise,pace){
     const after=hours[ei]+sh.hours;if(after>P.target[ei])s+=(after-P.target[ei])*12;
     const w=P.wishes[ei][i];
     if(w){if(w.off)s+=400;else if(w.s===sh.id)s-=250;else if(w.s)s+=60;}
+    const lv=P.lvl[ei][shIdx[sh.id]];if(lv===2)s-=25;
     if(isWk(i))s+=wk[ei]/P.pctf[ei]*7;
     if(sh.isNight)s+=nt[ei]/P.pctf[ei]*5;
     const p=i>0?row[i-1]:null;
@@ -240,8 +263,18 @@ function runOnce(C,P,rnd,noise,pace){
     if(f.dow===5&&i<N-1&&row[i+1]&&row[i+1].s)s-=10;
     return s+rnd()*noise;
   };
-  const assign=(ei,i,sh)=>{grid[ei][i]={s:sh.id};hours[ei]+=sh.hours;cnt[i][shIdx[covId(C,sh.id)]]++;if(isWk(i))wk[ei]++;if(sh.isNight)nt[ei]++;
-    const w=P.wishes[ei][i];if(w&&w.off)softViol++;};
+  const assign=(ei,i,sh)=>{grid[ei][i]={s:sh.id};hours[ei]+=sh.hours;cnt[i][shIdx[covId(C,sh.id)]]++;if(isWk(i))wk[ei]++;if(sh.isNight)nt[ei]++;addWk(ei,i,1);
+    const w=P.wishes[ei][i];if(w&&w.off)softViol++;if(w&&w.s===sh.id)granted[ei]++;};
+  const free=(i,sh)=>P.need[i][shIdx[covId(C,sh.id)]]-cnt[i][shIdx[covId(C,sh.id)]];
+  // 1) fastar vaktir (t.d. sjúkraliði á 8–16 alla virka daga)
+  for(let i=0;i<N;i++)E.forEach((e,ei)=>{const sh=P.fixed[ei];if(sh&&free(i,sh)>0&&can(ei,i,sh))assign(ei,i,sh);});
+  // 2) óskir: úthlutað fyrst; ef fleiri óska en pláss er ræður forgangur, síðan hver hefur fengið hlutfallslega fæstar óskir
+  if(C.R.wishFirst!==false)for(let i=0;i<N;i++){
+    const L=[];E.forEach((e,ei)=>{const w=P.wishes[ei][i];if(w&&w.s&&C.shift[w.s]&&!grid[ei][i])L.push({ei,sh:C.shift[w.s],r:rnd()});});
+    L.sort((a,b)=>P.prio[a.ei]-P.prio[b.ei]||granted[a.ei]/Math.max(1,P.asked[a.ei])-granted[b.ei]/Math.max(1,P.asked[b.ei])||a.r-b.r);
+    for(const x of L)if(free(i,x.sh)>0&&can(x.ei,i,x.sh))assign(x.ei,i,x.sh);
+  }
+  // 3) fylla það sem eftir er
   for(let i=0;i<N;i++){
     const order=SH.map((sh,j)=>{const rem=P.need[i][j]-cnt[i][j];return {sh,j,rem,el:rem>0?E.reduce((a,_,ei)=>a+(can(ei,i,sh)?1:0),0):0};})
       .filter(o=>o.rem>0).sort((a,b)=>(a.el-a.rem)-(b.el-b.rem)||(rnd()-.5));
@@ -279,7 +312,9 @@ function runOnce(C,P,rnd,noise,pace){
   let blocks=0;grid.forEach(row=>row.forEach((c,i)=>{if(c&&c.s&&!(row[i-1]&&row[i-1].s)&&!(row[i+1]&&row[i+1].s))blocks++;}));
   const holeDays={};holes.forEach(h=>holeDays[h.i]=(holeDays[h.i]||0)+h.missing);
   const clump=Object.values(holeDays).reduce((a,b)=>a+b*b,0);
-  const sc=unfilled*10000+clump*40+dev+softViol*300+spread(wk,()=>true)*4+spread(nt,ei=>P.nightOk[ei])*3+blocks*2;
+  let missed=0;const ratios=[];E.forEach((e,ei)=>{if(P.asked[ei]){missed+=P.asked[ei]-granted[ei];ratios.push(granted[ei]/P.asked[ei]);}});
+  const rm=ratios.reduce((a,b)=>a+b,0)/(ratios.length||1),rvar=ratios.reduce((a,b)=>a+(b-rm)*(b-rm),0);
+  const sc=unfilled*10000+clump*40+dev+softViol*300+missed*120+rvar*600+spread(wk,()=>true)*4+spread(nt,ei=>P.nightOk[ei])*3+blocks*2;
   return {grid,score:sc,unfilled,holes};
 }
 function generate(state,opts={}){
@@ -304,7 +339,7 @@ function stats(state){
   const C=buildCtx(state),S=state;
   const emp=C.emps.map(e=>{
     const o={id:e.id,name:e.name,pct:+e.pct||0,target:targetHours(C,e),carry:+e.carry||0,shifts:0,worked:0,credit:0,
-      cats:Object.fromEntries(CATS.map(c=>[c,0])),byShift:{},abs:{},weekendDays:0,weekends:0,nights:0,holidayShifts:0,wishOff:0,wishOffKept:0,wishShift:0,wishShiftKept:0};
+      cats:Object.fromEntries(CATS.map(c=>[c,0])),byShift:{},abs:{},weekendDays:0,weekends:0,nights:0,holidayShifts:0,wishOff:0,wishOffKept:0,wishShift:0,wishShiftKept:0,wished:0};
     const wkSet=new Set();
     C.dates.forEach((d,i)=>{
       const k=e.id+'|'+d,v=S.plan[k],w=(S.wishes||{})[k];
@@ -314,7 +349,7 @@ function stats(state){
         if(f.hol)o.holidayShifts++;if(sh.isNight)o.nights++;}
       if(v&&v.a){o.abs[v.a]=(o.abs[v.a]||0)+1;o.credit+=absenceCredit(C,e,i,v.a);}
       if(w&&w.off){o.wishOff++;if(!(v&&v.s))o.wishOffKept++;}
-      if(w&&w.s){o.wishShift++;if(v&&v.s===w.s)o.wishShiftKept++;}
+      if(w&&w.s){o.wishShift++;if(v&&v.s===w.s)o.wishShiftKept++;if(C.shift[w.s])o.wished+=C.shift[w.s].hours;}
     });
     o.weekends=wkSet.size;
     o.total=o.worked+o.credit;o.diff=o.total-o.target;o.balance=o.diff+o.carry;o.outstanding=o.target-o.total;
@@ -331,8 +366,11 @@ function stats(state){
   const tot={target:0,worked:0,credit:0,need:0,have:0,cats:Object.fromEntries(CATS.map(c=>[c,0]))};
   emp.forEach(o=>{tot.target+=o.target;tot.worked+=o.worked;tot.credit+=o.credit;for(const c of CATS)tot.cats[c]+=o.cats[c];});
   days.forEach(r=>Object.values(r.shifts).forEach(x=>{tot.need+=x.need;tot.have+=Math.min(x.have,x.need);}));
+  const used=new Set();days.forEach(r=>Object.entries(r.shifts).forEach(([id,x])=>{if(x.need||x.have)used.add(id);}));
+  C.emps.forEach(e=>C.dates.forEach(d=>{const v=S.plan[e.id+'|'+d],w=(S.wishes||{})[e.id+'|'+d];if(v&&v.s)used.add(v.s);if(w&&w.s)used.add(w.s);}));
+  const usedShifts=C.shifts.filter(s=>used.has(s.id));
   const hourly=C.allEmps.filter(e=>!C.emps.includes(e)).map(e=>({id:e.id,name:e.name,status:C.empDays[e.id][C.n-1].status}));
-  return {C,emp,days,tot,hourly,workdays:C.workdays,holReduction:C.holReduction,effWorkdays:C.effWorkdays};
+  return {C,emp,days,tot,hourly,usedShifts,workdays:C.workdays,holReduction:C.holReduction,effWorkdays:C.effWorkdays};
 }
 
 /* ---------- Yfirferð ---------- */
@@ -396,7 +434,7 @@ function parseRange(v){
 function importTable(state,rows,opts={}){
   const uid=p=>p+Math.random().toString(36).slice(2,9);
   rows=(rows||[]).map(r=>(r||[]).map(c=>c==null?'':String(c).trim()));
-  const rep={period:null,count:0,replaced:0,newEmps:[],newShifts:[],unknown:[],inactive:[]};
+  const rep={period:null,count:0,replaced:0,wishes:0,newEmps:[],newShifts:[],unknown:[],inactive:[],ignored:[]};const asWish=opts.mode==='wish';
   // tímabil úr skjalinu, t.d. „16.11.2026 - 15.12.2026“
   for(const r of rows)for(const c of r){const m=c.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})\s*[-–]\s*(\d{1,2})\.(\d{1,2})\.(\d{4})/);
     if(m&&!rep.period&&+m[1]===16){rep.period={year:+m[3],month:+m[2]};}}
@@ -419,6 +457,7 @@ function importTable(state,rows,opts={}){
   for(const r of rows.slice(hi+1)){
     const name=r[nameCol];if(!name||!/[a-zA-Z\u00C0-\u00FF]/.test(name))continue;
     let e=byName[normName(name)];
+    if(e&&e.status==='off'&&!(e.changes||[]).length){rep.ignored.push(name);continue;}
     const cells=Object.entries(cols).filter(([j])=>r[j]);
     if(!e){if(!cells.length&&opts.addEmpty===false)continue;
       e={id:uid('e'),name,title:'',pct:0,status:'active',prefs:[],changes:[],allowed:[],noDays:[],carry:0,fixedTarget:'',weekly:'',note:'Bætt við úr innlestri. Skráðu starfshlutfall.'};
@@ -444,15 +483,15 @@ function importTable(state,rows,opts={}){
         if(s2)val={s:s2.id};else if(a2)val={a:a2.id};
       }
       if(!val){rep.unknown.push(`${name} ${dateLabel(d)}: „${v}“`);continue;}
-      if(state.plan[k])rep.replaced++;
-      state.plan[k]=val;if(val.s)state.locks[k]=true;else delete state.locks[k];rep.count++;
+      if(val.s&&asWish){state.wishes=state.wishes||{};state.wishes[k]={s:val.s};rep.wishes++;rep.count++;}
+      else{if(state.plan[k])rep.replaced++;state.plan[k]=val;if(val.s)state.locks[k]=true;else delete state.locks[k];rep.count++;}
       if(val.s&&empOn(e,d).status!=='active')rep.inactive.push(`${name} ${dateLabel(d)}`);
     }
   }
   return rep;
 }
 
-const API={PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
+const API={PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
   MONTHS,DAYS,DAYS_SHORT,DAYS_1,CATS,CAT_NAMES,easter,icelandicHolidays,holidaysForPeriod,shiftTimes,buildCtx,targetHours,absenceCredit,
   shiftCats,needFor,generate,stats,validate};
 if(typeof module!=='undefined'&&module.exports)module.exports=API;else root.VP=API;
