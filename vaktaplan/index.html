@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1f3a40">
+<title>Vaktaplan</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="brand"><b>Vaktaplan</b><span><span id="wpName"></span><br><span id="periodBadge"></span></span></div>
+  <div class="toolbar head-tools">
+    <button data-act="open" title="Opna vaktaplan úr JSON-skrá">Opna skrá</button>
+    <button data-act="save" title="Sækja öll gögn sem JSON-skrá">Sækja JSON</button>
+    <button data-act="pdf" class="primary" title="Sækja allt planið sem PDF">Allt planið · PDF</button>
+  </div>
+</header>
+<nav class="stepper" id="stepper" aria-label="Skref"></nav>
+<main id="view" tabindex="-1"></main>
+<footer class="foot"><span id="saveState" role="status" aria-live="polite"></span><span>Gögnin eru aðeins geymd í þessum vafra. Sæktu JSON til að eiga afrit.</span></footer>
+<input type="file" id="fileInput" class="file" accept=".json,application/json">
+<input type="file" id="importInput" class="file" accept=".csv,.txt,.tsv,.xlsx,.xls,text/csv">
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="../vendor/jspdf.umd.min.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/defaults.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pdf.js"></script>
+</body>
+</html>

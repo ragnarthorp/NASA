@@ -45,3 +45,7 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Vaktaplan
+
+`vaktaplan/index.html` er sjálfstæður vefur til að útbúa vaktaplan fyrir vinnustað. Tímabilið er frá 16. hvers mánaðar til 15. næsta mánaðar. Vefurinn raðar á vaktir sjálfvirkt, merkir stórhátíðardaga og rauða daga sérstaklega, reiknar vinnuskyldu, stöðu og álag og flytur út sem JSON og PDF (allt planið, vikuplan og einstaklingsplan). Sjá `vaktaplan/README.md`.
