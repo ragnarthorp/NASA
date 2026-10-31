@@ -225,7 +225,9 @@ function rng32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>
 function prepare(C){
   const S=C.state,E=C.emps;
   const wishes=E.map(e=>C.dates.map(d=>(S.wishes||{})[e.id+'|'+d]||null));
-  const target=E.map(e=>targetHours(C,e)-(S.rules.carryInTarget?(+e.carry||0):0));   // skuld (neikvæð staða) bætist við vinnuskyldu
+  // virk vinnuskylda í röðun: almenn regla telur flutta stöðu með (báðar áttir); á spjaldi „vinna upp skuld“ telur aðeins skuld
+  const target=E.map(e=>{const c=+e.carry||0;return targetHours(C,e)-(S.rules.carryInTarget?c:e.carryIn?Math.min(0,c):0);});
+  const mustMeet=E.map(e=>!!e.mustMeet);   // skuld (neikvæð staða) bætist við vinnuskyldu
   const credit=E.map((e,ei)=>C.dates.reduce((s,d,i)=>{const v=S.plan[e.id+'|'+d];return s+(v&&v.a?absenceCredit(C,e,i,v.a):0);},0));
   const pctf=E.map(e=>Math.max(C.empDays[e.id].reduce((a,x)=>Math.max(a,x.status==='active'?x.pct:0),0)/100,0.05));
   const allowed=E.map(e=>allowedIds(C,e));
@@ -257,7 +259,7 @@ function prepare(C){
     for(let k=1;k<=14;k++){const dd=addDays(d0,-k);if(L.some(x=>x.date===dd))run++;else break;}
     return {lastEnd,lastNight,run};});
   const hasHelst=E.map(e=>PREF_CATS.some(([c])=>prefLevel(e,c)===2));
-  return {empOver,weekCap,weekKey,prev,hasHelst,nightPref,onlyW,partner,scope,blocked,wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
+  return {mustMeet,empOver,weekCap,weekKey,prev,hasHelst,nightPref,onlyW,partner,scope,blocked,wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
 }
 function runOnce(C,P,rnd,noise,pace){
   const S=C.state,E=C.emps,N=C.n,SH=C.shifts,shIdx={};SH.forEach((s,j)=>shIdx[s.id]=j);
@@ -298,6 +300,7 @@ function runOnce(C,P,rnd,noise,pace){
   const score=(ei,i,sh)=>{
     const row=grid[ei],t=P.target[ei]||1;
     let s=(hours[ei]/t)*100;
+    if(P.mustMeet[ei]&&hours[ei]<P.target[ei])s-=80;   // verður að ná vinnuskyldu
     const after=hours[ei]+sh.hours;if(after>P.target[ei])s+=(after-P.target[ei])*12;
     const w=P.wishes[ei][i];
     if(w){if(w.off)s+=400;else if(w.s===sh.id)s-=250;else if(w.s)s+=60;}
@@ -346,13 +349,13 @@ function runOnce(C,P,rnd,noise,pace){
     let changed=true,guard=0;
     while(changed&&guard++<500){
       changed=false;
-      const order=E.map((e,ei)=>ei).filter(ei=>P.target[ei]-hours[ei]>=minH*0.75).sort((a,b)=>(hours[a]-P.target[a])-(hours[b]-P.target[b]));
+      const order=E.map((e,ei)=>ei).filter(ei=>P.target[ei]-hours[ei]>=minH*0.75||(P.mustMeet[ei]&&hours[ei]<P.target[ei]-0.01)).sort((a,b)=>(P.mustMeet[b]-P.mustMeet[a])||(hours[a]-P.target[a])-(hours[b]-P.target[b]));
       for(const ei of order){
         let best=null,bs=Infinity;
         for(let i=0;i<N;i++)SH.forEach((sh,j)=>{
           if(P.need[i][j]<=0)return;
           if(sh.max!==''&&sh.max!=null&&cnt[i][j]>=+sh.max)return;
-          if(!can(ei,i,sh,Math.min(C.maxOver,sh.hours/2)))return;
+          if(!can(ei,i,sh,P.mustMeet[ei]?(P.empOver[ei]??C.maxOver):Math.min(C.maxOver,sh.hours/2)))return;
           const sc=cnt[i][j]/P.need[i][j]*10+(isWk(i)?3:0)+score(ei,i,sh)/50+rnd()*noise/3;
           if(sc<bs){bs=sc;best={i,sh};}
         });
@@ -361,7 +364,7 @@ function runOnce(C,P,rnd,noise,pace){
     }
   }
   // heildarmat
-  let dev=0;E.forEach((e,ei)=>{const d=hours[ei]-P.target[ei];dev+=d*d;});
+  let dev=0;E.forEach((e,ei)=>{const d=hours[ei]-P.target[ei];dev+=d*d;if(P.mustMeet[ei]&&d<-0.01)dev+=2000-d*100;});
   const spread=(arr,mask)=>{const v=arr.map((x,ei)=>x/P.pctf[ei]).filter((_,ei)=>mask(ei));if(v.length<2)return 0;const m=v.reduce((a,b)=>a+b,0)/v.length;return v.reduce((a,b)=>a+(b-m)*(b-m),0);};
   let blocks=0;grid.forEach(row=>row.forEach((c,i)=>{if(c&&c.s&&!(row[i-1]&&row[i-1].s)&&!(row[i+1]&&row[i+1].s))blocks++;}));
   const holeDays={};holes.forEach(h=>holeDays[h.i]=(holeDays[h.i]||0)+h.missing);
@@ -464,6 +467,8 @@ function validate(state){
     const cap=Math.min(+e.maxWeekHours>0?+e.maxWeekHours:1e9,+S.rules.maxWeekHours>0?+S.rules.maxWeekHours:1e9);
     Object.entries(W).forEach(([k,h])=>{if(h>cap+1e-6)out.push({level:'warn',type:'week',emp:e.id,msg:`${e.name}: ${fmtNum(h)} klst. í viku ${k} (hámark ${fmtNum(cap)})`});});});
   const st=stats(state),tol=+S.rules.hourTolerance||4;
+  st.emp.forEach(o=>{const e=C.emps.find(x=>x.id===o.id);if(e&&e.mustMeet){const need=o.target-(e.carryIn||S.rules.carryInTarget?Math.min(0,o.carry):0);
+    if(o.total<need-0.01)out.push({level:'warn',type:'must',emp:o.id,msg:`${o.name} á að ná vinnuskyldu en vantar ${fmtNum(need-o.total)} klst. (${fmtNum(o.total)} af ${fmtNum(need)})`});}});
   st.emp.forEach(o=>{if(Math.abs(o.diff)>tol)out.push({level:'warn',type:'hours',emp:o.id,msg:`${o.name}: ${o.diff>0?'+':''}${fmtNum(o.diff)} klst. miðað við vinnuskyldu (${fmtNum(o.total)} af ${fmtNum(o.target)})`});});
   return out;
 }

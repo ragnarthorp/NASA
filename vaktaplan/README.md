@@ -25,6 +25,7 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
    - **Helgar:** allar, aðra hvora helgi (A eða B, dagsetningar sýndar) eða engar, og **helst sömu helgar og** annar starfsmaður.
    - **Forgangur gildir** alla daga, aðeins virka daga eða aðeins um helgar (t.d. „óskir á virkum dögum hafa forgang“).
    - **Hámark klst. á viku** (t.d. 36) og **hámark umfram vinnuskyldu** fyrir hvern starfsmann.
+   - **Verður að ná vinnuskyldu:** viðkomandi gengur fyrir þegar vantar upp á tíma hjá honum. **Vinna upp skuld:** neikvæð flutt staða bætist við vinnuskylduna.
    - **Aðeins óskaðar vaktir:** starfsmaður fær bara þær vaktir sem hann óskar eftir, auk fastrar vaktar.
    - Vikustundir (t.d. 40 fyrir dagvinnu), föst vinnuskylda, flutt staða og vikudagar sem viðkomandi vinnur ekki.
 
