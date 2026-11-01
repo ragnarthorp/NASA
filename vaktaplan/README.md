@@ -54,6 +54,17 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
 - **Hlutfall vaktategunda:** hlutfall morgun-, kvöld-, helgar- og næturvakta hjá hverjum starfsmanni er reiknað úr fyrra tímabili, annaðhvort úr innlesnu fyrra plani eða sjálfkrafa þegar næsta tímabil er stofnað. Röðunin heldur því sem líkustu, að teknu tilliti til óska (regla í Grunni).
 - **Nöfn:** við innlestur eru nöfn pöruð þó þau séu skrifuð á ólíkan hátt, t.d. „Haukur Birgir Jónsson“ og „Haukur Birgir“.
 
+## Rúllandi plan
+
+Hnappurinn **↻ Rúllandi plan** í skrefi 6 byggir á þessari reglu: *vaktir eru forsendan, óskir eru settar inn, og reynt er að flytja fyrirkomulag síðasta tímabils inn eins óbreytt og hægt er.*
+
+1. Vaktaskipulagið (mönnunarþörf hvers dags) er forsendan.
+2. Óskir og fastar vaktir eru settar inn fyrst.
+3. Hver dagur fær sömu vakt og sami starfsmaður hafði fyrir 4 vikum: sami vikudagur og sama helgi í tveggja vikna hrynjandi, svo helgarhópar haldast. Ef sá dagur er utan síðasta tímabils er notað 6, 2 eða 8 vikum fyrr. Frídagar flytjast líka.
+4. Vikið er frá síðasta tímabili aðeins þar sem óskir, reglur eða mönnunarþörf krefjast þess. Restin er fyllt eins og venjulega.
+
+Plan síðasta tímabils fylgir sjálfkrafa með „Stofna næsta tímabil“, eða það má lesa inn sem „Sem fyrra tímabil“.
+
 ## Vinnuferli hvers mánaðar
 
 Efst í skrefi 6 sést hvað er búið og hvað er næst:

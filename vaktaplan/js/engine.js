@@ -306,6 +306,7 @@ function runOnce(C,P,rnd,noise,pace){
   const score=(ei,i,sh)=>{
     const row=grid[ei],t=P.target[ei]||1;
     let s=(hours[ei]/t)*100;
+    if(P.tmpl){const tv=P.tmpl[ei][i];if(tv&&covId(C,tv)===covId(C,sh.id))s-=50;else if(tv==='')s+=20;}   // rúllandi plan: sama og síðast
     if(P.mustMeet[ei]&&hours[ei]<P.target[ei])s-=80;   // verður að ná vinnuskyldu
     const after=hours[ei]+sh.hours;if(after>P.target[ei])s+=(after-P.target[ei])*12;
     const w=P.wishes[ei][i];
@@ -338,6 +339,12 @@ function runOnce(C,P,rnd,noise,pace){
     L.sort((a,b)=>pr(a.ei)-pr(b.ei)||granted[a.ei]/Math.max(1,P.asked[a.ei])-granted[b.ei]/Math.max(1,P.asked[b.ei])||a.r-b.r);
     for(const x of L)if(free(i,x.sh)>0&&can(x.ei,i,x.sh))assign(x.ei,i,x.sh);
   }
+  // 2b) rúllandi plan: fyrirkomulag síðasta tímabils flutt inn eins óbreytt og hægt er
+  let tmplKept=0,tmplTotal=0;
+  if(P.tmpl){for(let i=0;i<N;i++){const ord=E.map((e,ei)=>ei).sort(()=>rnd()-.5);
+    for(const ei of ord){const t=P.tmpl[ei][i];if(!t)continue;const sh=C.shift[t];if(!sh)continue;
+      if(grid[ei][i]&&grid[ei][i].s){continue;}
+      if(!grid[ei][i]&&free(i,sh)>0&&can(ei,i,sh))assign(ei,i,sh);}}}
   // 3) fylla það sem eftir er
   for(let i=0;i<N;i++){
     const order=SH.map((sh,j)=>{const rem=P.need[i][j]-cnt[i][j];return {sh,j,rem,el:rem>0?E.reduce((a,_,ei)=>a+(can(ei,i,sh)?1:0),0):0};})
@@ -379,11 +386,13 @@ function runOnce(C,P,rnd,noise,pace){
   let missed=0;const ratios=[];E.forEach((e,ei)=>{if(P.asked[ei]){missed+=P.asked[ei]-granted[ei];ratios.push(granted[ei]/P.asked[ei]);}});
   const rm=ratios.reduce((a,b)=>a+b,0)/(ratios.length||1),rvar=ratios.reduce((a,b)=>a+(b-rm)*(b-rm),0);
   let mixDev=0;E.forEach((e,ei)=>{if(!P.mix[ei]||!catTot[ei])return;PREF_CATS.forEach(([c])=>{const d=(catCnt[ei][c]||0)/catTot[ei]-(P.mix[ei][c]||0);mixDev+=d*d*catTot[ei];});});
-  const sc=unfilled*10000+clump*40+mixDev*60+dev+softViol*300+missed*120+rvar*600+spread(wk,()=>true)*4+spread(nt,ei=>P.nightOk[ei]&&!P.nightPref[ei])*3+blocks*2;
-  return {grid,score:sc,unfilled,holes};
+  if(P.tmpl)E.forEach((e,ei)=>C.dates.forEach((d,i)=>{const t=P.tmpl[ei][i];if(t){tmplTotal++;const g=grid[ei][i];if(g&&g.s&&covId(C,g.s)===covId(C,t))tmplKept++;}}));
+  const sc=unfilled*10000+clump*40+mixDev*60+(tmplTotal-tmplKept)*80+dev+softViol*300+missed*120+rvar*600+spread(wk,()=>true)*4+spread(nt,ei=>P.nightOk[ei]&&!P.nightPref[ei])*3+blocks*2;
+  return {grid,score:sc,unfilled,holes,tmplKept,tmplTotal};
 }
 function generate(state,opts={}){
   const C=buildCtx(state),P=prepare(C);
+  if(opts.template){const T=opts.template;P.tmpl=C.emps.map(e=>C.dates.map(d=>{const v=T[e.id+'|'+d];return v===undefined?undefined:v;}));}
   const runs=opts.runs??300,ms=opts.ms??1800,t0=Date.now(),rnd=rng32(opts.seed??(Date.now()%2147483647));
   let best=null,tried=0;
   for(let r=0;r<runs;r++){
@@ -396,7 +405,7 @@ function generate(state,opts={}){
   // halda færslum utan tímabils óbreyttum
   const inPlan=new Set(C.emps.map(e=>e.id));
   for(const [k,v] of Object.entries(state.plan||{})){const [eid,d]=k.split('|');if(C.idx[d]==null||!inPlan.has(eid))plan[k]=v;}
-  return {plan,unfilled:best.unfilled,holes:best.holes.map(h=>({date:C.dates[h.i],shift:h.shift,missing:h.missing})),runs:tried,score:best.score};
+  return {plan,tmplKept:best.tmplKept,tmplTotal:best.tmplTotal,unfilled:best.unfilled,holes:best.holes.map(h=>({date:C.dates[h.i],shift:h.shift,missing:h.missing})),runs:tried,score:best.score};
 }
 
 /* ---------- Tölfræði ---------- */
@@ -518,7 +527,7 @@ function importTable(state,rows,opts={}){
   for(const r of rows)for(const c of r){const m=c.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})\s*[-–]\s*(\d{1,2})\.(\d{1,2})\.(\d{4})/);
     if(m&&!rep.period&&+m[1]===16){rep.period={year:+m[3],month:+m[2]};}}
   const asPrev=opts.mode==='prev';
-  const mixCnt={};if(asPrev)state.prevTail={};
+  const mixCnt={};if(asPrev){state.prevTail={};state.prevPlan={};}
   if(rep.period&&!asPrev&&(rep.period.year!==state.period.year||rep.period.month!==state.period.month)&&opts.setPeriod!==false){
     const custom=(state.holidays||[]).filter(h=>h.custom);state.period=rep.period;const {start,end}=periodRange(rep.period.year,rep.period.month);
     const auto=holidaysForPeriod(rep.period),ad=new Set(auto.map(h=>h.date));
@@ -549,7 +558,8 @@ function importTable(state,rows,opts={}){
       e={id:uid('e'),name,title:'',pct:0,status:'active',prefs:[],changes:[],allowed:[],noDays:[],carry:0,fixedTarget:'',weekly:'',note:'Bætt við úr innlestri. Skráðu starfshlutfall.'};
       state.employees.push(e);byName[normName(name)]=e;rep.newEmps.push(name);}
     for(const [j,d] of cells){
-      if(asPrev){const t=parseRange(r[j]);if(t){const wkd=dow(d)>=5,c=guessCat(t.m0,t.m1,wkd);mixCnt[e.id]=mixCnt[e.id]||{};mixCnt[e.id][c]=(mixCnt[e.id][c]||0)+1;}
+      if(asPrev){const t=parseRange(r[j]);if(t){state.prevPlan=state.prevPlan||{};(state.prevPlan[e.id]=state.prevPlan[e.id]||[]).push({date:d,m0:t.m0,m1:t.m1});}
+        if(t){const wkd=dow(d)>=5,c=guessCat(t.m0,t.m1,wkd);mixCnt[e.id]=mixCnt[e.id]||{};mixCnt[e.id][c]=(mixCnt[e.id][c]||0)+1;}
         if(t&&d<start&&d>=addDays(start,-7)){state.prevTail=state.prevTail||{};const L=state.prevTail[e.id]=state.prevTail[e.id]||[];
           L.push({date:d,m0:t.m0,m1:t.m1});rep.prev++;}continue;}
       if(d<start||d>end)continue;
@@ -577,9 +587,30 @@ function importTable(state,rows,opts={}){
       if(val.s&&empOn(e,d).status!=='active')rep.inactive.push(`${name} ${dateLabel(d)}`);
     }
   }
-  if(asPrev){(state.employees||[]).forEach(e=>{const m=mixCnt[e.id];if(!m)return;const tot=Object.values(m).reduce((a,b)=>a+b,0);
+  if(asPrev){const all=Object.values(state.prevPlan||{}).flat().map(x=>x.date).sort();
+    state.prevRange=rep.period?periodRange(rep.period.year,rep.period.month):all.length?{start:all[0],end:all[all.length-1]}:null;
+    (state.employees||[]).forEach(e=>{const m=mixCnt[e.id];if(!m)return;const tot=Object.values(m).reduce((a,b)=>a+b,0);
     e.mix=Object.fromEntries(Object.entries(m).map(([c,n])=>[c,round2(n/tot)]));rep.mix=(rep.mix||0)+1;});}
   return rep;
+}
+/* ---------- Rúllandi plan ----------
+   Vaktaskipulagið er forsendan, óskir eru settar inn, og fyrirkomulag síðasta tímabils er flutt inn eins óbreytt og hægt er.
+   Hver dagur tekur mið af sama degi fyrir 4 vikum (sami vikudagur og sama helgi í tveggja vikna hrynjandi, svo helgarhópar haldast);
+   ef sá dagur er utan síðasta tímabils er notað 6, 2 eða 8 vikum fyrr. '' í sniðmáti = frídagur síðast. */
+function matchShiftFor(C,i,m0,m1){
+  const wk=C.infos[i].weekend||!!C.infos[i].hol,same=C.shifts.filter(s=>s.m0===m0&&s.m1===m1);
+  const ok=same.find(s=>needFor(C,i,C.shift[covId(C,s.id)])>0);if(ok)return ok.id;
+  const cat=guessCat(m0,m1,wk),mains=C.shifts.filter(s=>!s.countsAs&&s.cat===cat&&needFor(C,i,s)>0)
+    .sort((a,b)=>(Math.abs(a.m0-m0)+Math.abs(a.m1-m1))-(Math.abs(b.m0-m0)+Math.abs(b.m1-m1)));
+  return mains[0]?mains[0].id:null;
+}
+function rollingTemplate(state){
+  const C=buildCtx(state),PP=state.prevPlan||{},pr=state.prevRange,T={};let mapped=0,src=0;
+  if(!pr)return {T,mapped,src};
+  C.emps.forEach(e=>{const L=PP[e.id];if(!L||!L.length)return;const byD={};L.forEach(x=>{if(!byD[x.date])byD[x.date]=x;});
+    C.dates.forEach((d,i)=>{for(const off of [28,42,14,56]){const sd=addDays(d,-off);if(sd<pr.start||sd>pr.end)continue;
+      const x=byD[sd];if(x){src++;const id=matchShiftFor(C,i,x.m0,x.m1);if(id){T[e.id+'|'+d]=id;mapped++;}}else T[e.id+'|'+d]='';break;}});});
+  return {T,mapped,src};
 }
 /* Hlutfall vaktategunda (flokka) hjá starfsmanni í plani tímabilsins */
 function mixOf(state,e){const C=buildCtx(state),m={};let t=0;C.dates.forEach(d=>{const v=state.plan[e.id+'|'+d];if(v&&v.s&&C.shift[v.s]){const c=shiftCat(C,C.shift[v.s]);if(c){m[c]=(m[c]||0)+1;t++;}}});
@@ -660,7 +691,7 @@ function grantWish(state,key){
    1. umferð virðir hámark umfram vinnuskyldu; 2. umferð (relax) leyfir aukatíma ef enn vantar. */
 function fillPlan(state,opts={}){
   // 1) innan vinnuskyldu  2) tímavinnufólk (ef leyft)  3) aukatími fastráðinna ef enn vantar
-  const before=state.plan,g=(T)=>generate(T,{runs:opts.runs??160,ms:opts.ms??1000,seed:opts.seed});
+  const before=state.plan,g=(T)=>generate(T,{runs:opts.runs??160,ms:opts.ms??1000,seed:opts.seed,template:opts.template});
   const mk=(plan)=>{const T=JSON.parse(JSON.stringify(state));if(plan)T.plan=plan;T.locks=T.locks||{};
     for(const [k,v] of Object.entries(T.plan))if(v.s)T.locks[k]=true;T.rules={...T.rules,fillUp:false};return T;};
   let r=g(mk()),plan=r.plan,hourly=0,extra=0;
@@ -674,7 +705,7 @@ function fillPlan(state,opts={}){
   return {plan,added,overtime:extra,hourly,unfilled:r.unfilled,holes:r.holes};
 }
 
-const API={mixOf,WEEKEND_PATTERNS,PRIO_SCOPES,weekendIdx,weekendDates,empRuleBlock,fillPlan,wishConflicts,grantWish,PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
+const API={rollingTemplate,matchShiftFor,mixOf,WEEKEND_PATTERNS,PRIO_SCOPES,weekendIdx,weekendDates,empRuleBlock,fillPlan,wishConflicts,grantWish,PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
   MONTHS,DAYS,DAYS_PL,DAYS_SHORT,DAYS_1,CATS,CAT_NAMES,easter,icelandicHolidays,holidaysForPeriod,shiftTimes,buildCtx,targetHours,absenceCredit,
   shiftCats,needFor,generate,stats,validate};
 if(typeof module!=='undefined'&&module.exports)module.exports=API;else root.VP=API;
