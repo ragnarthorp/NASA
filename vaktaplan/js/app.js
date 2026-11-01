@@ -610,7 +610,7 @@ async function importFile(file){
   try{
     let rows;
     if(/\.xlsx?$/i.test(file.name)){const X=await loadXlsxLib();const wb=X.read(await file.arrayBuffer(),{type:'array'});
-      rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''});}
+      rows=wb.SheetNames.flatMap(n=>X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}));}
     else rows=VP.parseCsv(await file.text());
     const mode=await choose(`Hvernig á að setja vaktirnar í „${file.name}“ inn?`,[['wish','Sem óskir (mælt með): röðunin úthlutar þeim sanngjarnt innan reglna'],['lock','Sem fastar vaktir (læstar): fara framhjá reglum, vinnuskyldu og forgangi'],['prev','Sem fyrra tímabil (síðustu 7 dagar fyrir 16., til að virða hvíld og vinnudaga í röð við mánaðamót)']]);
     if(!mode)return;

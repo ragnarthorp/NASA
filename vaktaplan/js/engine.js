@@ -579,14 +579,18 @@ function importTable(state,rows,opts={}){
     m=c.match(/^(\d{1,2})[.\/](\d{1,2})(?:[.\/](\d{2,4}))?(?![\d:])/);if(!m)return null;const d=+m[1],mo=+m[2];if(d<1||d>31||mo<1||mo>12)return null;
     if(m[3]){let y=+m[3];if(y<100)y+=2000;return `${y}-${pad(mo)}-${pad(d)}`;}
     for(const y of [sy,ey]){const x=`${y}-${pad(mo)}-${pad(d)}`;if(x>=start&&x<=end)return x;}return `${sy}-${pad(mo)}-${pad(d)}`;};
-  let hi=-1,best=0;rows.forEach((r,i)=>{const n=r.filter(c=>c&&!/\d{4}\s*[-–]/.test(c)&&dateOf(c)).length;if(n>best){best=n;hi=i;}});
-  if(hi<0||best<3)throw Error('Fann ekki línu með dagsetningum (t.d. „16.11 mán.“) í skjalinu.');
-  const cols={};rows[hi].forEach((c,j)=>{const d=c&&dateOf(c);if(d)cols[j]=d;});
-  const firstCol=Math.min(...Object.keys(cols).map(Number));
+  // dagsetningalínur: skjal getur verið í mörgum vikublokkum (t.d. eitt blað á viku), hver með sína dagsetningalínu
+  const nDates=r=>r.filter(c=>c&&!/\d{4}\s*[-–]/.test(c)&&!/\d:\d/.test(c)&&dateOf(c)).length;
+  const best=Math.max(0,...rows.map(nDates)),heads=rows.map((r,i)=>i).filter(i=>nDates(rows[i])>=2&&(best<3||nDates(rows[i])>=2));
+  if(!heads.length||best<2||(heads.length===1&&best<3))throw Error('Fann ekki línu með dagsetningum (t.d. „16.11 mán.“) í skjalinu.');
+  const colsOf=i=>{const o={};rows[i].forEach((c,j)=>{const d=c&&!/\d:\d/.test(c)&&dateOf(c);if(d)o[j]=d;});return o;};
+  const hi=heads[0],headCols=Object.fromEntries(heads.map(i=>[i,colsOf(i)]));let cols=headCols[hi];
+  const firstCol=Math.min(...heads.map(i=>Math.min(...Object.keys(headCols[i]).map(Number))));
   let nameCol=-1,nb=0;for(let j=0;j<firstCol;j++){const n=rows.slice(hi+1).filter(r=>r[j]&&/[a-zA-Z\u00C0-\u00FF]/.test(r[j])).length;if(n>nb){nb=n;nameCol=j;}}
   if(nameCol<0)throw Error('Fann ekki dálk með nöfnum starfsfólks vinstra megin við dagsetningarnar.');
   const byName={};(state.employees||[]).forEach(e=>byName[normName(e.name)]=e);
-  for(const r of rows.slice(hi+1)){
+  for(let ri=hi+1;ri<rows.length;ri++){const r=rows[ri];
+    if(headCols[ri]){cols=headCols[ri];continue;}
     const name=r[nameCol];if(!name||!/[a-zA-Z\u00C0-\u00FF]/.test(name))continue;
     let e=byName[normName(name)];
     if(!e){const t=normName(name).split(' '),C2=(state.employees||[]).filter(x=>{const u=normName(x.name).split(' ');return u[0]===t[0]&&(u.length<2||t.length<2||u[1]===t[1]);});
