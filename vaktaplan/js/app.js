@@ -189,6 +189,7 @@ VIEWS.grunnur=()=>{
    </div>
    <label class="check"><input type="checkbox" data-k="rules.hardWishes" ${R.hardWishes?'checked':''}> Óskir um frí eru bindandi (annars reynir röðunin að virða þær en má víkja frá þeim)</label>
    <label class="check"><input type="checkbox" data-k="rules.fillUp" ${R.fillUp?'checked':''}> Fylla upp í vinnuskyldu með aukavöktum umfram lágmarksmönnun (að hámarki „hámark á vakt“ ef það er skráð)</label>
+   <label class="check"><input type="checkbox" data-k="rules.nightBlocks" ${R.nightBlocks?'checked':''}> Næturvaktir í blokkum: fös–sun hjá einum úr helgarhópnum, mán–þri og mið–fim hjá einum hvor</label>
    <label class="check"><input type="checkbox" data-k="rules.keepMix" ${R.keepMix!==false?'checked':''}> Halda hlutfalli vaktategunda hjá hverjum starfsmanni sem líkustu fyrra tímabili (að teknu tilliti til óska)</label>
    <label class="check"><input type="checkbox" data-k="rules.carryInTarget" ${R.carryInTarget?'checked':''}> Flutt staða telst með: sá sem skuldar vinnuskyldu frá fyrra tímabili fær fleiri vaktir (á undan tímavinnufólki) og sá sem á inni fær færri</label>
    <label class="check"><input type="checkbox" data-k="rules.useHourly" ${S.rules.useHourly?'checked':''}> Nota tímavinnufólk í vaktir sem ekki tekst að manna með föstu starfsfólki („Manna allar lausar vaktir“)</label>

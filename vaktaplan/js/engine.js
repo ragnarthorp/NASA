@@ -306,6 +306,10 @@ function runOnce(C,P,rnd,noise,pace){
   const score=(ei,i,sh)=>{
     const row=grid[ei],t=P.target[ei]||1;
     let s=(hours[ei]/t)*100;
+    if(sh.m1>1440&&C.R.nightBlocks){   // næturvaktir í blokkum: fös–sun (helgarhópur), mán–þri, mið–fim
+      const w=C.infos[i].dow,start=w===0||w===2||w===4,p=i>0?row[i-1]:null,pn=p&&p.s&&C.shift[p.s].m1>1440;
+      if(!start){if(pn)s-=300;else{const other=i>0&&grid.some((r2,ej)=>ej!==ei&&r2[i-1]&&r2[i-1].s&&C.shift[r2[i-1].s].m1>1440);if(other)s+=120;}}
+      else{if(pn)s+=80;const len=w===4?3:2,room=P.target[ei]+(P.empOver[ei]??C.maxOver)-hours[ei];if(room<len*sh.hours-0.01)s+=150;}}   // byrjar blokk: þarf tíma fyrir alla blokkina
     if(P.tmpl){const tv=P.tmpl[ei][i];if(tv&&covId(C,tv)===covId(C,sh.id))s-=50;else if(tv==='')s+=20;}   // rúllandi plan: sama og síðast
     if(P.mustMeet[ei]&&hours[ei]<P.target[ei])s-=80;   // verður að ná vinnuskyldu
     const after=hours[ei]+sh.hours;if(after>P.target[ei])s+=(after-P.target[ei])*12;
@@ -329,6 +333,8 @@ function runOnce(C,P,rnd,noise,pace){
   };
   const assign=(ei,i,sh)=>{grid[ei][i]={s:sh.id};addCat(ei,sh.id);hours[ei]+=sh.hours;cnt[i][shIdx[covId(C,sh.id)]]++;if(isWk(i))wk[ei]++;if(sh.isNight)nt[ei]++;addWk(ei,i,1);
     const w=P.wishes[ei][i];if(w&&w.off)softViol++;if(w&&w.s===sh.id)granted[ei]++;};
+  const unassign=(ei,i)=>{const c=grid[ei][i];if(!c||!c.s)return;const sh=C.shift[c.s];grid[ei][i]=null;hours[ei]-=sh.hours;cnt[i][shIdx[covId(C,sh.id)]]--;
+    if(isWk(i))wk[ei]--;if(sh.isNight)nt[ei]--;addWk(ei,i,-1);const ct=P.shCat[shIdx[sh.id]];if(ct){catCnt[ei][ct]--;catTot[ei]--;}const w=P.wishes[ei][i];if(w&&w.s===sh.id)granted[ei]--;};
   const free=(i,sh)=>P.need[i][shIdx[covId(C,sh.id)]]-cnt[i][shIdx[covId(C,sh.id)]];
   // 1) fastar vaktir (t.d. sjúkraliði á 8–16 alla virka daga)
   for(let i=0;i<N;i++)E.forEach((e,ei)=>{const sh=P.fixed[ei],w=P.wishes[ei][i];if(w&&(w.off||(w.s&&w.s!==(sh&&sh.id))))return;if(sh&&free(i,sh)>0&&can(ei,i,sh))assign(ei,i,sh);});
@@ -339,9 +345,24 @@ function runOnce(C,P,rnd,noise,pace){
     L.sort((a,b)=>pr(a.ei)-pr(b.ei)||granted[a.ei]/Math.max(1,P.asked[a.ei])-granted[b.ei]/Math.max(1,P.asked[b.ei])||a.r-b.r);
     for(const x of L)if(free(i,x.sh)>0&&can(x.ei,i,x.sh))assign(x.ei,i,x.sh);
   }
+  // 2a) næturvaktir í heilum blokkum: fös–sun (helgarhópur), mán–þri, mið–fim, hver blokk hjá einum starfsmanni
+  if(C.R.nightBlocks){
+    const nightFor=j=>SH.find(sh=>sh.m1>1440&&!sh.countsAs&&P.need[j][shIdx[sh.id]]>0);
+    for(let i=0;i<N;i++){const w=C.infos[i].dow;if(!(w===0||w===2||w===4)&&i>0)continue;
+      const len=w===4?3:w===0||w===2?2:(w===1||w===3?1:(w===5?2:1)),days=[];for(let j=i;j<Math.min(N,i+len);j++)days.push(j);
+      const open=days.filter(j=>{const sh=nightFor(j);return sh&&free(j,sh)>0;});if(!open.length)continue;
+      const holder=E.findIndex((e,ei)=>days.some(j=>grid[ei][j]&&grid[ei][j].s&&C.shift[grid[ei][j].s].m1>1440));
+      const cands=holder>=0?[holder]:E.map((e,ei)=>ei).filter(ei=>P.allowed[ei].has(nightFor(open[0]).id))
+        .map(ei=>({ei,k:w===4?(P.nightPref[ei]?-1000:0)+(hours[ei]/(P.target[ei]||1))*100-(P.mix[ei]?(P.mix[ei].night||0)*200:0)+rnd()*noise
+          :-(((P.mix[ei]?P.mix[ei].night||0:0)*(P.target[ei]||0)/7.5)-nt[ei])*60+(hours[ei]/(P.target[ei]||1))*30+rnd()*noise})).sort((a,b)=>a.k-b.k).map(x=>x.ei);   // helgarblokkir til næturfólks, virka daga dreift eftir næturhlutfalli
+      for(const ei of cands){const done=[];let ok=true;
+        for(const j of open){const sh=nightFor(j);if(can(ei,j,sh)){assign(ei,j,sh);done.push(j);}else{ok=false;break;}}
+        if(ok)break;done.forEach(j=>unassign(ei,j));}
+    }
+  }
   // 2b) rúllandi plan: fyrirkomulag síðasta tímabils flutt inn eins óbreytt og hægt er
   let tmplKept=0,tmplTotal=0;
-  if(P.tmpl){for(let i=0;i<N;i++){const ord=E.map((e,ei)=>ei).sort(()=>rnd()-.5);
+  if(P.tmpl&&!P.tmplSoft){for(let i=0;i<N;i++){const ord=E.map((e,ei)=>ei).sort(()=>rnd()-.5);
     for(const ei of ord){const t=P.tmpl[ei][i];if(!t)continue;const sh=C.shift[t];if(!sh)continue;
       if(grid[ei][i]&&grid[ei][i].s){continue;}
       if(!grid[ei][i]&&free(i,sh)>0&&can(ei,i,sh))assign(ei,i,sh);}}}
@@ -392,6 +413,7 @@ function runOnce(C,P,rnd,noise,pace){
 }
 function generate(state,opts={}){
   const C=buildCtx(state),P=prepare(C);
+  P.tmplSoft=!!opts.templateSoft;
   if(opts.template){const T=opts.template;P.tmpl=C.emps.map(e=>C.dates.map(d=>{const v=T[e.id+'|'+d];return v===undefined?undefined:v;}));}
   const runs=opts.runs??300,ms=opts.ms??1800,t0=Date.now(),rnd=rng32(opts.seed??(Date.now()%2147483647));
   let best=null,tried=0;
@@ -691,7 +713,7 @@ function grantWish(state,key){
    1. umferð virðir hámark umfram vinnuskyldu; 2. umferð (relax) leyfir aukatíma ef enn vantar. */
 function fillPlan(state,opts={}){
   // 1) innan vinnuskyldu  2) tímavinnufólk (ef leyft)  3) aukatími fastráðinna ef enn vantar
-  const before=state.plan,g=(T)=>generate(T,{runs:opts.runs??160,ms:opts.ms??1000,seed:opts.seed,template:opts.template});
+  const before=state.plan,g=(T)=>generate(T,{runs:opts.runs??160,ms:opts.ms??1000,seed:opts.seed,template:opts.template,templateSoft:opts.templateSoft});
   const mk=(plan)=>{const T=JSON.parse(JSON.stringify(state));if(plan)T.plan=plan;T.locks=T.locks||{};
     for(const [k,v] of Object.entries(T.plan))if(v.s)T.locks[k]=true;T.rules={...T.rules,fillUp:false};return T;};
   let r=g(mk()),plan=r.plan,hourly=0,extra=0;

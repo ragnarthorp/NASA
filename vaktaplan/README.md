@@ -51,6 +51,7 @@ Vefur til að útbúa vaktaplan fyrir vinnustað. Hreint HTML/CSS/JavaScript sem
 - **Fyrra tímabil:** síðustu 7 dagar fyrra tímabils eru lesnir inn („Lesa inn vaktaóskir“ → „Sem fyrra tímabil“), eða fylgja sjálfkrafa þegar næsta tímabil er stofnað. Þá eru hvíld, „ekki vakt sama dag og næturvakt lýkur“ og vinnudagar í röð virt yfir mánaðamótin.
 - **Flutt staða telst með** (regla í Grunni): sá sem skuldar vinnuskyldu frá fyrra tímabili fær fleiri vaktir, á undan tímavinnufólki, og sá sem á inni fær færri.
 - **Hámark klst. á viku fyrir alla** (sjálfgefið 48) og **hámark næturvakta í röð** (sjálfgefið 3).
+- **Næturvaktir í blokkum** (regla í Grunni): helgarnætur (fös, lau og sun) tekur einn úr helgarhópi þeirrar helgar, og virka daga eru nætur teknar í pörum, mán–þri og mið–fim, eins og í fyrra plani.
 - **Hlutfall vaktategunda:** hlutfall morgun-, kvöld-, helgar- og næturvakta hjá hverjum starfsmanni er reiknað úr fyrra tímabili, annaðhvort úr innlesnu fyrra plani eða sjálfkrafa þegar næsta tímabil er stofnað. Röðunin heldur því sem líkustu, að teknu tilliti til óska (regla í Grunni).
 - **Nöfn:** við innlestur eru nöfn pöruð þó þau séu skrifuð á ólíkan hátt, t.d. „Haukur Birgir Jónsson“ og „Haukur Birgir“.
 
