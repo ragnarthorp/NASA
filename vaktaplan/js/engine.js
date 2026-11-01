@@ -306,6 +306,7 @@ function runOnce(C,P,rnd,noise,pace){
   const score=(ei,i,sh)=>{
     const row=grid[ei],t=P.target[ei]||1;
     let s=(hours[ei]/t)*100;
+    if(C.R.weekendPairs&&sh.m1<=1440){const w=C.infos[i].dow;if(w===5||w===6){const o=w===5?i+1:i-1;if(o>=0&&o<N){const oc=row[o];s+=oc&&oc.s?-80:60;}}}
     if(sh.m1>1440&&C.R.nightBlocks){   // næturvaktir í blokkum: fös–sun (helgarhópur), mán–þri, mið–fim
       const w=C.infos[i].dow,start=w===0||w===2||w===4,p=i>0?row[i-1]:null,pn=p&&p.s&&C.shift[p.s].m1>1440;
       if(!start){if(pn)s-=300;else{const other=i>0&&grid.some((r2,ej)=>ej!==ei&&r2[i-1]&&r2[i-1].s&&C.shift[r2[i-1].s].m1>1440);if(other)s+=120;}}
@@ -358,6 +359,25 @@ function runOnce(C,P,rnd,noise,pace){
       for(const ei of cands){const done=[];let ok=true;
         for(const j of open){const sh=nightFor(j);if(can(ei,j,sh)){assign(ei,j,sh);done.push(j);}else{ok=false;break;}}
         if(ok)break;done.forEach(j=>unassign(ei,j));}
+    }
+  }
+  // 2a2) helgarvaktir í pörum: sá sem vinnur helgi vinnur bæði laugardag og sunnudag (dagvaktir)
+  if(C.R.weekendPairs){
+    const dayOpen=j=>SH.filter(sh=>sh.m1<=1440&&!sh.countsAs&&free(j,sh)>0);
+    for(let i=0;i<N-1;i++){if(C.infos[i].dow!==5)continue;const j=i+1;
+      const workedOne=ei=>(grid[ei][i]&&grid[ei][i].s?1:0)+(grid[ei][j]&&grid[ei][j].s?1:0);
+      const cands=E.map((e,ei)=>ei).map(ei=>({ei,k:(workedOne(ei)===1?-1000:0)+wk[ei]/P.pctf[ei]*10+(hours[ei]/(P.target[ei]||1))*100+rnd()*noise}))
+        .sort((a,b)=>a.k-b.k).map(x=>x.ei);
+      for(const ei of cands){
+        const has=[grid[ei][i],grid[ei][j]];if(has[0]&&has[1])continue;
+        const need=[!has[0]?i:null,!has[1]?j:null].filter(x=>x!=null);
+        const done=[];let ok=true;
+        for(const d of need){const pref=has[0]&&has[0].s?has[0].s:has[1]&&has[1].s?has[1].s:(done.length?grid[ei][done[0]].s:null);
+          const opts=dayOpen(d).sort((a,b)=>(b.id===pref)-(a.id===pref));const sh=opts.find(o=>can(ei,d,o));
+          if(sh){assign(ei,d,sh);done.push(d);}else{ok=false;break;}}
+        if(!ok)done.forEach(d=>unassign(ei,d));
+        if(!dayOpen(i).length&&!dayOpen(j).length)break;
+      }
     }
   }
   // 2b) rúllandi plan: fyrirkomulag síðasta tímabils flutt inn eins óbreytt og hægt er

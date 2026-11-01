@@ -9,7 +9,7 @@ function nextPeriod(today=new Date()){
 }
 const SHIFT_COLORS=['#f3c969','#8fc1e3','#9b8fd6','#8cd1a8','#f2a07b','#e59ac2','#b7c96a','#6fc7c1','#d9a96b','#a3b1c6'];
 function defaultRules(){
-  return {weekly:40,minRest:11,maxConsec:6,maxOver:4,hourTolerance:6,hardWishes:true,fillUp:true,wishFirst:true,noAfterNight:true,maxWeekHours:48,maxNightsRow:3,carryInTarget:false,keepMix:true,nightBlocks:false,lockManual:true,holidaysReduce:true,
+  return {weekly:40,minRest:11,maxConsec:6,maxOver:4,hourTolerance:6,hardWishes:true,fillUp:true,wishFirst:true,noAfterNight:true,maxWeekHours:48,maxNightsRow:3,carryInTarget:false,keepMix:true,nightBlocks:false,weekendPairs:false,lockManual:true,holidaysReduce:true,
     dayStart:'08:00',dayEnd:'17:00',eveningEnd:'24:00',rates:{evening:33.33,night:45,weekend:45,red:45,major:90}};
 }
 function defaultAbsTypes(){
