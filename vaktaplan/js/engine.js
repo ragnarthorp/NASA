@@ -247,6 +247,8 @@ function prepare(C){
   const partner=E.map(e=>e.weekendWith?E.findIndex(x=>x.id===e.weekendWith):-1);
   const scope=E.map(e=>e.priorityScope||'all');
   const nightPref=E.map(e=>prefLevel(e,'night')===2);
+  const mix=E.map(e=>S.rules.keepMix!==false&&e.mix&&Object.keys(e.mix).length?e.mix:null);
+  const shCat=C.shifts.map(sh=>shiftCat(C,sh));
   const empOver=E.map(e=>e.maxOver===''||e.maxOver==null||isNaN(+e.maxOver)?null:+e.maxOver);
   const gCap=+S.rules.maxWeekHours>0?+S.rules.maxWeekHours:null;
   const weekCap=E.map(e=>{const c=e.maxWeekHours===''||e.maxWeekHours==null||!(+e.maxWeekHours>0)?null:+e.maxWeekHours;return c!=null&&gCap!=null?Math.min(c,gCap):(c??gCap);});
@@ -257,9 +259,10 @@ function prepare(C){
     L.forEach(x=>{const off=diffDays(d0,x.date)*1440,end=off+x.m1;if(end>lastEnd){lastEnd=end;}});
     const last=L[L.length-1];lastNight=diffDays(last.date,d0)===1&&last.m1>1440;
     for(let k=1;k<=14;k++){const dd=addDays(d0,-k);if(L.some(x=>x.date===dd))run++;else break;}
-    return {lastEnd,lastNight,run};});
+    let nights=0;for(let k=1;k<=14;k++){const dd=addDays(d0,-k);if(L.some(x=>x.date===dd&&x.m1>1440))nights++;else break;}
+    return {lastEnd,lastNight,run,nights};});
   const hasHelst=E.map(e=>PREF_CATS.some(([c])=>prefLevel(e,c)===2));
-  return {mustMeet,empOver,weekCap,weekKey,prev,hasHelst,nightPref,onlyW,partner,scope,blocked,wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
+  return {mix,shCat,mustMeet,empOver,weekCap,weekKey,prev,hasHelst,nightPref,onlyW,partner,scope,blocked,wishes,target,credit,pctf,allowed,avail,noDays,nightOk,need,lvl,prio,fixed,maxWk,maxCon,asked,wkKey};
 }
 function runOnce(C,P,rnd,noise,pace){
   const S=C.state,E=C.emps,N=C.n,SH=C.shifts,shIdx={};SH.forEach((s,j)=>shIdx[s.id]=j);
@@ -270,6 +273,9 @@ function runOnce(C,P,rnd,noise,pace){
   const isWk=i=>C.infos[i].weekend||!!C.infos[i].hol;
   grid.forEach((row,ei)=>row.forEach((c,i)=>{if(c&&c.s){const s=C.shift[c.s];hours[ei]+=s.hours;cnt[i][shIdx[covId(C,c.s)]]++;if(isWk(i))wk[ei]++;if(s.isNight)nt[ei]++;}}));
   let unfilled=0,softViol=0;const holes=[],granted=E.map(()=>0);
+  const catCnt=E.map(()=>({})),catTot=E.map(()=>0);
+  const addCat=(ei,id)=>{const c=P.shCat[shIdx[id]];if(!c)return;catCnt[ei][c]=(catCnt[ei][c]||0)+1;catTot[ei]++;};
+  grid.forEach((row,ei)=>row.forEach(c=>{if(c&&c.s)addCat(ei,c.s);}));
   const wkSets=E.map(()=>new Map());
   const addWk=(ei,i,dlt)=>{const k=P.wkKey[i];if(k==null)return;const m=wkSets[ei];m.set(k,(m.get(k)||0)+dlt);if(!m.get(k))m.delete(k);};
   grid.forEach((row,ei)=>row.forEach((c,i)=>{if(c&&c.s)addWk(ei,i,1);}));
@@ -291,7 +297,7 @@ function runOnce(C,P,rnd,noise,pace){
     if(run>P.maxCon[ei])return false;
     if(P.maxWk[ei]!=null&&P.wkKey[i]!=null&&!wkSets[ei].has(P.wkKey[i])&&wkSets[ei].size+1>P.maxWk[ei])return false;
     if(hours[ei]+sh.hours>P.target[ei]+(tol??(P.empOver[ei]??C.maxOver))+1e-6)return false;
-    if(sh.m1>1440&&+C.R.maxNightsRow>0){let nr=1;for(let j=i-1;j>=0&&row[j]&&row[j].s&&C.shift[row[j].s].m1>1440;j--)nr++;
+    if(sh.m1>1440&&+C.R.maxNightsRow>0){let nr=1,jn=i-1;for(;jn>=0&&row[jn]&&row[jn].s&&C.shift[row[jn].s].m1>1440;jn--)nr++;if(jn<0&&pv0)nr+=pv0.nights||0;
       for(let j=i+1;j<N&&row[j]&&row[j].s&&C.shift[row[j].s].m1>1440;j++)nr++;if(nr>+C.R.maxNightsRow)return false;}
     if(P.weekCap[ei]!=null){const wk0=P.weekKey[i];let wh=sh.hours;for(let j=0;j<N;j++)if(P.weekKey[j]===wk0&&row[j]&&row[j].s)wh+=C.shift[row[j].s].hours;if(wh>P.weekCap[ei]+1e-6)return false;}
     if(pace&&tol==null&&hours[ei]+sh.hours>P.target[ei]*(i+1)/N+pace)return false;
@@ -304,6 +310,7 @@ function runOnce(C,P,rnd,noise,pace){
     const after=hours[ei]+sh.hours;if(after>P.target[ei])s+=(after-P.target[ei])*12;
     const w=P.wishes[ei][i];
     if(w){if(w.off)s+=400;else if(w.s===sh.id)s-=250;else if(w.s)s+=60;}
+    if(P.mix[ei]){const c=P.shCat[shIdx[sh.id]];if(c){const cur=((catCnt[ei][c]||0)+1)/(catTot[ei]+1);s+=(cur-(P.mix[ei][c]||0))*140;}}  // hlutfall vaktategunda eins og síðast
     const lv=P.lvl[ei][shIdx[sh.id]];if(lv===2)s-=40;else if(P.hasHelst[ei])s+=25;  // þeir sem hafa „Helst“ fara síður á aðrar vaktir
     const pa=P.partner[ei];if(pa>=0){const k=weekendIdx(C,i,sh);if(k!=null){const pe=E[pa],pp=pe.weekendPattern||'all';
       let on;if(pp==='A'||pp==='B')on=(k%2===0?'A':'B')===pp;else on=grid[pa].some((c,j)=>c&&c.s&&weekendIdx(C,j,C.shift[c.s])===k);
@@ -319,7 +326,7 @@ function runOnce(C,P,rnd,noise,pace){
     if(f.dow===5&&i<N-1&&row[i+1]&&row[i+1].s)s-=10;
     return s+rnd()*noise;
   };
-  const assign=(ei,i,sh)=>{grid[ei][i]={s:sh.id};hours[ei]+=sh.hours;cnt[i][shIdx[covId(C,sh.id)]]++;if(isWk(i))wk[ei]++;if(sh.isNight)nt[ei]++;addWk(ei,i,1);
+  const assign=(ei,i,sh)=>{grid[ei][i]={s:sh.id};addCat(ei,sh.id);hours[ei]+=sh.hours;cnt[i][shIdx[covId(C,sh.id)]]++;if(isWk(i))wk[ei]++;if(sh.isNight)nt[ei]++;addWk(ei,i,1);
     const w=P.wishes[ei][i];if(w&&w.off)softViol++;if(w&&w.s===sh.id)granted[ei]++;};
   const free=(i,sh)=>P.need[i][shIdx[covId(C,sh.id)]]-cnt[i][shIdx[covId(C,sh.id)]];
   // 1) fastar vaktir (t.d. sjúkraliði á 8–16 alla virka daga)
@@ -371,7 +378,8 @@ function runOnce(C,P,rnd,noise,pace){
   const clump=Object.values(holeDays).reduce((a,b)=>a+b*b,0);
   let missed=0;const ratios=[];E.forEach((e,ei)=>{if(P.asked[ei]){missed+=P.asked[ei]-granted[ei];ratios.push(granted[ei]/P.asked[ei]);}});
   const rm=ratios.reduce((a,b)=>a+b,0)/(ratios.length||1),rvar=ratios.reduce((a,b)=>a+(b-rm)*(b-rm),0);
-  const sc=unfilled*10000+clump*40+dev+softViol*300+missed*120+rvar*600+spread(wk,()=>true)*4+spread(nt,ei=>P.nightOk[ei]&&!P.nightPref[ei])*3+blocks*2;
+  let mixDev=0;E.forEach((e,ei)=>{if(!P.mix[ei]||!catTot[ei])return;PREF_CATS.forEach(([c])=>{const d=(catCnt[ei][c]||0)/catTot[ei]-(P.mix[ei][c]||0);mixDev+=d*d*catTot[ei];});});
+  const sc=unfilled*10000+clump*40+mixDev*60+dev+softViol*300+missed*120+rvar*600+spread(wk,()=>true)*4+spread(nt,ei=>P.nightOk[ei]&&!P.nightPref[ei])*3+blocks*2;
   return {grid,score:sc,unfilled,holes};
 }
 function generate(state,opts={}){
@@ -465,7 +473,7 @@ function validate(state){
       if(w&&w.s&&!(c&&c.s===w.s)&&C.shift[w.s])out.push({level:'info',type:'wishshift',emp:e.id,date:d,msg:`${e.name}: ósk um ${C.shift[w.s].name} ${dateLabel(d)} ekki uppfyllt`});
     });
   });
-  C.emps.forEach(e=>{const W={};let nr=0;
+  C.emps.forEach(e=>{const W={};const L0=(S.prevTail||{})[e.id]||[];let nr=0;for(let k=1;k<=14;k++){const dd=addDays(C.dates[0],-k);if(L0.some(x=>x.date===dd&&x.m1>1440))nr++;else break;}
     C.dates.forEach((d,i)=>{const v=S.plan[e.id+'|'+d];const sh=v&&v.s&&C.shift[v.s];if(sh){const k=isoWeek(d);W[k]=(W[k]||0)+sh.hours;}
       if(sh&&sh.m1>1440){nr++;if(+S.rules.maxNightsRow>0&&nr===+S.rules.maxNightsRow+1)out.push({level:'warn',type:'nights',emp:e.id,date:d,msg:`${e.name}: fleiri en ${S.rules.maxNightsRow} næturvaktir í röð (${dateLabel(d)})`});}else nr=0;});
     const cap=Math.min(+e.maxWeekHours>0?+e.maxWeekHours:1e9,+S.rules.maxWeekHours>0?+S.rules.maxWeekHours:1e9);
@@ -510,7 +518,7 @@ function importTable(state,rows,opts={}){
   for(const r of rows)for(const c of r){const m=c.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})\s*[-–]\s*(\d{1,2})\.(\d{1,2})\.(\d{4})/);
     if(m&&!rep.period&&+m[1]===16){rep.period={year:+m[3],month:+m[2]};}}
   const asPrev=opts.mode==='prev';
-  if(asPrev)state.prevTail={};
+  const mixCnt={};if(asPrev)state.prevTail={};
   if(rep.period&&!asPrev&&(rep.period.year!==state.period.year||rep.period.month!==state.period.month)&&opts.setPeriod!==false){
     const custom=(state.holidays||[]).filter(h=>h.custom);state.period=rep.period;const {start,end}=periodRange(rep.period.year,rep.period.month);
     const auto=holidaysForPeriod(rep.period),ad=new Set(auto.map(h=>h.date));
@@ -541,7 +549,8 @@ function importTable(state,rows,opts={}){
       e={id:uid('e'),name,title:'',pct:0,status:'active',prefs:[],changes:[],allowed:[],noDays:[],carry:0,fixedTarget:'',weekly:'',note:'Bætt við úr innlestri. Skráðu starfshlutfall.'};
       state.employees.push(e);byName[normName(name)]=e;rep.newEmps.push(name);}
     for(const [j,d] of cells){
-      if(asPrev){const t=parseRange(r[j]);if(t&&d<start&&d>=addDays(start,-7)){state.prevTail=state.prevTail||{};const L=state.prevTail[e.id]=state.prevTail[e.id]||[];
+      if(asPrev){const t=parseRange(r[j]);if(t){const wkd=dow(d)>=5,c=guessCat(t.m0,t.m1,wkd);mixCnt[e.id]=mixCnt[e.id]||{};mixCnt[e.id][c]=(mixCnt[e.id][c]||0)+1;}
+        if(t&&d<start&&d>=addDays(start,-7)){state.prevTail=state.prevTail||{};const L=state.prevTail[e.id]=state.prevTail[e.id]||[];
           L.push({date:d,m0:t.m0,m1:t.m1});rep.prev++;}continue;}
       if(d<start||d>end)continue;
       const v=r[j],k=e.id+'|'+d;let C=buildCtx(state);const i=C.idx[d],f=C.infos[i],wk=f.weekend||!!f.hol;
@@ -568,8 +577,13 @@ function importTable(state,rows,opts={}){
       if(val.s&&empOn(e,d).status!=='active')rep.inactive.push(`${name} ${dateLabel(d)}`);
     }
   }
+  if(asPrev){(state.employees||[]).forEach(e=>{const m=mixCnt[e.id];if(!m)return;const tot=Object.values(m).reduce((a,b)=>a+b,0);
+    e.mix=Object.fromEntries(Object.entries(m).map(([c,n])=>[c,round2(n/tot)]));rep.mix=(rep.mix||0)+1;});}
   return rep;
 }
+/* Hlutfall vaktategunda (flokka) hjá starfsmanni í plani tímabilsins */
+function mixOf(state,e){const C=buildCtx(state),m={};let t=0;C.dates.forEach(d=>{const v=state.plan[e.id+'|'+d];if(v&&v.s&&C.shift[v.s]){const c=shiftCat(C,C.shift[v.s]);if(c){m[c]=(m[c]||0)+1;t++;}}});
+  return t?Object.fromEntries(Object.entries(m).map(([c,n])=>[c,round2(n/t)])):null;}
 
 /* ---------- Árekstrar í óskum ----------
    Greint beint út frá óskum, mönnunarþörf, föstum/læstum vöktum og reglum, án þess að raða.
@@ -660,7 +674,7 @@ function fillPlan(state,opts={}){
   return {plan,added,overtime:extra,hourly,unfilled:r.unfilled,holes:r.holes};
 }
 
-const API={WEEKEND_PATTERNS,PRIO_SCOPES,weekendIdx,weekendDates,empRuleBlock,fillPlan,wishConflicts,grantWish,PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
+const API={mixOf,WEEKEND_PATTERNS,PRIO_SCOPES,weekendIdx,weekendDates,empRuleBlock,fillPlan,wishConflicts,grantWish,PREF_LEVELS,PRIORITY_NAMES,prefLevel,shiftCat,PREF_CATS,PREF_NAME,STATUS_NAMES,guessCat,empOn,allowedIds,covId,dailyOf,importTable,parseCsv,fmtNum,todayLabel,pad,iso,parse,addDays,dow,diffDays,toMin,fmtTime,round2,isoWeek,periodRange,periodDates,periodLabel,dateLabel,shortDate,
   MONTHS,DAYS,DAYS_PL,DAYS_SHORT,DAYS_1,CATS,CAT_NAMES,easter,icelandicHolidays,holidaysForPeriod,shiftTimes,buildCtx,targetHours,absenceCredit,
   shiftCats,needFor,generate,stats,validate};
 if(typeof module!=='undefined'&&module.exports)module.exports=API;else root.VP=API;

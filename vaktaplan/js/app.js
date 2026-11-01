@@ -33,7 +33,7 @@ function newEmp(e={}){
   if(!pl){pl={};if(e.prefs&&e.prefs.length)VP.PREF_CATS.forEach(([k])=>pl[k]=e.prefs.includes(k)?2:0);}
   return {id:e.id||VPD.uid('e'),name:e.name||'',title:e.title||'',pct:e.pct??100,status:e.status||'active',prefs:[],prefLevels:pl,
   priority:e.priority||2,fixedShift:e.fixedShift||'',maxWeekends:e.maxWeekends??'',maxConsec:e.maxConsec??'',
-  dayRules:e.dayRules||[],mustMeet:!!e.mustMeet,carryIn:!!e.carryIn,maxWeekHours:e.maxWeekHours??'',maxOver:e.maxOver??'',weekendPattern:e.weekendPattern||'all',weekendWith:e.weekendWith||'',priorityScope:e.priorityScope||'all',onlyWishes:!!e.onlyWishes,
+  dayRules:e.dayRules||[],mix:e.mix||null,mustMeet:!!e.mustMeet,carryIn:!!e.carryIn,maxWeekHours:e.maxWeekHours??'',maxOver:e.maxOver??'',weekendPattern:e.weekendPattern||'all',weekendWith:e.weekendWith||'',priorityScope:e.priorityScope||'all',onlyWishes:!!e.onlyWishes,
   changes:e.changes||[],allowed:e.allowed||[],noDays:e.noDays||[],carry:e.carry??0,fixedTarget:e.fixedTarget??'',weekly:e.weekly??'',note:e.note||''};}
 const SAMPLES=()=>[{id:'demo',name:'Almennt sýnidæmi',build:()=>({state:VPD.sampleState()})},...(window.VP_SAMPLES||[])];
 function sampleState(id){const x=SAMPLES().find(z=>z.id===id)||SAMPLES()[0];const r=x.build();return {state:normalize(r.state),report:r.report};}
@@ -189,6 +189,7 @@ VIEWS.grunnur=()=>{
    </div>
    <label class="check"><input type="checkbox" data-k="rules.hardWishes" ${R.hardWishes?'checked':''}> Óskir um frí eru bindandi (annars reynir röðunin að virða þær en má víkja frá þeim)</label>
    <label class="check"><input type="checkbox" data-k="rules.fillUp" ${R.fillUp?'checked':''}> Fylla upp í vinnuskyldu með aukavöktum umfram lágmarksmönnun (að hámarki „hámark á vakt“ ef það er skráð)</label>
+   <label class="check"><input type="checkbox" data-k="rules.keepMix" ${R.keepMix!==false?'checked':''}> Halda hlutfalli vaktategunda hjá hverjum starfsmanni sem líkustu fyrra tímabili (að teknu tilliti til óska)</label>
    <label class="check"><input type="checkbox" data-k="rules.carryInTarget" ${R.carryInTarget?'checked':''}> Flutt staða telst með: sá sem skuldar vinnuskyldu frá fyrra tímabili fær fleiri vaktir (á undan tímavinnufólki) og sá sem á inni fær færri</label>
    <label class="check"><input type="checkbox" data-k="rules.useHourly" ${S.rules.useHourly?'checked':''}> Nota tímavinnufólk í vaktir sem ekki tekst að manna með föstu starfsfólki („Manna allar lausar vaktir“)</label>
    <label class="check"><input type="checkbox" data-k="rules.noAfterNight" ${S.rules.noAfterNight!==false?'checked':''}> Aldrei vakt sama dag og næturvakt lýkur (önnur næturvakt í röð er leyfð)</label>
@@ -311,6 +312,7 @@ function empEditor(e,C){
   <div class="row"><div class="field"><label>Staða</label><select data-k="employees.${i}.status" data-re>${Object.entries(VP.STATUS_NAMES).map(([k,n])=>`<option value="${k}" ${e.status===k?'selected':''}>${n}</option>`).join('')}</select></div>
    <div class="field"><label>Starfshlutfall %</label><input type="number" data-k="employees.${i}.pct" data-num data-re min="0" max="100" step="0.1" value="${esc(e.pct)}" ${e.status!=='active'?'disabled':''}></div></div>
   <p class="hint" style="margin-top:-6px">${e.status==='hourly'?'Tímavinna: tilfallandi tímar, ekki fastar vaktir og ekki í vaktaplani.':e.status==='leave'?'Í leyfi: ekki í vaktaplani og engin vinnuskylda.':`Vinnuskylda á tímabilinu: <b>${fmt(o?o.target:0)} klst.</b>${o?` · á vöktum ${fmt(o.total)} · útistandandi: <b>${outTxt(o)}</b>`:''}`}</p>
+  ${e.mix?`<p class="hint" style="margin:10px 0 0"><b>Hlutfall vakta á síðasta tímabili:</b> ${VP.PREF_CATS.filter(([k])=>e.mix[k]).map(([k,n])=>`${esc(n)} ${Math.round(e.mix[k]*100)}%`).join(' · ')}${(()=>{const m=VP.mixOf(S,e);return m?`<br><b>Í þessu plani:</b> ${VP.PREF_CATS.filter(([k])=>m[k]).map(([k,n])=>`${esc(n)} ${Math.round(m[k]*100)}%`).join(' · ')}`:'';})()}</p>`:''}
   <h3>Óskir um vaktir</h3>
   <table class="plv">${VP.PREF_CATS.map(([k,n])=>{const lv=VP.prefLevel(e,k);return `<tr><td>${n}</td><td><div class="seg small">${VP.PREF_LEVELS.map(([v,t])=>`<button data-plv="${k}|${v}" class="${lv===v?'on lv'+v:''}">${t}</button>`).join('')}</div></td></tr>`;}).join('')}</table>
   <p class="hint"><b>Helst</b>: röðunin velur starfsmanninn frekar á slíkar vaktir. <b>Má</b>: kemur til greina. <b>Ekki</b>: aldrei sett á slíkar vaktir.</p>
@@ -608,7 +610,7 @@ async function importFile(file){
           await ask(`${r2.wishes} óskir lesnar inn. Smelltu á „Búa til vaktaplan“ til að úthluta þeim.`,{ok:'Í lagi',cancel:'Loka'});return;}}
     }
     save();lastGen=null;render();
-    if(mode==='prev'){const n=Object.keys(S.prevTail||{}).length;await ask(`${rep.prev} vaktir frá síðustu 7 dögum fyrra tímabils lesnar inn fyrir ${n} starfsmenn. Röðunin tekur tillit til þeirra við mánaðamót (hvíld, næturvakt, vinnudagar í röð).`+(rep.matched.length?'\n\nNöfn pöruð: '+rep.matched.join(', '):'')+(rep.unknown.length?'\n\nEkki á starfsmannalista: '+rep.unknown.join(', '):''),{ok:'Í lagi',cancel:'Loka'});return;}
+    if(mode==='prev'){const n=Object.keys(S.prevTail||{}).length;await ask(`${rep.prev} vaktir frá síðustu 7 dögum fyrra tímabils lesnar inn fyrir ${n} starfsmenn. Röðunin tekur tillit til þeirra við mánaðamót (hvíld, næturvakt, vinnudagar í röð).${rep.mix?` Hlutfall vaktategunda úr fyrra tímabili var reiknað fyrir ${rep.mix} starfsmenn.`:''}`+(rep.matched.length?'\n\nNöfn pöruð: '+rep.matched.join(', '):'')+(rep.unknown.length?'\n\nEkki á starfsmannalista: '+rep.unknown.join(', '):''),{ok:'Í lagi',cancel:'Loka'});return;}
     const L=[mode==='wish'?`${rep.wishes} óskir um vaktir lesnar inn${rep.count>rep.wishes?` og ${rep.count-rep.wishes} fjarvistir`:''}.`:`${rep.count} vaktir lesnar inn og læstar${rep.replaced?` (${rep.replaced} skrifuðu yfir eldri færslur)`:''}.`];
     if(rep.matched.length)L.push('Nöfn pöruð: '+rep.matched.join(', ')+'.');
     if(rep.ignored.length)L.push('Hunsað (ekki á vaktaplani): '+[...new Set(rep.ignored)].join(', ')+'.');
@@ -868,6 +870,7 @@ AFTER.utgafa=()=>{
     if(!ch)return;if(ch==='save')saveJson();
     pushUndo();const st=VP.stats(S);S.employees.forEach(e=>{const o=st.emp.find(x=>x.id===e.id);if(o)e.carry=VP.round2(o.balance);});
     {const C0=VP.buildCtx(S),last=C0.dates.slice(-7);S.prevTail={};   // síðustu 7 dagar fylgja yfir mánaðamótin
+      C0.emps.forEach(e=>{const m=VP.mixOf(S,e);if(m)e.mix=m;});   // hlutföll vaktategunda fylgja yfir á næsta tímabil
       C0.emps.forEach(e=>last.forEach(d=>{const v=S.plan[e.id+'|'+d];if(v&&v.s&&C0.shift[v.s]){(S.prevTail[e.id]=S.prevTail[e.id]||[]).push({date:d,m0:C0.shift[v.s].m0,m1:C0.shift[v.s].m1});}}));}
     let {year:y,month:m}=S.period;m++;if(m>12){m=1;y++;}S.locks={};S.approved=null;lastGen=null;picked.clear();setPeriod({year:y,month:m});step=5;try{localStorage.setItem(STEP_KEY,step);}catch(e){}render();toast('Nýtt tímabil: '+VP.periodLabel(S.period)+'. Næst: Lesa inn vaktaóskir');};
 };
