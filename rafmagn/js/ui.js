@@ -328,6 +328,60 @@
     setTimeout(function () { liveEl.textContent = text; }, 30);
   }
 
+  /* ---------- PDF og prentun ---------- */
+  // Inni í Claude-artifact er vefurinn í lokuðum ramma þar sem prentgluggi vafrans opnast ekki.
+  // Þar er tilbúna PDF-skjalið boðið til niðurhals í staðinn (downloads-hæfni).
+  function inArtifact() { return !!(root.claude && typeof root.claude.use === 'function'); }
+  let toastTimer = null;
+  function toast(text) {
+    const t = document.getElementById('toast');
+    if (!t) { announce(text); return; }
+    t.textContent = text; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 5000);
+  }
+  const PDF_NAMES = { glosur: 'Glósur – rað- og hliðtenging.pdf', formulublad: 'Formúlublað – rað- og hliðtenging.pdf' };
+  function pdfLink(name, label, cls) {
+    return '<a class="btn ' + (cls || '') + '" href="pdf/' + name + '.pdf" download="' + esc(PDF_NAMES[name]) + '" data-pdf="' + name + '">' + (label || 'Sækja PDF') + '</a>';
+  }
+  function savePdf(name) {
+    const url = 'pdf/' + name + '.pdf';
+    const fallback = function () {
+      const a = document.createElement('a');
+      a.href = url; a.download = PDF_NAMES[name]; a.target = '_blank'; a.rel = 'noopener';
+      document.body.appendChild(a); a.click(); a.remove();
+    };
+    if (!inArtifact()) { fallback(); return Promise.resolve(); }
+    return root.claude.use('downloads').then(function (dl) {
+      if (!dl) { fallback(); return; }
+      return fetch(url).then(function (r) {
+        if (!r.ok) throw { code: 'missing' };
+        return r.blob();
+      }).then(function (blob) {
+        return dl.save({ filename: PDF_NAMES[name], data: blob });
+      }).then(function () { toast('PDF-skjalið var vistað.'); });
+    }).catch(function (e) {
+      const code = e && e.code;
+      if (code === 'declined') return;
+      if (code === 'rate_limited') { toast('Bíddu andartak og reyndu aftur.'); return; }
+      toast('Ekki tókst að sækja PDF-skjalið hér. Opnaðu vefinn í nýjum flipa eða sæktu skrána af GitHub.');
+    });
+  }
+  /** Prentar síðuna — eða, inni í artifact þar sem prentun er lokuð, býður PDF-skjalið. */
+  function printOrSave(name) {
+    if (inArtifact()) return savePdf(name);
+    root.print();
+    return Promise.resolve();
+  }
+  if (root.document) {
+    document.addEventListener('click', function (e) {
+      const a = e.target.closest('a[data-pdf]');
+      if (!a || !inArtifact()) return;
+      e.preventDefault();
+      savePdf(a.dataset.pdf);
+    });
+  }
+
   function pct(a, b) { return b ? Math.round((a / b) * 100) : 0; }
   function progressBar(value, max, label) {
     return '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="' + max + '" aria-valuenow="' + value + '" aria-label="' + esc(label) + '"><span style="width:' + pct(value, max) + '%"></span></div>';
@@ -336,6 +390,6 @@
   root.UI = {
     esc: esc, S: S, F: Explain.frac, diagram: diagram, steps: steps, unitControl: unitControl, topicTag: topicTag,
     correctText: correctText, toolsHTML: toolsHTML, updateConverter: updateConverter, exerciseCard: exerciseCard, readAnswers: readAnswers, gradeExercise: gradeExercise,
-    feedbackText: feedbackText, feedbackClass: cls, confirm: confirmDialog, announce: announce, pct: pct, progressBar: progressBar,
+    feedbackText: feedbackText, inArtifact: inArtifact, pdfLink: pdfLink, savePdf: savePdf, printOrSave: printOrSave, toast: toast, feedbackClass: cls, confirm: confirmDialog, announce: announce, pct: pct, progressBar: progressBar,
   };
 })(typeof self !== 'undefined' ? self : this);

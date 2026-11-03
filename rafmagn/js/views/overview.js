@@ -58,7 +58,7 @@
       return '<section class="hero">' +
         '<div><p class="eyebrow">Rafmagnsfræði · grunnatriði</p><h1>Undirbúningur fyrir rafmagnsfræðipróf</h1>' +
         '<p class="lead">Hér rifjarðu upp og æfir raðtengingu og hliðtengingu viðnáma og lögmál Ohms: að reikna spennu, straum og viðnám, heildarviðnám, spennuföll og greinastrauma.</p>' +
-        '<div class="actions"><a class="btn btn-primary" href="#formulublad:prenta">Prenta formúlublað</a><a class="btn" href="#aefingar">Byrja að æfa</a></div></div>' +
+        '<div class="actions"><a class="btn btn-primary" href="#formulublad:prenta" data-print-sheet>Prenta formúlublað</a>' + UI.pdfLink('glosur', 'Sækja glósur sem PDF') + '<a class="btn" href="#aefingar">Byrja að æfa</a></div></div>' +
         '<div class="card"><h2>Það sem þarf að kunna</h2><ul class="checklist">' +
         '<li>Lögmál Ohms: <span class="math">' + S('U') + ' = ' + S('I') + ' · ' + S('R') + '</span> og að velja rétta útgáfu.</li>' +
         '<li>Raðtenging: viðnám og spennuföll leggjast saman, sami straumur alls staðar.</li>' +
@@ -80,6 +80,8 @@
     },
     mount: function (el) {
       el.addEventListener('click', function (e) {
+        // Inni í artifact opnast prentgluggi ekki; þá er formúlublaðið boðið sem PDF.
+        if (e.target.closest('[data-print-sheet]') && UI.inArtifact()) { e.preventDefault(); UI.savePdf('formulublad'); return; }
         if (!e.target.closest('[data-reset]')) return;
         UI.confirm('Þetta eyðir öllum vistuðum svörum, árangri í æfingum og niðurstöðum æfingaprófa í þessum vafra. Ekki er hægt að afturkalla það.', 'Já, endurstilla', 'Endurstilla framvindu?')
           .then(function (ok) {

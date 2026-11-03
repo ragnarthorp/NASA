@@ -59,4 +59,6 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 
 Framvinda og stillingar vistast í `localStorage`. Útreikningar (`js/calc.js`), lausnarskref (`js/explain.js`), svaramat (`js/grade.js`), tengimyndir (`js/diagrams.js`) og verkefnabanki (`js/exercises.js`) eru aðskilin frá viðmótinu (`js/ui.js`, `js/views/`).
 
+Glósurnar og formúlublaðið fylgja líka sem tilbúin PDF-skjöl í `rafmagn/pdf/` („Sækja PDF“). Ef glósum eða formúlublaði er breytt þarf að endurgera þau með `npm run pdf`. Þegar vefurinn er birtur sem Claude-artifact opnast prentgluggi vafrans ekki, og þá bjóða prenthnapparnir PDF-skjalið í staðinn.
+
 Próf (Node 18+): `cd rafmagn && npm test` (útreikningar og svaramat) og `npm run test:ui` (vafrapróf, krefst Playwright og Chromium).

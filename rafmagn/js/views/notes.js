@@ -34,7 +34,7 @@
 
     let h = '<div class="section-head"><div><p class="eyebrow">Glósur</p><h1>Glósur: rað- og hliðtenging</h1>' +
       '<p class="lead">Stuttar glósur með formúlum, tengimyndum og reiknuðum dæmum. Þær eru prentvænar og nýtast vel í prófinu.</p></div>' +
-      '<div class="actions no-print"><button type="button" class="btn-primary" data-print>Prenta glósur</button><a class="btn" href="#formulublad">Formúlublað (1 síða)</a></div></div>';
+      '<div class="actions no-print"><button type="button" class="btn-primary" data-print>Prenta glósur</button>' + UI.pdfLink('glosur', 'Sækja glósur sem PDF') + '<a class="btn" href="#formulublad">Formúlublað (1 síða)</a></div></div>';
     h += '<div class="notes-layout"><nav class="toc" aria-label="Efnisyfirlit glósa"><ol>' +
       SECTIONS.map(function (s) { return '<li><a href="#glosur:' + s[0] + '">' + s[1] + '</a></li>'; }).join('') + '</ol></nav><div class="stack">';
 
@@ -130,7 +130,7 @@
     render: render,
     mount: function (el) {
       el.addEventListener('click', function (e) {
-        if (e.target.closest('[data-print]')) root.print();
+        if (e.target.closest('[data-print]')) UI.printOrSave('glosur');
       });
     },
     navigate: function (sub) {

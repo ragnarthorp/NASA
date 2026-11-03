@@ -249,6 +249,49 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
   await page.emulateMedia({ media: 'screen' });
   ok('Glósur prentast');
 
+  // PDF-skrár fylgja og „Sækja PDF“ vísar á þær
+  const fs = require('fs');
+  for (const f of ['glosur', 'formulublad']) assert.ok(fs.statSync(path.resolve(__dirname, '..', 'pdf', f + '.pdf')).size > 10000, f + '.pdf');
+  assert.equal(await page.getAttribute('a[data-pdf=glosur]', 'href'), 'pdf/glosur.pdf');
+  ok('PDF-skrár glósa og formúlublaðs eru til og tengdar');
+
+  // Inni í Claude-artifact: prenthnappar bjóða PDF í gegnum downloads í stað prentglugga
+  // Einfaldur vefþjónn svo fetch() virki eins og í artifact (file:// leyfir það ekki).
+  const root = path.resolve(__dirname, '..');
+  const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.pdf': 'application/pdf' };
+  const server = require('http').createServer((req, res) => {
+    const f = path.join(root, decodeURIComponent(req.url.split('?')[0]).replace(/^\/$/, '/index.html'));
+    if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; }
+    res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
+    res.end(fs.readFileSync(f));
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const HTTP = 'http://127.0.0.1:' + server.address().port + '/index.html';
+  const ctx = await browser.newContext();
+  const ap = await ctx.newPage();
+  ap.on('pageerror', (e) => errors.push(e.message));
+  await ap.addInitScript(() => {
+    window.__saved = []; window.__printed = 0;
+    window.print = () => { window.__printed++; };
+    window.claude = { use: (n) => Promise.resolve(n === 'downloads' ? { save: (req) => { window.__saved.push({ filename: req.filename, size: req.data.size, type: req.data.constructor.name }); return Promise.resolve({ status: 'saved' }); } } : null) };
+  });
+  await ap.goto(HTTP + '#glosur');
+  await ap.click('[data-print]');
+  await ap.waitForFunction(() => window.__saved.length === 1);
+  let saved = await ap.evaluate(() => window.__saved);
+  assert.match(saved[0].filename, /Glósur.*\.pdf$/); assert.ok(saved[0].size > 10000);
+  assert.match(await ap.locator('#toast').innerText(), /vistað/);
+  await ap.goto(HTTP + '#yfirlit');
+  await ap.evaluate(() => { window.__saved = []; });
+  await ap.click('[data-print-sheet]');
+  await ap.waitForFunction(() => window.__saved.length === 1 && window.__saved[0].filename.startsWith('Formúlublað'));
+  await ap.click('a[data-pdf=glosur]');
+  await ap.waitForFunction(() => window.__saved.length === 2);
+  assert.equal(await ap.evaluate(() => window.__printed), 0, 'enginn prentgluggi inni í artifact');
+  await ctx.close();
+  server.close();
+  ok('Inni í artifact: Prenta og Sækja PDF vista PDF-skjal í stað prentglugga');
+
   assert.deepEqual(errors, [], 'engar villur í vafra');
   ok('Engar JavaScript-villur');
   await browser.close();
