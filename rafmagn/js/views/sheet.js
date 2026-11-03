@@ -25,30 +25,37 @@
       '</div>' +
 
       '<section style="margin-top:3mm"><h2>Samanburður</h2><table><thead><tr><th scope="col"></th><th scope="col">Raðtenging</th><th scope="col">Hliðtenging</th></tr></thead><tbody>' +
+      '<tr><th scope="row">Tengimynd</th><td><figure class="diagram">' + Diagrams.series({ U: '', R: ['', '', ''], I: '', aria: 'Raðtenging: þrjú viðnám á sömu leið.' }) + '</figure></td>' +
+      '<td><figure class="diagram">' + Diagrams.parallel({ U: '', R: ['', '', ''], I: '', aria: 'Hliðtenging: þrjú viðnám, hvert í sinni grein.' }) + '</figure></td></tr>' +
       '<tr><th scope="row">Heildarviðnám</th><td>' + S('R', 'H') + ' = ' + R(1) + ' + ' + R(2) + ' + … + ' + R('n') + '</td><td>' + F('1', S('R', 'H')) + ' = ' + F('1', R(1)) + ' + ' + F('1', R(2)) + ' + … + ' + F('1', R('n')) + '</td></tr>' +
       '<tr><th scope="row">Straumur</th><td>sá sami: ' + S('I', 'H') + ' = ' + S('I', 1) + ' = ' + S('I', 2) + ' = … = ' + S('I', 'n') + '</td><td>leggst saman: ' + S('I', 'H') + ' = ' + S('I', 1) + ' + ' + S('I', 2) + ' + … + ' + S('I', 'n') + '</td></tr>' +
       '<tr><th scope="row">Spenna</th><td>leggst saman: ' + S('U', 'H') + ' = ' + S('U', 1) + ' + ' + S('U', 2) + ' + … + ' + S('U', 'n') + '</td><td>sú sama: ' + S('U', 'H') + ' = ' + S('U', 1) + ' = ' + S('U', 2) + ' = … = ' + S('U', 'n') + '</td></tr>' +
       '<tr><th scope="row">Stærð ' + S('R', 'H') + '</th><td>stærra en hvert einstakt viðnám</td><td>minna en minnsta viðnámið</td></tr>' +
       '<tr><th scope="row">Einstök viðnám</th><td>' + S('U', 1) + ' = ' + S('I', 'H') + ' · ' + R(1) + '</td><td>' + S('I', 1) + ' = ' + S('U', 'H') + ' / ' + R(1) + '</td></tr>' +
+      '<tr><th scope="row">Vinnuröð</th><td>' + S('R', 'H') + ' → ' + S('I', 'H') + ' = ' + S('U', 'H') + '/' + S('R', 'H') + ' → ' + S('U', 1) + ' = ' + S('I', 'H') + '·' + R(1) + ' … → athuga ' + S('U', 1) + ' + ' + S('U', 2) + ' + … = ' + S('U', 'H') + '</td>' +
+      '<td>' + S('R', 'H') + ' (1/R, snúa við!) → ' + S('I', 1) + ' = ' + S('U', 'H') + '/' + R(1) + ' … → ' + S('I', 'H') + ' = ' + S('I', 1) + ' + ' + S('I', 2) + ' + … → athuga ' + S('U', 'H') + '/' + S('R', 'H') + '</td></tr>' +
       '</tbody></table>' +
-      '<div class="formula-box"><h4>Formúlan góða — fyrir tvö viðnám (aðeins tvö!)</h4><div class="formula" style="margin:1mm 0 0"><span>' + S('R', 'H') + ' = ' + F(R(1) + ' · ' + R(2), R(1) + ' + ' + R(2)) + '</span></div></div></section>' +
+      '<div class="pair" style="margin-top:1.5mm"><div class="formula-box" style="margin:0"><h4>Formúlan góða — fyrir tvö viðnám (aðeins tvö!)</h4><div class="formula" style="margin:1mm 0 0"><span>' + S('R', 'H') + ' = ' + F(R(1) + ' · ' + R(2), R(1) + ' + ' + R(2)) + '</span></div></div>' +
+      '<div class="formula-box prof-box" style="margin:0"><h4><span class="tag tag-prof">[Prófefni]</span> Lögmál Kirchhoffs</h4><p style="margin:0"><strong>1. (straumur, hliðt.):</strong> summa strauma að greinipunkti = summa strauma frá honum.<br><strong>2. (spenna, raðt.):</strong> summa spennufalla í lokaðri rás = spennugjafaspennan.</p></div></div></section>' +
+      '<section class="prof-box" style="margin-top:2mm;padding:1.5mm 3mm"><h2 style="margin-bottom:1mm"><span class="tag tag-prof">[Prófefni]</span> Gerðir dæma í æfingunum</h2><div class="cols" style="gap:1mm 6mm"><ul>' +
+      '<li><strong>Raðt., jafnstórar:</strong> ' + S('R', 'H') + ' = ' + S('n') + ' · ' + S('R') + ', ' + S('U', 'R') + ' = ' + S('U', 'H') + ' / ' + S('n') + '</li>' +
+      '<li><strong>Óþekkt mótstaða:</strong> ' + S('R', 'x') + ' = ' + S('R', 'H') + ' − (summa hinna)</li>' +
+      '<li><strong>Fellimótstaða:</strong> ' + S('R') + ' = (' + S('U') + ' − ' + S('U', 'tæki') + ') / ' + S('I') + '</li>' +
+      '<li><strong>Tæki í röð:</strong> ' + S('n') + ' = ' + S('U') + ' / ' + S('U', 'tæki') + ' (sami straumur)</li>' +
+      '<li><strong>Mælar:</strong> A raðtengdur, V hliðtengdur yfir íhlut</li></ul><ul>' +
+      '<li><strong>Hliðt., jafnstórar:</strong> ' + S('R', 'H') + ' = ' + S('R') + ' / ' + S('n') + '; fjöldi álaga ' + S('n') + ' = ' + S('R') + ' / ' + S('R', 'H') + '</li>' +
+      '<li><strong>Ná ákveðnu ' + S('R', 'H') + ':</strong> 1/' + S('R', 'x') + ' = 1/' + S('R', 'H') + ' − 1/' + R(1) + ' − 1/' + R(2) + '</li>' +
+      '<li><strong>Óþekkt grein:</strong> ' + S('I', 'x') + ' = ' + S('I', 'H') + ' − (hinir), ' + S('R', 'x') + ' = ' + S('U') + ' / ' + S('I', 'x') + '</li>' +
+      '<li><strong>Grein rofnar:</strong> hinar óbreyttar, ' + S('I', 'H') + ' minnkar</li>' +
+      '<li><strong>Blönduð:</strong> innstu hópar fyrst → ' + S('R', 'H') + ' → ' + S('I', 'H') + ' → til baka: raðt. ' + S('U') + ' = ' + S('I') + '·' + S('R') + ', hliðt. ' + S('I') + ' = ' + S('U') + '/' + S('R') + '</li></ul></div></section>' +
 
-      '<div class="pair">' +
-      '<figure class="diagram">' + Diagrams.series({ U: '', R: ['', '', ''], I: '', aria: 'Raðtenging: þrjú viðnám á sömu leið.' }) + '<figcaption>Raðtenging — ein leið</figcaption></figure>' +
-      '<figure class="diagram">' + Diagrams.parallel({ U: '', R: ['', '', ''], I: '', aria: 'Hliðtenging: þrjú viðnám, hvert í sinni grein.' }) + '<figcaption>Hliðtenging — margar greinar</figcaption></figure>' +
-      '</div>' +
 
       '<div class="cols" style="margin-top:2mm">' +
-      '<section><h2>Vinnuröð</h2><p style="margin:0 0 1mm"><strong>Raðtenging:</strong></p><ol>' +
-      '<li>' + S('R', 'H') + ' = summa viðnáma</li><li>' + S('I', 'H') + ' = ' + S('U', 'H') + ' / ' + S('R', 'H') + '</li><li>' + S('U', 1) + ' = ' + S('I', 'H') + ' · ' + R(1) + ' o.s.frv.</li><li>Athuga: ' + S('U', 1) + ' + ' + S('U', 2) + ' + … = ' + S('U', 'H') + '</li></ol>' +
-      '<p style="margin:1.5mm 0 1mm"><strong>Hliðtenging:</strong></p><ol>' +
-      '<li>' + S('R', 'H') + ' með 1/R-formúlu (snúa við!)</li><li>' + S('U', 'H') + ' yfir hverja grein</li><li>' + S('I', 1) + ' = ' + S('U', 'H') + ' / ' + R(1) + ' o.s.frv.</li><li>' + S('I', 'H') + ' = ' + S('I', 1) + ' + ' + S('I', 2) + ' + …</li><li>Athuga: ' + S('I', 'H') + ' = ' + S('U', 'H') + ' / ' + S('R', 'H') + '</li></ol></section>' +
       '<section><h2>Gátlisti fyrir lausn dæma</h2><ol>' +
-      '<li>Teikna eða skoða rásina: rað- eða hliðtenging?</li><li>Skrifa niður gefnar stærðir og hvað á að finna.</li><li>Breyta í V, A og Ω.</li><li>Velja formúlu og setja tölur inn með einingum.</li><li>Halda fullri nákvæmni, námunda aðeins lokasvar.</li><li>Athuga hvort svarið sé skynsamlegt og skrifa einingu.</li></ol>' +
-      '<h2 style="margin-top:2.5mm">Helstu villur</h2><ul>' +
+      '<li>Teikna rásina: rað-, hlið- eða blönduð tenging?</li><li>Skrifa gefnar stærðir og hvað á að finna.</li><li>Breyta í V, A og Ω.</li><li>Velja formúlu, setja inn tölur með einingum.</li><li>Námunda aðeins lokasvar; athuga hvort það sé skynsamlegt.</li></ol>' +
+      '</section><section><h2>Helstu villur</h2><ul>' +
       '<li>Gleyma að breyta mA → A eða kΩ → Ω.</li><li>Gleyma að snúa við: 1/' + S('R', 'H') + ' er ekki ' + S('R', 'H') + '.</li><li>Formúlan góða notuð á þrjú viðnám.</li><li>Halda að straumur skiptist í raðtengingu eða spenna í hliðtengingu.</li><li>Hliðtenging: ' + S('R', 'H') + ' stærra en minnsta viðnám = villa.</li></ul></section>' +
       '</div>' +
-      '<p class="foot">Formúlublað til undirbúnings fyrir próf í rað- og hliðtengingu viðnáma.</p>' +
       '</article>';
   }
 

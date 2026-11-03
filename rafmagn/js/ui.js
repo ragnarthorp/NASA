@@ -13,6 +13,9 @@
     });
   }
 
+  /** Gerir auðkenni öruggt í id-eigindum (t.d. 'I:2,3' → 'I_2_3'). */
+  function safeId(k) { return String(k).replace(/[^A-Za-z0-9_-]/g, '_'); }
+
   function diagram(spec, caption) {
     if (!spec) return '';
     return '<figure class="diagram">' + Diagrams[spec.kind](spec) + (caption ? '<figcaption>' + caption + '</figcaption>' : '') + '</figure>';
@@ -37,6 +40,11 @@
     return '<span class="tag' + (tone ? ' tag-' + tone : '') + '">' + esc(Exercises.topicName(id)) + '</span>';
   }
 
+  /** Merking fyrir efni sem byggt er á æfingadæmum áfangans. */
+  function profTag(source) {
+    return '<span class="tag tag-prof" title="Byggt á: ' + esc(source) + '">[Prófefni]</span> <span class="small muted">' + esc(source) + '</span>';
+  }
+
   function correctText(a) {
     if (a.units.length === 1) return Calc.eqSign(Calc.fromSI(a.value, a.units[0])) + ' ' + Calc.formatIn(a.value, a.units[0]);
     return Calc.eqSign(a.value) + ' ' + Calc.formatBoth(a.value, a.q);
@@ -53,11 +61,11 @@
     const draft = o.draft || {};
     const fields = draft.fields || {};
     const locked = mode === 'review';
-    let head = '<div class="ex-head"><div>' + topicTag(ex.topic) +
+    let head = '<div class="ex-head"><div>' + topicTag(ex.topic) + (ex.profefni ? ' ' + profTag(ex.profefni) : '') +
       '<h3 id="' + pre + '-title">' + (o.number ? o.number + '. ' : '') + esc(ex.title) + '</h3></div>';
     if (o.status) head += o.status;
     head += '</div>';
-    let body = '<p class="prompt">' + ex.prompt + '</p>' + diagram(ex.diagram);
+    let body = '<p class="prompt">' + ex.prompt + '</p>' + (ex.note ? '<p class="notice notice-warn small">' + ex.note + '</p>' : '') + diagram(ex.diagram);
     if (mode === 'practice') body += toolsHTML(pre, ex.type === 'numeric' ? ex.answers[0].q : 'I');
 
     let form = '<form class="answers" data-ex="' + ex.id + '" novalidate aria-labelledby="' + pre + '-title">';
@@ -66,7 +74,7 @@
       ex.answers.forEach(function (a) {
         const f = fields[a.key] || {};
         const unit = f.u && a.units.indexOf(f.u) >= 0 ? f.u : (a.unit || a.units[0]);
-        const id = pre + '-' + a.key;
+        const id = pre + '-' + safeId(a.key);
         const res = o.results && o.results[a.key];
         form += '<div class="field"><label for="' + id + '">' + a.label + '</label>' +
           '<div class="inputrow"><input type="text" id="' + id + '" data-key="' + esc(a.key) + '" inputmode="decimal" autocomplete="off" spellcheck="false" value="' + esc(f.v || '') + '"' +
@@ -123,6 +131,7 @@
     return Calc.PREFIX_UNITS[q].map(function (u) { return '<option value="' + esc(u) + '"' + (u === selected ? ' selected' : '') + '>' + esc(u) + '</option>'; }).join('');
   }
   function converterHTML(pre, q) {
+    if (!Calc.PREFIX_UNITS[q]) q = 'I';
     const id = pre + '-conv';
     return '<h4>Einingabreytir</h4><div class="conv" data-conv>' +
       '<div class="conv-row">' +
@@ -262,7 +271,7 @@
     if (ex.type === 'numeric') {
       ex.answers.forEach(function (a) {
         const input = card.querySelector('input[data-key="' + a.key + '"]');
-        const sel = card.querySelector('#' + input.id + '-unit');
+        const sel = document.getElementById(input.id + '-unit');
         out.fields[a.key] = { v: input.value, u: sel && sel.tagName === 'SELECT' ? sel.value : a.units[0] };
       });
     } else {
@@ -404,7 +413,7 @@
 
   root.UI = {
     esc: esc, S: S, F: Explain.frac, diagram: diagram, steps: steps, unitControl: unitControl, topicTag: topicTag,
-    correctText: correctText, toolsHTML: toolsHTML, updateConverter: updateConverter, exerciseCard: exerciseCard, readAnswers: readAnswers, gradeExercise: gradeExercise,
+    correctText: correctText, profTag: profTag, safeId: safeId, toolsHTML: toolsHTML, updateConverter: updateConverter, exerciseCard: exerciseCard, readAnswers: readAnswers, gradeExercise: gradeExercise,
     feedbackText: feedbackText, inArtifact: inArtifact, pdfLink: pdfLink, savePdf: savePdf, printOrSave: printOrSave, toast: toast, feedbackClass: cls, confirm: confirmDialog, announce: announce, pct: pct, progressBar: progressBar,
   };
 })(typeof self !== 'undefined' ? self : this);

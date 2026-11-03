@@ -31,7 +31,8 @@
   function listHTML() {
     const set = Store.state.settings;
     const items = Exercises.practice().filter(function (e) {
-      if (set.practiceTopic !== 'all' && e.topic !== set.practiceTopic) return false;
+      if (set.practiceTopic === 'prof') { if (!e.profefni) return false; }
+      else if (set.practiceTopic !== 'all' && e.topic !== set.practiceTopic) return false;
       if (set.onlyUnsolved) { const p = Store.state.progress[e.id]; if (p && p.solved) return false; }
       return true;
     });
@@ -50,6 +51,7 @@
       return '<button type="button" class="btn-small" data-topic="' + id + '" aria-pressed="' + (set.practiceTopic === id) + '">' + esc(name) + ' (' + count + ')</button>';
     };
     return '<div class="filters" role="group" aria-label="Sía eftir efnisflokki">' + btn('all', 'Allir flokkar', list.length) +
+      btn('prof', '[Prófefni] úr æfingadæmum', list.filter(function (e) { return e.profefni; }).length) +
       Exercises.TOPICS.map(function (t) { return btn(t.id, t.name, list.filter(function (e) { return e.topic === t.id; }).length); }).join('') + '</div>' +
       '<label class="choice" style="display:inline-flex"><input type="checkbox" data-unsolved' + (set.onlyUnsolved ? ' checked' : '') + '> Sýna aðeins óleystar</label>';
   }
@@ -115,11 +117,12 @@
 
   Views.aefingar = {
     render: function (sub) {
-      if (sub && (sub === 'all' || Exercises.TOPICS.some(function (t) { return t.id === sub; }))) {
+      if (sub && (sub === 'all' || sub === 'prof' || Exercises.TOPICS.some(function (t) { return t.id === sub; }))) {
         Store.state.settings.practiceTopic = sub; Store.save();
       }
       return '<div class="section-head"><div><p class="eyebrow">Æfingar</p><h1>Æfingar með endurgjöf</h1>' +
-        '<p class="lead">Reiknaðu á blað eða í reiknivélinni þinni og skrifaðu svarið í reitinn. Svör í A og mA (eða Ω og kΩ) eru metin eins, og hæfileg námundun er í lagi.</p></div></div>' +
+        '<p class="lead">Reiknaðu á blað eða í reiknivélinni þinni og skrifaðu svarið í reitinn. Svör í A og mA (eða Ω og kΩ) eru metin eins, og hæfileg námundun er í lagi.</p>' +
+        '<p class="prof-box" style="margin:0"><span class="tag tag-prof">[Prófefni]</span> Æfingar merktar svona eru byggðar á æfingadæmum áfangans (2.1.1 Raðtengingar, 2.2.1 Hliðtengingar og 2.3 Blönduð tenging). Prófið er byggt á þessum æfingum, svo þær eru mikilvægastar. <a href="#aefingar:prof">Sýna aðeins [Prófefni]</a></p></div></div>' +
         '<section class="card" data-stats aria-labelledby="stats-h" style="margin-bottom:18px">' + statsHTML() + '</section>' +
         '<div class="no-print">' + filtersHTML() + '</div><div class="stack" data-list style="margin-top:16px">' + listHTML() + '</div>';
     },
@@ -167,7 +170,7 @@
     },
     navigate: function (sub) {
       if (!sub) return false;
-      if (sub !== 'all' && !Exercises.TOPICS.some(function (t) { return t.id === sub; })) return false;
+      if (sub !== 'all' && sub !== 'prof' && !Exercises.TOPICS.some(function (t) { return t.id === sub; })) return false;
       Store.state.settings.practiceTopic = sub; Store.save();
       container.querySelectorAll('[data-topic]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.topic === sub)); });
       refreshList();

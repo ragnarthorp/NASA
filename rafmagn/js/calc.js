@@ -22,8 +22,9 @@
     'µV': { q: 'U', exp: -6 },
     'kV': { q: 'U', exp: 3 },
     'mΩ': { q: 'R', exp: -3 },
+    'stk.': { q: 'N', exp: 0 },
   };
-  const BASE_UNIT = { U: 'V', I: 'A', R: 'Ω' };
+  const BASE_UNIT = { U: 'V', I: 'A', R: 'Ω', N: 'stk.' };
   // Einingar sem nemandi getur valið í reitum.
   const INPUT_UNITS = { U: ['V'], I: ['A', 'mA'], R: ['Ω', 'kΩ'] };
   // Einingar með forskeytum í einingabreyti, frá minnstu til stærstu.
@@ -142,6 +143,7 @@
     if (q === 'I') { if (a >= 1 || a === 0) return 'A'; if (a >= 1e-3) return 'mA'; return 'µA'; }
     if (q === 'U') { if (a >= 1 || a === 0) return 'V'; return 'mV'; }
     if (q === 'R') { if (a >= 1e6) return 'MΩ'; if (a >= 1e3) return 'kΩ'; return 'Ω'; }
+    if (q === 'N') return 'stk.';
     throw new Error('Óþekkt stærð: ' + q);
   }
   function formatIn(valueSI, unit, sig) {
@@ -297,6 +299,41 @@
     }
   }
 
+  /* ---------- Blandaðar tengingar ---------- */
+  /*
+   * Rás er tré: { R: 20, name: '1' } (mótstaða), { s: [...] } (raðtengt) eða { p: [...] } (hliðtengt).
+   * Samsettir hnútar fá nafn úr númerum mótstaðanna, t.d. '2,3'.
+   */
+  function isLeaf(node) { return !node.s && !node.p; }
+  function leaves(node) {
+    if (isLeaf(node)) return [node];
+    return (node.s || node.p).reduce(function (a, c) { return a.concat(leaves(c)); }, []);
+  }
+  function nodeName(node) {
+    if (isLeaf(node)) return String(node.name);
+    return leaves(node).map(function (l) { return l.name; }).join(',');
+  }
+  function equivalent(node) {
+    if (isLeaf(node)) { assertPositive(node.R, 'R' + node.name); return node.R; }
+    if (node.s) return finite(node.s.reduce(function (a, c) { return a + equivalent(c); }, 0));
+    if (node.p) return finite(1 / node.p.reduce(function (a, c) { return a + 1 / equivalent(c); }, 0));
+    throw new Error('Ógildur hnútur í rás');
+  }
+  /** Leysir blandaða rás: skilar R_H, I_H og { nafn: { U, I, R, kind } } fyrir hvern hnút. */
+  function network(U, tree) {
+    assertPositive(U, 'U');
+    const nodes = {};
+    (function solve(node, u) {
+      const R = equivalent(node);
+      const I = finite(u / R);
+      nodes[nodeName(node)] = { U: u, I: I, R: R, kind: isLeaf(node) ? 'R' : (node.s ? 's' : 'p'), node: node };
+      if (node.s) node.s.forEach(function (c) { solve(c, I * equivalent(c)); });
+      else if (node.p) node.p.forEach(function (c) { solve(c, u); });
+    })(tree, U);
+    const RH = equivalent(tree);
+    return { U: U, RH: RH, IH: finite(U / RH), nodes: nodes, tree: tree };
+  }
+
   /** Hlutfallslegt frávik, notað í sannprófun. */
   function relDiff(a, b) {
     const d = Math.abs(a - b);
@@ -315,7 +352,7 @@
   }
 
   return {
-    UNITS: UNITS, BASE_UNIT: BASE_UNIT, INPUT_UNITS: INPUT_UNITS, PREFIX_UNITS: PREFIX_UNITS, PREFIXES: PREFIXES, convertAll: convertAll, evaluate: evaluate, MIN_INPUT: MIN_INPUT, MAX_INPUT: MAX_INPUT,
+    UNITS: UNITS, BASE_UNIT: BASE_UNIT, INPUT_UNITS: INPUT_UNITS, PREFIX_UNITS: PREFIX_UNITS, PREFIXES: PREFIXES, convertAll: convertAll, evaluate: evaluate, network: network, equivalent: equivalent, nodeName: nodeName, leaves: leaves, MIN_INPUT: MIN_INPUT, MAX_INPUT: MAX_INPUT,
     unitInfo: unitInfo, toSI: toSI, fromSI: fromSI,
     parseNumber: parseNumber, parseQuantity: parseQuantity, quantity: quantity,
     formatNumber: formatNumber, formatScientific: formatScientific, isRounded: isRounded, eqSign: eqSign,

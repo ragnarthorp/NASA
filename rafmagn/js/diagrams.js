@@ -129,5 +129,86 @@
     return s + '</svg>';
   }
 
-  return { series: series, parallel: parallel, esc: esc };
+  /* ---------- Blönduð tenging ---------- */
+  // Hnútar: { R, name } (mótstaða), { s: [...] } (raðtengt), { p: [...] } (hliðtengt).
+  function measure(node) {
+    if (node.R !== undefined || node.name !== undefined && !node.s && !node.p) return { w: 116, h: 64, port: 42 };
+    const kids = (node.s || node.p).map(measure);
+    if (node.s) {
+      const port = Math.max.apply(null, kids.map(function (k) { return k.port; }));
+      const h = Math.max.apply(null, kids.map(function (k) { return port - k.port + k.h; }));
+      return { w: kids.reduce(function (a, k) { return a + k.w; }, 0), h: h, port: port, kids: kids };
+    }
+    const W = Math.max.apply(null, kids.map(function (k) { return k.w; }));
+    let y = 0; const ys = [];
+    kids.forEach(function (k) { ys.push(y); y += k.h + 10; });
+    return { w: W + 44, h: y - 10, port: kids[0].port, kids: kids, ys: ys, inner: W };
+  }
+  function drawNode(node, m, x, y, labels) {
+    let s = '';
+    if (!node.s && !node.p) {
+      const py = y + m.port;
+      s += '<line class="w" x1="' + x + '" y1="' + py + '" x2="' + (x + m.w) + '" y2="' + py + '"/>';
+      s += hRes(x + m.w / 2, py);
+      const val = labels && labels[node.name] != null ? labels[node.name] : '';
+      s += label(x + m.w / 2, py - 20, 'R', String(node.name), eqText(val), { cls: 'lbl' });
+      return s;
+    }
+    if (node.s) {
+      let cx = x;
+      node.s.forEach(function (c, i) {
+        const k = m.kids[i];
+        s += drawNode(c, k, cx, y + m.port - k.port, labels);
+        cx += k.w;
+      });
+      return s;
+    }
+    const L = x + 12, Rr = x + m.w - 12;
+    const ports = m.kids.map(function (k, i) { return y + m.ys[i] + k.port; });
+    const last = ports[ports.length - 1];
+    s += '<line class="w" x1="' + x + '" y1="' + ports[0] + '" x2="' + L + '" y2="' + ports[0] + '"/>';
+    s += '<line class="w" x1="' + Rr + '" y1="' + ports[0] + '" x2="' + (x + m.w) + '" y2="' + ports[0] + '"/>';
+    s += '<line class="w" x1="' + L + '" y1="' + ports[0] + '" x2="' + L + '" y2="' + last + '"/>';
+    s += '<line class="w" x1="' + Rr + '" y1="' + ports[0] + '" x2="' + Rr + '" y2="' + last + '"/>';
+    node.p.forEach(function (c, i) {
+      const k = m.kids[i];
+      const bx = x + 22;
+      const py = ports[i];
+      s += '<line class="w" x1="' + L + '" y1="' + py + '" x2="' + bx + '" y2="' + py + '"/>';
+      s += drawNode(c, k, bx, y + m.ys[i], labels);
+      s += '<line class="w" x1="' + (bx + k.w) + '" y1="' + py + '" x2="' + Rr + '" y2="' + py + '"/>';
+      if (i < node.p.length - 1) s += '<circle class="dot" cx="' + L + '" cy="' + py + '" r="4"/><circle class="dot" cx="' + Rr + '" cy="' + py + '" r="4"/>';
+    });
+    return s;
+  }
+  function treeText(node) {
+    if (!node.s && !node.p) return 'R' + node.name;
+    return '(' + (node.s || node.p).map(treeText).join(node.s ? ' raðtengt við ' : ' hliðtengt við ') + ')';
+  }
+  /** Blönduð tenging. o = { U: '9 V', tree, labels: { '1': '20 Ω', … }, I?: heildarstraumur } */
+  function network(o) {
+    const m = measure(o.tree);
+    const xb = 78, x0 = 118, y0 = 16;
+    const py = y0 + m.port;
+    const yb = y0 + m.h + 34;
+    const xr = x0 + m.w + 22;
+    const W = xr + 100, H = yb + 18;
+    const yc = (py + yb) / 2;
+    const aria = o.aria || ('Blönduð tenging: ' + treeText(o.tree) + '. Spennugjafi UH' + eqText(o.U) + '. ' +
+      Object.keys(o.labels || {}).map(function (k) { return 'R' + k + eqText(o.labels[k]); }).join(', ') + '.');
+    let s = svgOpen(W, H, aria);
+    s += '<path class="w" d="M' + xb + ' ' + (yc - 7) + ' V' + py + ' H' + x0 + ' M' + (x0 + m.w) + ' ' + py + ' H' + xr + ' V' + yb + ' H' + xb + ' V' + (yc + 7) + '"/>';
+    s += drawNode(o.tree, m, x0, y0, o.labels);
+    s += battery(xb, yc);
+    s += label(xb - 30, yc - 30, 'U', 'H', '', { anchor: 'end', cls: 'lbl strong' });
+    s += plain(xb - 30, yc + 52, o.U || '', { anchor: 'end', cls: 'val' });
+    if (o.I !== undefined && o.I !== null) {
+      s += arrow(xr, yc, 'down');
+      s += label(xr + 14, yc - 4, 'I', 'H', '', { anchor: 'start', cls: 'lbl cur' });
+      s += plain(xr + 14, yc + 16, o.I, { anchor: 'start', cls: 'val cur' });
+    }
+    return s + '</svg>';
+  }
+
+  return { series: series, parallel: parallel, network: network, esc: esc };
 });

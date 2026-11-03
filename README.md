@@ -56,6 +56,7 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - **Æfingar:** 36 æfingar í 7 efnisflokkum með vísbendingum, lausnum og endurgjöf. 0,02 A og 20 mA teljast sama svar.
 - **Prófhamur:** 10 spurningar úr 51 spurningar banka, valfrjáls tímamælir, mat og útreikningar eftir skil.
 - **Formúlublað:** ein A4-síða, læsileg í svart-hvítu.
+- **[Prófefni]:** efni byggt á æfingadæmum áfangans (2.1.1 Raðtengingar, 2.2.1 Hliðtengingar, 2.3 Blönduð tenging) er merkt sérstaklega: 36 æfingar, glósukaflar um lögmál Kirchhoffs, mæla, gerðir dæma og blandaða tengingu, reiknivél fyrir blandaðar tengingar og viðbót á formúlublaðinu.
 
 Framvinda og stillingar vistast í `localStorage`. Útreikningar (`js/calc.js`), lausnarskref (`js/explain.js`), svaramat (`js/grade.js`), tengimyndir (`js/diagrams.js`) og verkefnabanki (`js/exercises.js`) eru aðskilin frá viðmótinu (`js/ui.js`, `js/views/`).
 

@@ -183,3 +183,39 @@ test('Einföld reiknivél', () => {
     assert.match(r.message, re, e);
   }
 });
+
+test('[Prófefni] Blönduð tenging: sýnidæmi námsefnisins', () => {
+  const R = (name, v) => ({ name, R: v });
+  // Sýnidæmi 1: R1 + (R2 ‖ R3) + R4 við 9 V
+  let r = Calc.network(9, { s: [R(1, 20), { p: [R(2, 45), R(3, 90)] }, R(4, 40)] });
+  close(r.RH, 90); close(r.IH, 0.1); close(r.nodes['2,3'].R, 30); close(r.nodes['2,3'].U, 3);
+  close(r.nodes['2'].I, 3 / 45); close(r.nodes['3'].I, 3 / 90); close(r.nodes['1'].U, 2); close(r.nodes['4'].U, 4);
+  // Sýnidæmi 2: R1 ‖ (R2 + R3) ‖ R4 við 8,7 V
+  r = Calc.network(8.7, { p: [R(1, 40), { s: [R(2, 20), R(3, 60)] }, R(4, 50)] });
+  assert.equal(Calc.formatNumber(r.RH, 3), '17,4'); close(r.nodes['2,3'].I, 0.10875); close(r.nodes['2'].U, 2.175); close(r.nodes['3'].U, 6.525);
+  // Sýnidæmi 3: fimm 12 Ω við 7,5 V
+  r = Calc.network(7.5, { p: [R(1, 12), { s: [R(2, 12), { p: [R(3, 12), { s: [R(4, 12), R(5, 12)] }] }] }] });
+  close(r.RH, 7.5); close(r.IH, 1); close(r.nodes['1'].I, 0.625); close(r.nodes['2'].I, 0.375); close(r.nodes['2'].U, 4.5);
+  close(r.nodes['3'].U, 3); close(r.nodes['3'].I, 0.25); close(r.nodes['4,5'].I, 0.125); close(r.nodes['5'].U, 1.5);
+  const ex = Explain.network(9, { s: [R(1, 20), { p: [R(2, 45), R(3, 90)] }, R(4, 40)] });
+  assert.equal(ex.check, true);
+  assert.ok(!/NaN|Infinity|undefined/.test(JSON.stringify(ex.steps)));
+  assert.throws(() => Calc.network(9, { s: [R(1, 0)] }), RangeError);
+});
+
+test('[Prófefni] Lykilsvör úr æfingadæmum 2.1.1 og 2.2.1', () => {
+  const E = require('../js/exercises.js');
+  const ans = (id, key) => E.byId[id].answers.find((a) => a.key === key).value;
+  const c = (a, b) => assert.ok(Calc.relDiff(a, b) < 1e-6, `${a} ≉ ${b}`);
+  c(ans('pf-r1', 'RH'), 48); c(ans('pf-r1', 'I'), 0.5); c(ans('pf-r1', 'U2'), 7.5); c(ans('pf-r1', 'U3'), 11.5);
+  c(ans('pf-r2', 'R4'), 360); c(ans('pf-r2', 'U'), 226.8); c(ans('pf-r3', 'R1'), 220); c(ans('pf-r3', 'R2'), 280);
+  c(ans('pf-r5', 'R1'), 12); c(ans('pf-r6', 'n'), 5); c(ans('pf-r7', 'R1'), 750); c(ans('pf-r7d', 'U1'), 18.6);
+  c(ans('pf-r9', 'U1'), 50); c(ans('pf-r9', 'U2'), 1); c(ans('pf-r10', 'R3'), 470);
+  c(ans('pf-h2', 'RH'), 15); c(ans('pf-h2', 'IH'), 1.2); c(ans('pf-h3', 'IH'), 1.75); c(ans('pf-h4', 'n'), 20);
+  c(ans('pf-h5', 'R3'), 40); c(ans('pf-h6', 'IH'), 25.3); c(ans('pf-h6', 'I3'), 4.6); c(ans('pf-h8', 'I1'), 46);
+  c(ans('pf-h15', 'R3'), 30); c(ans('pf-h15', 'IH2'), 26.4); c(ans('pf-h16', 'R3'), 8); c(ans('pf-h18', 'R4'), 10000);
+  c(ans('pf-b1', 'RH'), 90); c(ans('pf-b3', 'I:4,5'), 0.125); c(ans('pf-b4', 'RH'), 150);
+  const n = E.byId['pf-r6'].answers[0];
+  assert.equal(require('../js/grade.js').gradeNumeric('5', 'stk.', n).status, 'correct');
+  assert.ok(E.BANK.filter((e) => e.profefni).length >= 30);
+});

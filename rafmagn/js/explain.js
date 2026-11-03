@@ -170,5 +170,71 @@
     return { result: r, steps: steps, check: ok };
   }
 
-  return { sym: sym, frac: frac, subText: subText, conversions: conversions, FORMULA: FORMULA, ohm: ohm, series: series, parallel: parallel };
+  /* ---------- Blönduð tenging ---------- */
+  function nodeSym(node, root, base) {
+    if (node === root) return sym(base || 'R', 'H');
+    return sym(base || 'R', Calc.nodeName(node));
+  }
+  /** Lýsing á uppbyggingu: + = raðtengt, ‖ = hliðtengt. */
+  function structure(node, top) {
+    if (!node.s && !node.p) return sym('R', node.name);
+    const inner = (node.s || node.p).map(function (c) { return structure(c, false); }).join(node.s ? ' + ' : ' ‖ ');
+    return top ? inner : '(' + inner + ')';
+  }
+  function network(U, tree) {
+    const r = Calc.network(U, tree);
+    const steps = [];
+    steps.push({ title: 'Greina tenginguna', html: [sym('R', 'H') + ' = ' + structure(tree, true),
+      '„+“ merkir raðtengt og „‖“ hliðtengt. Byrjað er innst: fyrst eru einföldustu hópar reiknaðir saman og síðan koll af kolli út að heildarviðnáminu.'] });
+    const red = [];
+    (function post(node) {
+      if (!node.s && !node.p) return;
+      const kids = node.s || node.p;
+      kids.forEach(post);
+      const nm = nodeSym(node, tree);
+      const R = r.nodes[Calc.nodeName(node)].R;
+      if (node.s) {
+        red.push(nm + ' = ' + kids.map(function (c) { return nodeSym(c, tree); }).join(' + ') + ' = ' +
+          kids.map(function (c) { return q(Calc.equivalent(c), 'R'); }).join(' + ') + ' ' + eq(R) + ' ' + both(R, 'R') + ' <span class="muted">(raðtengdar)</span>');
+      } else {
+        red.push(nm + ' = ' + frac('1', kids.map(function (c) { return frac('1', nodeSym(c, tree)); }).join(' + ')) + ' = ' +
+          frac('1', kids.map(function (c) { return frac('1', q(Calc.equivalent(c), 'R')); }).join(' + ')) + ' ' + eq(R) + ' ' + both(R, 'R') + ' <span class="muted">(hliðtengdar)</span>');
+      }
+    })(tree);
+    steps.push({ title: 'Reikna heildarviðnám, innan frá og út', html: red });
+    steps.push({ title: 'Reikna heildarstraum', html: [sym('I', 'H') + ' = ' + frac(sym('U', 'H'), sym('R', 'H')) + ' = ' + frac(q(U, 'U'), q(r.RH, 'R')) + ' ' + eq(r.IH) + ' ' + both(r.IH, 'I')] });
+    const dist = [];
+    (function pre(node) {
+      if (!node.s && !node.p) return;
+      const me = r.nodes[Calc.nodeName(node)];
+      const kids = node.s || node.p;
+      kids.forEach(function (c) {
+        const k = r.nodes[Calc.nodeName(c)];
+        if (node.s) {
+          dist.push(nodeSym(c, tree, 'U') + ' = ' + nodeSym(node, tree, 'I') + ' · ' + nodeSym(c, tree) + ' = ' + q(me.I, 'I') + ' · ' + q(k.R, 'R') + ' ' + eq(k.U) + ' ' + both(k.U, 'U') +
+            ' <span class="muted">(sami straumur í raðtengingu)</span>');
+        } else {
+          dist.push(nodeSym(c, tree, 'I') + ' = ' + frac(nodeSym(node, tree, 'U'), nodeSym(c, tree)) + ' = ' + frac(q(me.U, 'U'), q(k.R, 'R')) + ' ' + eq(k.I) + ' ' + both(k.I, 'I') +
+            ' <span class="muted">(sama spenna í hliðtengingu)</span>');
+        }
+      });
+      kids.forEach(pre);
+    })(tree);
+    steps.push({ title: 'Spenna og straumur í hverjum hluta', html: dist });
+    const kids = tree.s || tree.p || [];
+    let check = true, line = '';
+    if (tree.s) {
+      const sum = kids.reduce(function (a, c) { return a + r.nodes[Calc.nodeName(c)].U; }, 0);
+      check = Calc.relDiff(sum, U) < 1e-9;
+      line = kids.map(function (c) { return nodeSym(c, tree, 'U'); }).join(' + ') + ' ' + eq(sum) + ' ' + q(sum, 'U') + ' = ' + sym('U', 'H') + ' ✓ (2. lögmál Kirchhoffs)';
+    } else if (tree.p) {
+      const sum = kids.reduce(function (a, c) { return a + r.nodes[Calc.nodeName(c)].I; }, 0);
+      check = Calc.relDiff(sum, r.IH) < 1e-9;
+      line = kids.map(function (c) { return nodeSym(c, tree, 'I'); }).join(' + ') + ' ' + eq(sum) + ' ' + q(sum, 'I') + ' = ' + sym('I', 'H') + ' ✓ (1. lögmál Kirchhoffs)';
+    }
+    if (line) steps.push({ title: 'Athuga', html: [line], check: check });
+    return { result: r, steps: steps, check: check, structure: structure(tree, true) };
+  }
+
+  return { network: network, structure: structure, sym: sym, frac: frac, subText: subText, conversions: conversions, FORMULA: FORMULA, ohm: ohm, series: series, parallel: parallel };
 });

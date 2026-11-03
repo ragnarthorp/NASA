@@ -9,7 +9,18 @@
     { id: 'ohm', key: 'ohm', label: 'Lögmál Ohms' },
     { id: 'rad', key: 'series', label: 'Raðtenging' },
     { id: 'hlid', key: 'parallel', label: 'Hliðtenging' },
+    { id: 'blond', key: 'mixed', label: '[Prófefni] Blönduð tenging' },
   ];
+  // Algengar uppsetningar blandaðra tenginga; dæmigildin eru úr sýnidæmum námsefnisins.
+  const L = function (n) { return { name: n, R: null }; };
+  const SHAPES = {
+    A: { text: 'R₁ + (R₂ ‖ R₃)', tree: function () { return { s: [L(1), { p: [L(2), L(3)] }] }; }, ex: { U: '12', R: ['10', '30', '60'] } },
+    B: { text: 'R₁ + (R₂ ‖ R₃) + R₄', tree: function () { return { s: [L(1), { p: [L(2), L(3)] }, L(4)] }; }, ex: { U: '9', R: ['20', '45', '90', '40'] }, src: 'sýnidæmi 1' },
+    C: { text: 'R₁ ‖ (R₂ + R₃)', tree: function () { return { p: [L(1), { s: [L(2), L(3)] }] }; }, ex: { U: '12', R: ['60', '20', '40'] } },
+    D: { text: 'R₁ ‖ (R₂ + R₃) ‖ R₄', tree: function () { return { p: [L(1), { s: [L(2), L(3)] }, L(4)] }; }, ex: { U: '8,7', R: ['40', '20', '60', '50'] }, src: 'sýnidæmi 2' },
+    E: { text: '(R₁ + R₂) ‖ (R₃ + R₄)', tree: function () { return { p: [{ s: [L(1), L(2)] }, { s: [L(3), L(4)] }] }; }, ex: { U: '12', R: ['100', '200', '150', '150'] } },
+    F: { text: 'R₁ ‖ (R₂ + (R₃ ‖ (R₄ + R₅)))', tree: function () { return { p: [L(1), { s: [L(2), { p: [L(3), { s: [L(4), L(5)] }] }] }] }; }, ex: { U: '7,5', R: ['12', '12', '12', '12', '12'] }, src: 'sýnidæmi 3' },
+  };
   const QLABEL = { U: 'Spenna', I: 'Straumur', R: 'Viðnám' };
   const FIND_LABEL = { U: 'Spennu', I: 'Straum', R: 'Viðnám' };
   const MAX_R = 6, MIN_R = 2;
@@ -199,11 +210,81 @@
     }
   }
 
+  /* ---------- Blönduð tenging [Prófefni] ---------- */
+  function mixedState() {
+    const st = Store.state.calc.mixed;
+    if (!SHAPES[st.shape]) st.shape = 'B';
+    if (!st.R || typeof st.R !== 'object') st.R = {};
+    return st;
+  }
+  function mixedPanel() {
+    const st = mixedState();
+    const shape = SHAPES[st.shape];
+    const n = Calc.leaves(shape.tree()).length;
+    let h = '<div class="calc-layout"><div class="card"><h2><span class="tag tag-prof">[Prófefni]</span> Blönduð tenging</h2>' +
+      '<p class="help" style="margin-top:-4px">Veldu uppsetningu. „+“ merkir raðtengt og „‖“ hliðtengt.</p>' +
+      '<fieldset><legend>Uppsetning</legend><div class="mc-options">' + Object.keys(SHAPES).map(function (k) {
+        const sh = SHAPES[k];
+        return '<label class="choice"><input type="radio" name="mix-shape" value="' + k + '"' + (st.shape === k ? ' checked' : '') + '> <span class="math">' + sh.text + '</span>' + (sh.src ? ' <span class="small muted">(' + sh.src + ')</span>' : '') + '</label>';
+      }).join('') + '</div></fieldset>' +
+      field('c-mixed-U', 'Spenna spennugjafans ' + S('U', 'H'), st.U, ['V'], 'V') +
+      '<fieldset><legend>Viðnám</legend>';
+    for (let i = 1; i <= n; i++) {
+      const r = st.R[i] || { v: '', u: 'Ω' };
+      const id = 'c-mixed-R' + i;
+      h += '<div class="r-row"><label for="' + id + '">' + S('R', i) + '</label>' +
+        '<input type="text" id="' + id + '" data-mr="' + i + '" inputmode="decimal" autocomplete="off" spellcheck="false" value="' + esc(r.v) + '" aria-describedby="' + id + '-msg">' +
+        UI.unitControl(id + '-unit', Calc.INPUT_UNITS.R, r.u, 'Eining fyrir R' + i) + '<span></span><p class="msg" id="' + id + '-msg"></p></div>';
+    }
+    h += '</fieldset><div class="actions"><button type="button" data-example>Hlaða dæmi</button><button type="button" data-clear>Hreinsa</button></div>' +
+      '<p class="help" data-example-note aria-live="polite"></p></div>' +
+      '<div class="stack"><div class="card"><h2>Tengimynd</h2><div data-diagram></div></div>' +
+      '<div class="card"><h2>Niðurstöður</h2><div data-out></div></div></div></div>';
+    return h;
+  }
+  function mixedUpdate() {
+    const st = mixedState();
+    const tree = SHAPES[st.shape].tree();
+    const leafs = Calc.leaves(tree);
+    const missing = [], invalid = [], labels = {};
+    st.U = document.getElementById('c-mixed-U').value;
+    const u = check('c-mixed-U', st.U, 'V');
+    if (u.empty) missing.push('spennu spennugjafans ' + S('U', 'H')); else if (!u.ok) invalid.push(S('U', 'H'));
+    let allOk = u.ok;
+    leafs.forEach(function (l) {
+      const id = 'c-mixed-R' + l.name;
+      const r = st.R[l.name] = { v: document.getElementById(id).value, u: document.getElementById(id + '-unit').value };
+      const c = check(id, r.v, r.u);
+      if (c.empty) missing.push(S('R', l.name)); else if (!c.ok) invalid.push(S('R', l.name));
+      if (c.ok) { l.R = c.value; labels[l.name] = Calc.formatIn(c.value, r.u); } else { allOk = false; labels[l.name] = '?'; }
+    });
+    Store.save();
+    const diag = container.querySelector('[data-diagram]');
+    const out = container.querySelector('[data-out]');
+    const uLabel = u.ok ? Calc.formatIn(u.value, 'V') : '?';
+    if (!allOk) {
+      diag.innerHTML = '<figure class="diagram">' + Diagrams.network({ U: uLabel, tree: tree, labels: labels }) + '</figure>';
+      out.innerHTML = waiting(missing, invalid);
+      return;
+    }
+    const ex = Explain.network(u.value, tree);
+    const r = ex.result;
+    diag.innerHTML = '<figure class="diagram">' + Diagrams.network({ U: uLabel, tree: tree, labels: labels, I: Calc.formatBest(r.IH, 'I') }) + '</figure>';
+    let s = '<div class="result-summary">' + kv('Heildarviðnám ' + S('R', 'H'), eqv(r.RH, 'R')) + kv('Heildarstraumur ' + S('I', 'H'), eqv(r.IH, 'I')) + '</div>' +
+      '<div class="table-wrap"><table><thead><tr><th scope="col">Mótstaða</th><th scope="col">Viðnám</th><th scope="col">Spennufall ' + S('U') + '</th><th scope="col">Straumur ' + S('I') + '</th></tr></thead><tbody>' +
+      leafs.map(function (l) {
+        const nd = r.nodes[String(l.name)];
+        return '<tr><th scope="row">' + S('R', l.name) + '</th><td>' + Calc.formatBest(nd.R, 'R') + '</td><td>' + Calc.eqSign(nd.U) + ' ' + Calc.formatBest(nd.U, 'U') + '</td><td>' + Calc.eqSign(nd.I) + ' ' + Calc.formatBest(nd.I, 'I') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    s += '<p class="notice ' + (ex.check ? 'notice-ok' : 'notice-bad') + '" style="margin-top:12px"><strong>Sannprófun:</strong> ' + (ex.check ? 'Spennuföll og straumar stemma við lögmál Kirchhoffs. ✓' : 'Stemmir ekki — farðu yfir gildin.') + '</p>';
+    out.innerHTML = s + '<h3 style="margin-top:16px">Lausn skref fyrir skref</h3>' + UI.steps(ex.steps);
+  }
+
   /* ---------- Samsetning ---------- */
-  function panelHTML(tab) { return tab.key === 'ohm' ? ohmPanel() : circuitPanel(tab.key); }
+  function panelHTML(tab) { return tab.key === 'ohm' ? ohmPanel() : tab.key === 'mixed' ? mixedPanel() : circuitPanel(tab.key); }
   function update() {
     const key = Store.state.settings.calcTab;
-    if (key === 'ohm') ohmUpdate(); else circuitUpdate(key);
+    if (key === 'ohm') ohmUpdate(); else if (key === 'mixed') mixedUpdate(); else circuitUpdate(key);
   }
   function renderPanel(focusId) {
     const tab = TABS.find(function (x) { return x.key === Store.state.settings.calcTab; }) || TABS[0];
@@ -231,7 +312,14 @@
     const key = Store.state.settings.calcTab;
     const note = function (t) { const n = container.querySelector('[data-example-note]'); if (n) n.textContent = t; };
     if (e.target.closest('[data-example]')) {
-      if (key === 'ohm') {
+      if (key === 'mixed') {
+        const st = mixedState();
+        const exm = SHAPES[st.shape].ex;
+        st.U = exm.U; st.R = {};
+        exm.R.forEach(function (v, i) { st.R[i + 1] = { v: v, u: 'Ω' }; });
+        Store.save(); renderPanel();
+        note('Dæmi hlaðið' + (SHAPES[st.shape].src ? ' (' + SHAPES[st.shape].src + ' í námsefninu)' : '') + ': spenna ' + exm.U + ' V, viðnám ' + exm.R.join(', ') + ' Ω.');
+      } else if (key === 'ohm') {
         const st = Store.state.calc.ohm;
         const exm = OHM_EXAMPLES[st.find];
         Object.keys(exm).forEach(function (k) { st[k] = { v: exm[k].v, u: exm[k].u }; });
@@ -252,7 +340,10 @@
       return;
     }
     if (e.target.closest('[data-clear]')) {
-      if (key === 'ohm') {
+      if (key === 'mixed') {
+        const st = mixedState(); st.U = ''; st.R = {};
+        Store.save(); renderPanel('c-mixed-U');
+      } else if (key === 'ohm') {
         const st = Store.state.calc.ohm;
         ['U', 'I', 'R'].forEach(function (k) { st[k].v = ''; });
         Store.save(); renderPanel('c-ohm-' + ['U', 'I', 'R'].filter(function (k) { return k !== st.find; })[0]);
@@ -290,6 +381,12 @@
       Store.state.calc.ohm.find = e.target.value; Store.save();
       renderPanel();
       const r = container.querySelector('input[name=ohm-find]:checked'); if (r) r.focus();
+      return;
+    }
+    if (e.target.name === 'mix-shape') {
+      mixedState().shape = e.target.value; Store.save();
+      renderPanel();
+      const r = container.querySelector('input[name=mix-shape]:checked'); if (r) r.focus();
       return;
     }
     if (e.target.closest('#calc-panel')) update();

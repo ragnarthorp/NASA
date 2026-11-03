@@ -19,6 +19,7 @@
         ohm: { find: 'I', U: { v: '', u: 'V' }, I: { v: '', u: 'A' }, R: { v: '', u: 'Ω' }, ex: -1 },
         series: emptyCircuit(),
         parallel: emptyCircuit(),
+        mixed: { shape: 'B', U: '', R: {}, ex: -1 },
       },
     };
   }

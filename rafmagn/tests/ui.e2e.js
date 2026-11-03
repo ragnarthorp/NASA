@@ -88,6 +88,21 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
   assert.ok(!/100 Ω/.test(await text('[data-out]')));
   ok('Hliðtenging: 66,6667 Ω, greinastraumar, 3×300 Ω = 100 Ω, ógilt inntak');
 
+  // [Prófefni] Blönduð tenging
+  await page.click('#tab-blond');
+  await page.check('input[name=mix-shape][value=B]');
+  await page.click('[data-example]');
+  out = await text('[data-out]');
+  for (const re of [/= 90 Ω/, /0,1 A/, /3 V/, /2 V/, /4 V/, /lögmál Kirchhoffs/]) assert.match(out, re);
+  await page.check('input[name=mix-shape][value=F]');
+  await page.click('[data-example]');
+  assert.match(await text('[data-out]'), /= 7,5 Ω/);
+  await page.fill('#c-mixed-R3', '0');
+  assert.match(await text('#c-mixed-R3-msg'), /stærra en núll/);
+  assert.ok(!/7,5 Ω/.test(await text('[data-out]')));
+  ok('[Prófefni] Blönduð tenging: reiknivél með sýnidæmum');
+  await page.click('#tab-hlid');
+
   // Stillingar vistast
   await page.reload();
   assert.equal(await page.getAttribute('#tab-hlid', 'aria-selected'), 'true');
@@ -157,19 +172,33 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
   assert.equal(await page.inputValue('#p-su-2-calc-in'), '');
   assert.equal(await page.locator('#p-su-2-I-fb').innerText(), '', 'Enter í reiknivél sendir ekki svar');
   ok('Hjálpartæki: lögmál Ohms, einingabreytir og reiknivél í hverju dæmi');
+  await page.click('[data-topic=prof]');
+  const profCount = await page.locator('article.ex').count();
+  assert.ok(profCount >= 30, 'prófefni ' + profCount);
+  assert.equal(await page.locator('article.ex .tag-prof').count(), profCount);
+  await page.fill('#p-pf-r5-U1', '120'); await page.fill('#p-pf-r5-R1', '23');
+  await page.click('#p-pf-r5 button[type=submit]');
+  assert.match(await text('#p-pf-r5-R1-fb'), /120 V/);
+  await page.fill('#p-pf-b1-RH', '90'); await page.fill('#p-pf-b1-IH', '100'); await page.selectOption('#p-pf-b1-IH-unit', 'mA');
+  await page.fill('#p-pf-b1-U_2_3', '3'); await page.fill('#p-pf-b1-I_2', '66,7'); await page.selectOption('#p-pf-b1-I_2-unit', 'mA');
+  await page.fill('#p-pf-b1-I_3', '0,0333'); await page.fill('#p-pf-b1-U_1', '2'); await page.fill('#p-pf-b1-U_4', '4');
+  await page.click('#p-pf-b1 button[type=submit]');
+  assert.match(await text('#p-pf-b1 [data-overall]'), /Allt rétt/);
+  ok('[Prófefni] æfingar: merking, sía, endurgjöf og blönduð tenging');
+  await page.click('[data-topic=all]');
   // Sía og framvinda
   await page.click('[data-topic=seriesU]');
-  assert.equal(await page.locator('article.ex').count(), 5);
-  assert.match(await text('[data-stats]'), /2 af 36/);
+  assert.equal(await page.locator('article.ex').count(), await page.evaluate(() => Exercises.practice().filter((e) => e.topic === 'seriesU').length));
+  assert.match(await text('[data-stats]'), /3 af \d+/);
   await page.goto(URL + '#yfirlit');
-  assert.match(await text('[data-progress]'), /2 \/ 36/);
+  assert.match(await text('[data-progress]'), /3 \/ \d+/);
   ok('Æfingar: mat, endurgjöf, einingar, krossaspurning, vísbending, lausn, framvinda');
 
   // Endurstilling með staðfestingu
   await page.click('[data-reset]');
   assert.equal(await page.locator('#confirm').isVisible(), true);
   await page.click('#confirm button[value=cancel]');
-  assert.match(await text('[data-progress]'), /2 \/ 36/);
+  assert.match(await text('[data-progress]'), /3 \/ \d+/);
   await page.click('[data-reset]');
   await page.click('#confirm-ok');
   await page.waitForFunction(() => /ekki leyst neinar/.test(document.querySelector('[data-progress]').innerText), null, { timeout: 2000 });
