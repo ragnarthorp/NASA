@@ -167,7 +167,7 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
   await page.click('[data-start]');
   assert.match(await text('h1'), /Spurning 1 af 10/);
   assert.equal(await page.locator('[data-act=hint], [data-act=solution], .reveal-hint, .reveal-solution').count(), 0);
-  assert.equal(await page.locator('article.ex [data-tool]').count(), 2, 'hjálpartæki líka í prófham');
+  assert.equal(await page.locator('article.ex [data-tool], .reveal-tool').count(), 0, 'engin hjálpartæki í prófham');
   // Svara fyrstu spurningu, fara áfram og til baka
   const firstInput = page.locator('article.ex input[data-key]').first();
   const hasText = await firstInput.count();

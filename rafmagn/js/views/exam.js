@@ -39,7 +39,7 @@
       '<label for="exam-min" style="margin-left:10px">Tími</label> <select id="exam-min" data-minutes' + (set.timer ? '' : ' disabled') + '>' +
       [15, 20, 30, 45, 60].map(function (m) { return '<option value="' + m + '"' + (set.timerMinutes === m ? ' selected' : '') + '>' + m + ' mínútur</option>'; }).join('') + '</select>' +
       '<p class="help">Tímamælirinn er valfrjáls. Ef tíminn rennur út er prófinu skilað sjálfkrafa.</p>' +
-      '<p class="help">Hafðu reiknivél og blað við höndina, eins og í prófinu.</p>' +
+      '<p class="help">Hafðu reiknivél, blað og formúlublaðið við höndina, eins og í prófinu. Hjálpartækin úr æfingunum (lögmál Ohms og einingabreytir) eru ekki í boði hér.</p>' +
       '<div class="actions"><button type="button" class="btn-primary" data-start>Hefja nýtt próf</button></div></section>';
     h += historyHTML();
     return h;

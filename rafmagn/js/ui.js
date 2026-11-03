@@ -58,7 +58,7 @@
     if (o.status) head += o.status;
     head += '</div>';
     let body = '<p class="prompt">' + ex.prompt + '</p>' + diagram(ex.diagram);
-    if (mode !== 'review') body += toolsHTML(pre, ex.type === 'numeric' ? ex.answers[0].q : 'I');
+    if (mode === 'practice') body += toolsHTML(pre, ex.type === 'numeric' ? ex.answers[0].q : 'I');
 
     let form = '<form class="answers" data-ex="' + ex.id + '" novalidate aria-labelledby="' + pre + '-title">';
     if (ex.type === 'numeric') {
