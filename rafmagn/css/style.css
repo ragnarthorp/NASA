@@ -360,3 +360,13 @@ dialog h2 { font-size: 1.3rem; }
 .conv-table td, .conv-table th { padding: 6px 10px; }
 .conv-table .conv-same { background: var(--accent-soft); }
 @media (max-width: 600px) { .conv-row { grid-template-columns: 1fr 1fr; } .conv-row > div:first-child { grid-column: 1 / -1; } }
+.mini-calc { max-width: 360px; }
+.mini-calc label { display: block; font-size: .92rem; margin-bottom: 4px; }
+.mini-calc input { font-size: 1.1rem; font-family: var(--math); }
+.calc-out { min-height: 1.6em; margin: 6px 0 8px; font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.calc-out.calc-err { font-size: .92rem; font-weight: 600; color: var(--bad); }
+.keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.keypad button { min-height: 44px; font-size: 1.1rem; padding: 4px; }
+.keypad button.op { background: var(--soft); }
+.calc-history { list-style: none; padding: 0; margin: 10px 0 0; font-size: .92rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.calc-history li { border-top: 1px solid var(--line); padding: 3px 0; }

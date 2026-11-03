@@ -136,10 +136,60 @@
   function toolsHTML(pre, q) {
     return '<div class="tools no-print" role="group" aria-label="Hjálpartæki"><span class="small muted">Hjálpartæki:</span>' +
       '<button type="button" class="btn-small" data-tool aria-expanded="false" aria-controls="' + pre + '-tool-ohm">Lögmál Ohms</button>' +
-      '<button type="button" class="btn-small" data-tool aria-expanded="false" aria-controls="' + pre + '-tool-conv">Einingabreytir</button></div>' +
+      '<button type="button" class="btn-small" data-tool aria-expanded="false" aria-controls="' + pre + '-tool-conv">Einingabreytir</button>' +
+      '<button type="button" class="btn-small" data-tool aria-expanded="false" aria-controls="' + pre + '-tool-calc">Reiknivél</button></div>' +
       '<div class="reveal reveal-tool" id="' + pre + '-tool-ohm" hidden>' + ohmRefHTML() + '</div>' +
-      '<div class="reveal reveal-tool" id="' + pre + '-tool-conv" hidden>' + converterHTML(pre, q) + '</div>';
+      '<div class="reveal reveal-tool" id="' + pre + '-tool-conv" hidden>' + converterHTML(pre, q) + '</div>' +
+      '<div class="reveal reveal-tool" id="' + pre + '-tool-calc" hidden>' + calculatorHTML(pre) + '</div>';
   }
+  const KEYS = [['7', '8', '9', '÷'], ['4', '5', '6', '×'], ['1', '2', '3', '−'], ['0', ',', '=', '+'], ['(', ')', '←', 'C']];
+  const KEY_LABEL = { '÷': 'deilt með', '×': 'sinnum', '−': 'mínus', '+': 'plús', '=': 'reikna', '←': 'eyða síðasta tákni', 'C': 'hreinsa', ',': 'komma', '(': 'opna sviga', ')': 'loka sviga' };
+  function calculatorHTML(pre) {
+    const id = pre + '-calc';
+    return '<h4>Reiknivél</h4><div class="mini-calc" data-calc>' +
+      '<label for="' + id + '-in">Dæmi</label>' +
+      '<input type="text" id="' + id + '-in" data-calc-in autocomplete="off" spellcheck="false" placeholder="t.d. 12 / (100 + 200)" aria-describedby="' + id + '-out">' +
+      '<p class="calc-out" id="' + id + '-out" data-calc-out aria-live="polite"></p>' +
+      '<div class="keypad" role="group" aria-label="Takkar reiknivélar">' + KEYS.map(function (row) {
+        return row.map(function (k) {
+          return '<button type="button" data-calc-key="' + esc(k) + '"' + (KEY_LABEL[k] ? ' aria-label="' + KEY_LABEL[k] + '"' : '') +
+            ' class="' + (k === '=' ? 'btn-primary' : (/[÷×−+]/.test(k) ? 'op' : '')) + '">' + esc(k) + '</button>';
+        }).join('');
+      }).join('') + '</div>' +
+      '<ol class="calc-history" data-calc-hist aria-label="Fyrri útreikningar"></ol>' +
+      '<p class="help">Skrifaðu eða smelltu. Enter eða = reiknar. Bæði komma og punktur virka sem tugabrotsmerki. Reiknivélin heldur fullri nákvæmni; námundaðu aðeins lokasvarið.</p></div>';
+  }
+  function calcPreview(box) {
+    const inp = box.querySelector('[data-calc-in]');
+    const out = box.querySelector('[data-calc-out]');
+    if (!inp.value.trim()) { out.className = 'calc-out'; out.textContent = ''; return null; }
+    const r = Calc.evaluate(inp.value);
+    out.className = 'calc-out' + (r.ok ? '' : ' calc-err');
+    out.textContent = r.ok ? '= ' + Calc.formatNumber(r.value, 10) : r.message;
+    return r;
+  }
+  function calcRun(box) {
+    const inp = box.querySelector('[data-calc-in]');
+    const r = calcPreview(box);
+    if (!r || !r.ok) return;
+    const hist = box.querySelector('[data-calc-hist]');
+    const li = document.createElement('li');
+    li.textContent = inp.value.trim() + ' = ' + Calc.formatNumber(r.value, 10);
+    hist.insertBefore(li, hist.firstChild);
+    while (hist.children.length > 5) hist.removeChild(hist.lastChild);
+    // Niðurstaðan með fullri nákvæmni má nota áfram í næsta útreikningi.
+    inp.value = String(r.value).replace('.', ',');
+    calcPreview(box);
+  }
+  function calcKey(box, k) {
+    const inp = box.querySelector('[data-calc-in]');
+    if (k === '=') { calcRun(box); return; }
+    if (k === 'C') inp.value = '';
+    else if (k === '←') inp.value = inp.value.replace(/\s+$/, '').slice(0, -1);
+    else inp.value += /[÷×−+]/.test(k) ? ' ' + k + ' ' : k;
+    calcPreview(box);
+  }
+
   function updateConverter(box) {
     const v = box.querySelector('[data-conv-v]');
     const u = box.querySelector('[data-conv-u]');
@@ -173,7 +223,17 @@
       panel.hidden = !panel.hidden;
       btn.setAttribute('aria-expanded', String(!panel.hidden));
       btn.classList.toggle('is-open', !panel.hidden);
-      if (!panel.hidden) { const f = panel.querySelector('[data-conv-v]'); if (f) f.focus(); }
+      if (!panel.hidden) { const f = panel.querySelector('[data-conv-v], [data-calc-in]'); if (f) f.focus(); }
+    });
+    document.addEventListener('click', function (e) {
+      const key = e.target.closest('[data-calc-key]');
+      if (key) calcKey(key.closest('[data-calc]'), key.dataset.calcKey);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.matches('[data-calc-in]')) { e.preventDefault(); calcRun(e.target.closest('[data-calc]')); }
+    });
+    document.addEventListener('input', function (e) {
+      if (e.target.matches('[data-calc-in]')) calcPreview(e.target.closest('[data-calc]'));
     });
     const onConv = function (e) {
       const box = e.target.closest('[data-conv]');

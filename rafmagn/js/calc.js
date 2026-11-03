@@ -240,6 +240,63 @@
     });
   }
 
+  /**
+   * Einföld reiknivél: + − × ÷, svigar og formerki. Bæði komma og punktur sem tugabrotsmerki.
+   * Notar ekki eval; skilar { ok, value } eða { ok: false, message }.
+   */
+  function evaluate(expr) {
+    const src = String(expr == null ? '' : expr).replace(/[\s\u00a0]/g, '')
+      .replace(/[×xX*·]/g, '*').replace(/[÷:\/]/g, '/').replace(/[−–]/g, '-');
+    if (!src) return { ok: false, message: 'Skrifaðu dæmi, t.d. 12 / (100 + 200).' };
+    if (/[\d.,]\s+[\d.,]/.test(String(expr))) return { ok: false, message: 'Það vantar reikniaðgerð á milli talna (ekki nota bil sem þúsundaskil).' };
+    const tokens = [];
+    const re = /(\d+(?:[.,]\d*)?|[.,]\d+)(?:e[+-]?\d+)?|[-+*/()]/gy;
+    let m;
+    while (re.lastIndex < src.length) {
+      const at = re.lastIndex;
+      m = re.exec(src);
+      if (!m) return { ok: false, message: 'Óþekkt tákn: „' + src.charAt(at) + '“. Notaðu tölur, + − × ÷ og sviga.' };
+      tokens.push(m[0]);
+    }
+    let i = 0;
+    function fail(msg) { throw new SyntaxError(msg); }
+    function expression() {
+      let v = term();
+      while (tokens[i] === '+' || tokens[i] === '-') { const op = tokens[i++]; const r = term(); v = op === '+' ? v + r : v - r; }
+      return v;
+    }
+    function term() {
+      let v = factor();
+      while (tokens[i] === '*' || tokens[i] === '/') {
+        const op = tokens[i++]; const r = factor();
+        if (op === '/' && r === 0) fail('Ekki má deila með núlli.');
+        v = op === '*' ? v * r : v / r;
+      }
+      return v;
+    }
+    function factor() {
+      const t = tokens[i];
+      if (t === '-') { i++; return -factor(); }
+      if (t === '+') { i++; return factor(); }
+      if (t === '(') {
+        i++; const v = expression();
+        if (tokens[i] !== ')') fail('Það vantar lokasviga „)“.');
+        i++; return v;
+      }
+      if (t == null) fail('Dæmið endar of snemma — það vantar tölu.');
+      if (t === ')' || '*/'.indexOf(t) >= 0) fail('Það vantar tölu á undan „' + (t === '*' ? '×' : t === '/' ? '÷' : t) + '“.');
+      i++; return Number(t.replace(',', '.'));
+    }
+    try {
+      const v = expression();
+      if (i < tokens.length) fail(tokens[i] === ')' ? 'Of margir lokasvigar „)“.' : 'Það vantar reikniaðgerð á milli talna.');
+      if (!Number.isFinite(v)) fail('Niðurstaðan er of stór til að reikna með.');
+      return { ok: true, value: v };
+    } catch (e) {
+      return { ok: false, message: e.message };
+    }
+  }
+
   /** Hlutfallslegt frávik, notað í sannprófun. */
   function relDiff(a, b) {
     const d = Math.abs(a - b);
@@ -258,7 +315,7 @@
   }
 
   return {
-    UNITS: UNITS, BASE_UNIT: BASE_UNIT, INPUT_UNITS: INPUT_UNITS, PREFIX_UNITS: PREFIX_UNITS, PREFIXES: PREFIXES, convertAll: convertAll, MIN_INPUT: MIN_INPUT, MAX_INPUT: MAX_INPUT,
+    UNITS: UNITS, BASE_UNIT: BASE_UNIT, INPUT_UNITS: INPUT_UNITS, PREFIX_UNITS: PREFIX_UNITS, PREFIXES: PREFIXES, convertAll: convertAll, evaluate: evaluate, MIN_INPUT: MIN_INPUT, MAX_INPUT: MAX_INPUT,
     unitInfo: unitInfo, toSI: toSI, fromSI: fromSI,
     parseNumber: parseNumber, parseQuantity: parseQuantity, quantity: quantity,
     formatNumber: formatNumber, formatScientific: formatScientific, isRounded: isRounded, eqSign: eqSign,

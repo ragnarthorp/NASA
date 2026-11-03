@@ -162,3 +162,24 @@ test('Einingabreytir: forskeyti fyrir V, A og Ω', () => {
   assert.equal(Calc.formatNumber(Calc.convertAll(9, 'mA').find((x) => x.unit === 'A').value), '0,009');
   assert.throws(() => Calc.convertAll(NaN, 'A'), RangeError);
 });
+
+test('Einföld reiknivél', () => {
+  const v = (e) => Calc.evaluate(e).value;
+  assert.equal(v('12 / (100 + 200)'), 0.04);
+  assert.equal(v('12/100+12/200'), 0.18);
+  assert.equal(v('100*200/(100+200)'), 20000 / 300);
+  assert.ok(Math.abs(v('1/(1/300+1/300+1/300)') - 100) < 1e-9);
+  assert.equal(v('0,04 × 100'), 4);
+  assert.equal(v('9 ÷ 1000'), 0.009);
+  assert.equal(v('2 − 5'), -3);
+  assert.equal(v('-(2+3)*2'), -10);
+  assert.equal(v('2*-3'), -6);
+  assert.equal(v('1e3 + 1'), 1001);
+  assert.equal(v('4.7*1000'), 4700);
+  for (const [e, re] of [['', /Skrifaðu/], ['5/0', /núlli/], ['2+', /vantar tölu/], ['(2+3', /lokasviga/], ['2+3)', /Of margir/],
+    ['2 3', /reikniaðgerð/], ['abc', /Óþekkt tákn/], ['*2', /vantar tölu/], ['1e308*10', /of stór/], ['2^3', /Óþekkt/]]) {
+    const r = Calc.evaluate(e);
+    assert.equal(r.ok, false, e);
+    assert.match(r.message, re, e);
+  }
+});
