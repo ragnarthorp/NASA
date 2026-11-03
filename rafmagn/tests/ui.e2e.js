@@ -129,6 +129,20 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
   assert.equal(await page.locator('#p-c-1-hint').isVisible(), true);
   await page.click('#p-c-1 [data-act=solution]');
   assert.equal(await page.locator('#p-c-1-sol').isVisible(), true);
+  // Hjálpartæki: lögmál Ohms og einingabreytir í dæmi
+  assert.equal(await page.locator('#p-su-2-tool-ohm').isHidden(), true);
+  await page.click('#p-su-2 [aria-controls="p-su-2-tool-ohm"]');
+  assert.match(await text('#p-su-2-tool-ohm'), /Gefið/);
+  await page.click('#p-su-2 [aria-controls="p-su-2-tool-conv"]');
+  await page.selectOption('#p-su-2-conv-q', 'R');
+  await page.fill('#p-su-2-conv-v', '2,2');
+  await page.selectOption('#p-su-2-conv-u', 'kΩ');
+  const conv = await text('#p-su-2-tool-conv [data-conv-out]');
+  assert.match(conv, /2200 Ω/); assert.match(conv, /0,0022 MΩ/);
+  await page.fill('#p-su-2-conv-v', 'x');
+  assert.match(await text('#p-su-2-conv-msg'), /ekki tala/);
+  assert.equal(await page.locator('#p-su-2-sol').isHidden(), true, 'hjálpartæki sýna ekki lausn');
+  ok('Hjálpartæki: lögmál Ohms og einingabreytir í hverju dæmi');
   // Sía og framvinda
   await page.click('[data-topic=seriesU]');
   assert.equal(await page.locator('article.ex').count(), 5);
@@ -152,9 +166,10 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
   await page.goto(URL + '#profhamur');
   await page.click('[data-start]');
   assert.match(await text('h1'), /Spurning 1 af 10/);
-  assert.equal(await page.locator('[data-act=hint], [data-act=solution], .reveal').count(), 0);
+  assert.equal(await page.locator('[data-act=hint], [data-act=solution], .reveal-hint, .reveal-solution').count(), 0);
+  assert.equal(await page.locator('article.ex [data-tool]').count(), 2, 'hjálpartæki líka í prófham');
   // Svara fyrstu spurningu, fara áfram og til baka
-  const firstInput = page.locator('article.ex input[type=text]').first();
+  const firstInput = page.locator('article.ex input[data-key]').first();
   const hasText = await firstInput.count();
   if (hasText) await firstInput.fill('1'); else await page.locator('article.ex input[type=radio]').first().check();
   await page.click('[data-next]');

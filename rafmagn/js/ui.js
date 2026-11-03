@@ -58,6 +58,7 @@
     if (o.status) head += o.status;
     head += '</div>';
     let body = '<p class="prompt">' + ex.prompt + '</p>' + diagram(ex.diagram);
+    if (mode !== 'review') body += toolsHTML(pre, ex.type === 'numeric' ? ex.answers[0].q : 'I');
 
     let form = '<form class="answers" data-ex="' + ex.id + '" novalidate aria-labelledby="' + pre + '-title">';
     if (ex.type === 'numeric') {
@@ -105,6 +106,86 @@
       after += '<details class="sol"><summary>Útreikningur og lausn</summary>' + steps(ex.solution) + '</details>';
     }
     return '<article class="card ex" id="' + pre + '" data-id="' + ex.id + '">' + head + body + form + after + '</article>';
+  }
+
+  /* ---------- Hjálpartæki í hverju dæmi: lögmál Ohms og einingabreytir ---------- */
+  const QNAMES = { U: 'Spenna (V)', I: 'Straumur (A)', R: 'Viðnám (Ω)' };
+  function ohmRefHTML() {
+    const F = Explain.FORMULA;
+    return '<h4>Lögmál Ohms</h4><div class="formula"><span>' + F.U + '</span><span>' + F.I + '</span><span>' + F.R + '</span></div>' +
+      '<div class="table-wrap"><table class="choose-table"><thead><tr><th scope="col">Gefið</th><th scope="col">Óþekkt</th><th scope="col">Formúla</th></tr></thead><tbody>' +
+      '<tr><td>' + S('I') + ' og ' + S('R') + '</td><td>spenna ' + S('U') + '</td><td>' + F.U + '</td></tr>' +
+      '<tr><td>' + S('U') + ' og ' + S('R') + '</td><td>straumur ' + S('I') + '</td><td>' + F.I + '</td></tr>' +
+      '<tr><td>' + S('U') + ' og ' + S('I') + '</td><td>viðnám ' + S('R') + '</td><td>' + F.R + '</td></tr></tbody></table></div>' +
+      '<p class="help">Breyttu fyrst í V, A og Ω. Í heilli rás notarðu heildarstærðir: ' + S('U', 'H') + ' = ' + S('I', 'H') + ' · ' + S('R', 'H') + '.</p>';
+  }
+  function unitOptions(q, selected) {
+    return Calc.PREFIX_UNITS[q].map(function (u) { return '<option value="' + esc(u) + '"' + (u === selected ? ' selected' : '') + '>' + esc(u) + '</option>'; }).join('');
+  }
+  function converterHTML(pre, q) {
+    const id = pre + '-conv';
+    return '<h4>Einingabreytir</h4><div class="conv" data-conv>' +
+      '<div class="conv-row">' +
+      '<div><label for="' + id + '-q">Stærð</label><select id="' + id + '-q" data-conv-q>' +
+      ['U', 'I', 'R'].map(function (k) { return '<option value="' + k + '"' + (k === q ? ' selected' : '') + '>' + QNAMES[k] + '</option>'; }).join('') + '</select></div>' +
+      '<div><label for="' + id + '-v">Gildi</label><input type="text" id="' + id + '-v" data-conv-v inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="' + id + '-msg"></div>' +
+      '<div><label for="' + id + '-u">Eining</label><select id="' + id + '-u" data-conv-u>' + unitOptions(q, Calc.BASE_UNIT[q]) + '</select></div>' +
+      '</div><p class="msg" id="' + id + '-msg" data-conv-msg></p><div data-conv-out aria-live="polite"><p class="help">Sláðu inn gildi til að sjá það í öllum einingum.</p></div>' +
+      '<p class="help">' + Calc.PREFIXES.map(function (x) { return '<strong>' + x.p + '</strong> = ' + x.name + ' = ' + x.text; }).join(' · ') + '</p></div>';
+  }
+  function toolsHTML(pre, q) {
+    return '<div class="tools no-print" role="group" aria-label="Hjálpartæki"><span class="small muted">Hjálpartæki:</span>' +
+      '<button type="button" class="btn-small" data-tool aria-expanded="false" aria-controls="' + pre + '-tool-ohm">Lögmál Ohms</button>' +
+      '<button type="button" class="btn-small" data-tool aria-expanded="false" aria-controls="' + pre + '-tool-conv">Einingabreytir</button></div>' +
+      '<div class="reveal reveal-tool" id="' + pre + '-tool-ohm" hidden>' + ohmRefHTML() + '</div>' +
+      '<div class="reveal reveal-tool" id="' + pre + '-tool-conv" hidden>' + converterHTML(pre, q) + '</div>';
+  }
+  function updateConverter(box) {
+    const v = box.querySelector('[data-conv-v]');
+    const u = box.querySelector('[data-conv-u]');
+    const msg = box.querySelector('[data-conv-msg]');
+    const out = box.querySelector('[data-conv-out]');
+    const raw = v.value;
+    if (!raw.trim()) {
+      msg.textContent = ''; msg.className = 'msg'; v.setAttribute('aria-invalid', 'false');
+      out.innerHTML = '<p class="help">Sláðu inn gildi til að sjá það í öllum einingum.</p>';
+      return;
+    }
+    const p = Calc.parseNumber(raw);
+    v.setAttribute('aria-invalid', p.ok ? 'false' : 'true');
+    msg.className = 'msg' + (p.ok ? (p.warning ? ' msg-warn' : '') : ' msg-error');
+    msg.textContent = p.ok ? (p.warning || '') : p.message;
+    if (!p.ok) { out.innerHTML = ''; return; }
+    const src = Calc.formatNumber(p.value) + ' ' + u.value;
+    out.innerHTML = '<div class="table-wrap"><table class="conv-table"><thead><tr><th scope="col">Eining</th><th scope="col">Gildi</th><th scope="col">Útreikningur</th></tr></thead><tbody>' +
+      Calc.convertAll(p.value, u.value).map(function (r) {
+        const same = r.unit === u.value;
+        return '<tr' + (same ? ' class="conv-same"' : '') + '><th scope="row">' + esc(r.unit) + '</th><td><strong>' + esc(Calc.formatNumber(r.value)) + ' ' + esc(r.unit) + '</strong></td><td>' +
+          (same ? 'gefið gildi' : esc(src + ' ' + r.op + ' = ' + Calc.formatNumber(r.value) + ' ' + r.unit)) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+  if (root.document) {
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-tool]');
+      if (!btn) return;
+      const panel = document.getElementById(btn.getAttribute('aria-controls'));
+      if (!panel) return;
+      panel.hidden = !panel.hidden;
+      btn.setAttribute('aria-expanded', String(!panel.hidden));
+      btn.classList.toggle('is-open', !panel.hidden);
+      if (!panel.hidden) { const f = panel.querySelector('[data-conv-v]'); if (f) f.focus(); }
+    });
+    const onConv = function (e) {
+      const box = e.target.closest('[data-conv]');
+      if (!box) return;
+      if (e.target.matches('[data-conv-q]')) {
+        const q = e.target.value;
+        box.querySelector('[data-conv-u]').innerHTML = unitOptions(q, Calc.BASE_UNIT[q]);
+      }
+      updateConverter(box);
+    };
+    document.addEventListener('input', onConv);
+    document.addEventListener('change', onConv);
   }
 
   function cls(status) { return status === 'correct' ? 'correct' : status === 'invalid' ? 'invalid' : 'wrong'; }
@@ -194,7 +275,7 @@
 
   root.UI = {
     esc: esc, S: S, F: Explain.frac, diagram: diagram, steps: steps, unitControl: unitControl, topicTag: topicTag,
-    correctText: correctText, exerciseCard: exerciseCard, readAnswers: readAnswers, gradeExercise: gradeExercise,
+    correctText: correctText, toolsHTML: toolsHTML, updateConverter: updateConverter, exerciseCard: exerciseCard, readAnswers: readAnswers, gradeExercise: gradeExercise,
     feedbackText: feedbackText, feedbackClass: cls, confirm: confirmDialog, announce: announce, pct: pct, progressBar: progressBar,
   };
 })(typeof self !== 'undefined' ? self : this);

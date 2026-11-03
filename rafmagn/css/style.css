@@ -348,3 +348,15 @@ dialog h2 { font-size: 1.3rem; }
   body.print-sheet .sheet .diagram svg { max-height: 34mm; }
   .diagram figcaption { color: #000; }
 }
+
+/* ---------- Hjálpartæki í dæmum ---------- */
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.tools button.is-open { background: var(--accent-soft); border-color: var(--accent); }
+.reveal-tool { background: #f7f9fd; border: 1px solid var(--line); margin: 0 0 14px; }
+.reveal-tool .formula { background: #fff; }
+.conv-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, .7fr); gap: 10px; }
+.conv-row label { display: block; margin-bottom: 4px; font-size: .92rem; }
+.conv-row select, .conv-row input { width: 100%; }
+.conv-table td, .conv-table th { padding: 6px 10px; }
+.conv-table .conv-same { background: var(--accent-soft); }
+@media (max-width: 600px) { .conv-row { grid-template-columns: 1fr 1fr; } .conv-row > div:first-child { grid-column: 1 / -1; } }

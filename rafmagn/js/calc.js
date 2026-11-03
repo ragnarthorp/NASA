@@ -19,10 +19,21 @@
     'Ω': { q: 'R', exp: 0 },
     'kΩ': { q: 'R', exp: 3 },
     'MΩ': { q: 'R', exp: 6 },
+    'µV': { q: 'U', exp: -6 },
+    'kV': { q: 'U', exp: 3 },
+    'mΩ': { q: 'R', exp: -3 },
   };
   const BASE_UNIT = { U: 'V', I: 'A', R: 'Ω' };
   // Einingar sem nemandi getur valið í reitum.
   const INPUT_UNITS = { U: ['V'], I: ['A', 'mA'], R: ['Ω', 'kΩ'] };
+  // Einingar með forskeytum í einingabreyti, frá minnstu til stærstu.
+  const PREFIX_UNITS = { U: ['µV', 'mV', 'V', 'kV'], I: ['µA', 'mA', 'A'], R: ['mΩ', 'Ω', 'kΩ', 'MΩ'] };
+  const PREFIXES = [
+    { p: 'µ', name: 'míkró', text: 'milljónasti hluti (÷ 1.000.000)' },
+    { p: 'm', name: 'millí', text: 'þúsundasti hluti (÷ 1000)' },
+    { p: 'k', name: 'kíló', text: 'þúsund (× 1000)' },
+    { p: 'M', name: 'mega', text: 'milljón (× 1.000.000)' },
+  ];
 
   // Ráðum við innsláttargildi á þessu bili (í grunneiningu) svo útreikningar flæði ekki yfir.
   const MIN_INPUT = 1e-9;
@@ -211,6 +222,24 @@
     };
   }
 
+  /**
+   * Einingabreytir: breytir gildi í allar einingar með forskeytum fyrir sömu stærð.
+   * Skilar [{ unit, value, op }] þar sem op lýsir aðgerðinni, t.d. '× 1000' eða '÷ 1000'.
+   */
+  function convertAll(value, unit) {
+    const from = unitInfo(unit);
+    if (typeof value !== 'number' || !Number.isFinite(value)) throw new RangeError('Gildið þarf að vera endanleg tala.');
+    return PREFIX_UNITS[from.q].map(function (u) {
+      const d = from.exp - unitInfo(u).exp;
+      const factor = formatNumber(Math.pow(10, Math.abs(d))).replace(/^(\d)(\d{3})(\d{3})$/, '$1.$2.$3');
+      return {
+        unit: u,
+        value: d >= 0 ? value * Math.pow(10, d) : value / Math.pow(10, -d),
+        op: d === 0 ? '' : (d > 0 ? '× ' : '÷ ') + factor,
+      };
+    });
+  }
+
   /** Hlutfallslegt frávik, notað í sannprófun. */
   function relDiff(a, b) {
     const d = Math.abs(a - b);
@@ -229,7 +258,7 @@
   }
 
   return {
-    UNITS: UNITS, BASE_UNIT: BASE_UNIT, INPUT_UNITS: INPUT_UNITS, MIN_INPUT: MIN_INPUT, MAX_INPUT: MAX_INPUT,
+    UNITS: UNITS, BASE_UNIT: BASE_UNIT, INPUT_UNITS: INPUT_UNITS, PREFIX_UNITS: PREFIX_UNITS, PREFIXES: PREFIXES, convertAll: convertAll, MIN_INPUT: MIN_INPUT, MAX_INPUT: MAX_INPUT,
     unitInfo: unitInfo, toSI: toSI, fromSI: fromSI,
     parseNumber: parseNumber, parseQuantity: parseQuantity, quantity: quantity,
     formatNumber: formatNumber, formatScientific: formatScientific, isRounded: isRounded, eqSign: eqSign,

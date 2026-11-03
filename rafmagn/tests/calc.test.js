@@ -148,3 +148,17 @@ test('Skref-fyrir-skref lausnir innihalda aldrei NaN eða Infinity', () => {
   assert.match(JSON.stringify(p.steps), /Formúlan góða — fyrir tvö viðnám/);
   assert.ok(!/Formúlan góða/.test(JSON.stringify(Explain.parallel(12, [1, 2, 3]).steps)));
 });
+
+test('Einingabreytir: forskeyti fyrir V, A og Ω', () => {
+  const r = Object.fromEntries(Calc.convertAll(4.7, 'kΩ').map((x) => [x.unit, x]));
+  assert.equal(r['Ω'].value, 4700);
+  assert.equal(r['Ω'].op, '× 1000');
+  assert.equal(r['MΩ'].value, 0.0047);
+  assert.equal(r['mΩ'].op, '× 1.000.000');
+  const a = Object.fromEntries(Calc.convertAll(250, 'mA').map((x) => [x.unit, x.value]));
+  assert.deepEqual(a, { 'µA': 250000, mA: 250, A: 0.25 });
+  const v = Object.fromEntries(Calc.convertAll(0.5, 'V').map((x) => [x.unit, x.value]));
+  assert.deepEqual(v, { 'µV': 500000, mV: 500, V: 0.5, kV: 0.0005 });
+  assert.equal(Calc.formatNumber(Calc.convertAll(9, 'mA').find((x) => x.unit === 'A').value), '0,009');
+  assert.throws(() => Calc.convertAll(NaN, 'A'), RangeError);
+});
