@@ -26,5 +26,14 @@ const OUT = path.resolve(__dirname, '..', 'pdf');
     await page.emulateMedia({ media: 'screen' });
     console.log('✓', file);
   }
+  // Minnisblað fyrir próf (sjálfstæð síða)
+  await page.goto('file://' + path.resolve(__dirname, '..', 'minnisblad.html'));
+  await page.emulateMedia({ media: 'print' });
+  await page.pdf({
+    path: path.join(OUT, 'minnisblad.pdf'), format: 'A4', preferCSSPageSize: true, printBackground: true,
+    displayHeaderFooter: true, headerTemplate: '<span></span>',
+    footerTemplate: '<div style="width:100%;font-size:8px;color:#333;text-align:center;font-family:sans-serif">Minnisblað fyrir próf · síða <span class="pageNumber"></span> af <span class="totalPages"></span></div>',
+  });
+  console.log('✓', 'minnisblad.pdf');
   await browser.close();
 })().catch((e) => { console.error(e); process.exit(1); });

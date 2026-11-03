@@ -363,7 +363,7 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { t.hidden = true; }, 5000);
   }
-  const PDF_NAMES = { glosur: 'Glósur – rað- og hliðtenging.pdf', formulublad: 'Formúlublað – rað- og hliðtenging.pdf' };
+  const PDF_NAMES = { glosur: 'Glósur – rað- og hliðtenging.pdf', formulublad: 'Formúlublað – rað- og hliðtenging.pdf', minnisblad: 'Minnisblað fyrir próf – rafmagnsfræði.pdf' };
   function pdfLink(name, label, cls) {
     return '<a class="btn ' + (cls || '') + '" href="pdf/' + name + '.pdf" download="' + esc(PDF_NAMES[name]) + '" data-pdf="' + name + '">' + (label || 'Sækja PDF') + '</a>';
   }

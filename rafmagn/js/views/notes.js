@@ -42,7 +42,7 @@
 
     let h = '<div class="section-head"><div><p class="eyebrow">Glósur</p><h1>Glósur: rað- og hliðtenging</h1>' +
       '<p class="lead">Stuttar glósur með formúlum, tengimyndum og reiknuðum dæmum. Þær eru prentvænar og nýtast vel í prófinu.</p></div>' +
-      '<div class="actions no-print">' + UI.pdfLink('glosur', 'Sækja glósur sem PDF', 'btn-primary') + '<button type="button" data-print>Prenta glósur</button>' + '<a class="btn" href="#formulublad">Formúlublað (1 síða)</a></div></div>';
+      '<div class="actions no-print">' + UI.pdfLink('glosur', 'Sækja glósur sem PDF', 'btn-primary') + UI.pdfLink('minnisblad', '[Prófefni] Minnisblað fyrir próf (PDF)') + '<button type="button" data-print>Prenta glósur</button>' + '<a class="btn" href="#formulublad">Formúlublað (1 síða)</a></div></div>';
     h += '<div class="notes-layout"><nav class="toc" aria-label="Efnisyfirlit glósa"><ol>' +
       SECTIONS.map(function (s) { return '<li><a href="#glosur:' + s[0] + '">' + s[1] + '</a></li>'; }).join('') + '</ol></nav><div class="stack">';
 

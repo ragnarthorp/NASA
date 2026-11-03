@@ -280,7 +280,7 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
 
   // PDF-skrár fylgja og „Sækja PDF“ vísar á þær
   const fs = require('fs');
-  for (const f of ['glosur', 'formulublad']) assert.ok(fs.statSync(path.resolve(__dirname, '..', 'pdf', f + '.pdf')).size > 10000, f + '.pdf');
+  for (const f of ['glosur', 'formulublad', 'minnisblad']) assert.ok(fs.statSync(path.resolve(__dirname, '..', 'pdf', f + '.pdf')).size > 10000, f + '.pdf');
   assert.equal(await page.getAttribute('a[data-pdf=glosur]', 'href'), 'pdf/glosur.pdf');
   ok('PDF-skrár glósa og formúlublaðs eru til og tengdar');
 

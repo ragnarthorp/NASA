@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minnisblað fyrir próf · Rað-, hlið- og blönduð tenging</title>
+<style>
+@page { size: A4; margin: 12mm 13mm 14mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #000; background: #fff; font: 10pt/1.42 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+main { max-width: 190mm; margin: 0 auto; }
+h1 { font-size: 19pt; margin: 0 0 1mm; letter-spacing: -.01em; }
+h2 { font-size: 12.5pt; margin: 5mm 0 2mm; padding: 1mm 0 1mm 3mm; border-left: 4px solid #000; background: #eee; break-after: avoid; }
+h3 { font-size: 10.5pt; margin: 3mm 0 1mm; break-after: avoid; }
+p { margin: 0 0 2mm; }
+ul, ol { margin: 0 0 2mm; padding-left: 5mm; }
+li { margin: .4mm 0; }
+var { font-family: "Cambria Math", "STIX Two Math", Cambria, Georgia, serif; font-style: italic; font-size: 1.06em; }
+sub { font-size: .72em; font-style: normal; }
+.lead { font-size: 10.5pt; margin-bottom: 3mm; }
+.tag { display: inline-block; border: 1px solid #000; border-radius: 3px; padding: 0 1.5mm; font-size: 8pt; font-weight: 700; vertical-align: 1px; }
+.box { border: 1.5px solid #000; border-radius: 3mm; padding: 2mm 3.5mm; margin: 2mm 0; break-inside: avoid; }
+.box.key { border-width: 2.5px; }
+.formula { font-family: "Cambria Math", "STIX Two Math", Cambria, Georgia, serif; font-size: 12.5pt; display: flex; flex-wrap: wrap; gap: 1mm 9mm; align-items: center; margin: 1mm 0; }
+.formula var { font-size: 1em; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 .12em; line-height: 1.2; }
+.frac > .num { border-bottom: 1.2px solid currentColor; padding: 0 .2em; }
+.frac > .den { padding: 0 .2em; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 6mm; }
+.cols > * { min-width: 0; }
+table { width: 100%; border-collapse: collapse; margin: 1mm 0 2mm; font-size: 9.3pt; break-inside: avoid; }
+th, td { border: 1px solid #000; padding: 1mm 1.6mm; text-align: left; vertical-align: top; }
+thead th { background: #eee; }
+.fig { text-align: center; margin: 1mm 0; break-inside: avoid; }
+.fig svg { max-width: 100%; height: auto; max-height: 38mm; }
+.fig figcaption { font-size: 8.5pt; margin-top: .5mm; }
+.ex { border: 1px dashed #000; border-radius: 2mm; padding: 2mm 3mm; margin: 2mm 0; break-inside: avoid; }
+.ex h4 { margin: 0 0 1mm; font-size: 9.8pt; }
+.ex p { margin: 0 0 .8mm; }
+.calc { font-family: "Cambria Math", Cambria, Georgia, serif; }
+.check li { list-style: none; position: relative; }
+.check li::before { content: "☐"; position: absolute; left: -4.5mm; }
+.src { font-size: 8.3pt; color: #333; }
+.page-break { break-before: page; }
+.foot { margin-top: 4mm; font-size: 8pt; border-top: 1px solid #000; padding-top: 1mm; }
+/* Tengimyndir (sami stíll og á vefnum, svart-hvítt) */
+svg.circuit { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+svg.circuit .w { fill: none; stroke: #000; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+svg.circuit .thick { stroke-width: 6; }
+svg.circuit .res { fill: #fff; stroke: #000; stroke-width: 2.5; }
+svg.circuit .dot, svg.circuit .arrow { fill: #000; }
+svg.circuit text { font-size: 15px; fill: #000; }
+svg.circuit .val { font-size: 14px; }
+svg.circuit .strong, svg.circuit .drop, svg.circuit .cur { font-weight: 700; }
+svg.circuit .pol { font-size: 17px; font-weight: 700; }
+@media screen { body { background: #f2f2f2; } main { background: #fff; padding: 12mm 13mm; margin: 6mm auto; box-shadow: 0 2px 10px rgba(0,0,0,.15); } }
+</style>
+</head>
+<body>
+<main id="m"></main>
+<script src="js/calc.js"></script>
+<script src="js/explain.js"></script>
+<script src="js/diagrams.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = Explain.sym, F = Explain.frac, D = Diagrams;
+  var R = function (i) { return S('R', i); }, U = function (i) { return S('U', i); }, I = function (i) { return S('I', i); };
+  function fig(svg, cap) { return '<figure class="fig">' + svg + (cap ? '<figcaption>' + cap + '</figcaption>' : '') + '</figure>'; }
+  function steps(list) { return '<ol>' + list.map(function (s) { return '<li><strong>' + s.title + ':</strong> ' + s.html.join('<br>') + '</li>'; }).join('') + '</ol>'; }
+
+  var T1 = { s: [{ name: 1, R: 20 }, { p: [{ name: 2, R: 45 }, { name: 3, R: 90 }] }, { name: 4, R: 40 }] };
+  var T3 = { p: [{ name: 1, R: 12 }, { s: [{ name: 2, R: 12 }, { p: [{ name: 3, R: 12 }, { s: [{ name: 4, R: 12 }, { name: 5, R: 12 }] }] }] }] };
+  var mix1 = Explain.network(9, T1);
+
+  var h = '';
+  h += '<h1>Minnisblað fyrir próf — rað-, hlið- og blönduð tenging</h1>';
+  h += '<p class="lead">Byggt á námsefninu: <em>2.1 Raðtenging</em> (glósur), <em>2.1.1 Raðtengingar — æfingadæmi og svör</em>, <em>2.2.1 Hliðtengingar — æfingaverkefni</em> og <em>2.3 Blönduð tenging</em> (glærur). Hér er það sem þarf að kunna, formúlurnar og aðferðirnar, með dæmum úr æfingunum.</p>';
+
+  /* 1. Hvað þarf að kunna */
+  h += '<h2>1. Það sem þarf að kunna</h2><div class="cols"><ul class="check">' +
+    '<li>Tákn og einingar: ' + U('') + ' (V), ' + I('') + ' (A), ' + R('') + ' (Ω), H = heild.</li>' +
+    '<li>Lögmál Ohms í öllum þremur útgáfum og að velja rétta.</li>' +
+    '<li>Breyta mA ↔ A og kΩ ↔ Ω <strong>áður</strong> en reiknað er.</li>' +
+    '<li>Lögmál Kirchhoffs: 1. (straumur) og 2. (spenna).</li>' +
+    '<li>Raðtenging: ' + S('R', 'H') + ', ' + S('I', 'H') + ', spennuföll og athugun.</li>' +
+    '<li>Hliðtenging: ' + S('R', 'H') + ' (1/R og formúlan góða), greinastraumar, ' + S('I', 'H') + '.</li></ul><ul class="check">' +
+    '<li>Jafnstórar mótstöður: ' + S('R', 'H') + ' = ' + S('n') + '·' + R('') + ' (raðt.) og ' + R('') + '/' + S('n') + ' (hliðt.).</li>' +
+    '<li>Finna óþekkta mótstöðu, spennu eða straum út frá gefnum stærðum og mælalestri.</li>' +
+    '<li>Fellimótstaða og fjöldi tækja í röð (t.d. LED).</li>' +
+    '<li>Hvað gerist þegar grein rofnar eða mótstöðu er bætt við.</li>' +
+    '<li>Blönduð tenging: greina, einfalda innan frá, reikna til baka.</li>' +
+    '<li>Teikna tengimynd og sýna hvar straum- og spennumælar eru tengdir.</li></ul></div>';
+
+  /* 2. Grunnur */
+  h += '<h2>2. Tákn, einingar og lögmál Ohms</h2><div class="cols"><div>' +
+    '<table><thead><tr><th>Tákn</th><th>Stærð</th><th>Eining</th></tr></thead><tbody>' +
+    '<tr><td>' + U('') + '</td><td>spenna, spennufall</td><td>volt (V)</td></tr>' +
+    '<tr><td>' + I('') + '</td><td>straumur</td><td>amper (A)</td></tr>' +
+    '<tr><td>' + R('') + '</td><td>viðnám (mótstaða)</td><td>ohm (Ω)</td></tr></tbody></table>' +
+    '<p><strong>H</strong> = heild: ' + S('R', 'H') + ' heildarviðnám, ' + S('I', 'H') + ' heildarstraumur, ' + S('U', 'H') + ' spennugjafaspenna. Námsefnið skrifar oft ' + S('U', 'R1') + ' og ' + S('I', 'R1') + ' — það er það sama og ' + U(1) + ' og ' + I(1) + '.</p>' +
+    '<div class="box"><strong>Einingar:</strong> 1 A = 1000 mA · 1 kΩ = 1000 Ω<br>mA → A: deila með 1000 (20 mA = 0,02 A)<br>kΩ → Ω: margfalda með 1000 (1,95 kΩ = 1950 Ω; „1K Ω“ = 1 kΩ)</div></div><div>' +
+    '<div class="box key"><strong>Lögmál Ohms</strong><div class="formula"><span>' + U('') + ' = ' + I('') + ' · ' + R('') + '</span><span>' + I('') + ' = ' + F(U(''), R('')) + '</span><span>' + R('') + ' = ' + F(U(''), I('')) + '</span></div></div>' +
+    '<table><thead><tr><th>Gefið</th><th>Finna</th><th>Formúla</th></tr></thead><tbody>' +
+    '<tr><td>' + I('') + ' og ' + R('') + '</td><td>' + U('') + '</td><td>' + U('') + ' = ' + I('') + ' · ' + R('') + '</td></tr>' +
+    '<tr><td>' + U('') + ' og ' + R('') + '</td><td>' + I('') + '</td><td>' + I('') + ' = ' + U('') + ' / ' + R('') + '</td></tr>' +
+    '<tr><td>' + U('') + ' og ' + I('') + '</td><td>' + R('') + '</td><td>' + R('') + ' = ' + U('') + ' / ' + I('') + '</td></tr></tbody></table>' +
+    '<p>Gildir um eina mótstöðu (' + U(1) + ' = ' + I(1) + '·' + R(1) + ') og alla rásina (' + S('U', 'H') + ' = ' + S('I', 'H') + '·' + S('R', 'H') + '). Notaðu alltaf stærðir sem tilheyra <em>sama</em> hlutanum.</p></div></div>';
+
+  /* 3. Kirchhoff og mælar */
+  h += '<h2>3. Lögmál Kirchhoffs og mælar</h2><div class="cols"><div class="box key"><strong>1. lögmál — straumur (hliðtenging)</strong><br>„Summa strauma sem streyma að greinipunkti er jöfn summu þeirra strauma sem streyma frá honum.“<div class="formula"><span>' + S('I', 'H') + ' = ' + I(1) + ' + ' + I(2) + ' + ' + I(3) + ' + …</span></div></div>' +
+    '<div class="box key"><strong>2. lögmál — spenna (raðtenging)</strong><br>„Summa spennufalla í lokaðri straumrás er jöfn spennugjafaspennunni.“<div class="formula"><span>' + S('U', 'H') + ' = ' + U(1) + ' + ' + U(2) + ' + ' + U(3) + ' + …</span></div></div></div>' +
+    '<p><strong>Mælar:</strong> straummælir (A) er <strong>raðtengdur</strong> — straumurinn fer í gegnum hann. Spennumælir (V) er <strong>hliðtengdur</strong> yfir íhlutinn. Viðnámsmælir (Ω) er tengdur yfir mótstöðu þegar enginn straumur er á rásinni. Í blandaðri tengingu eru bæði lögmálin notuð, hvort á sinn hluta.</p>';
+
+  /* 4. Raðtenging */
+  h += '<h2>4. Raðtenging — sami straumur, spennan skiptist</h2><div class="cols"><div>' +
+    '<div class="box key"><div class="formula"><span>' + S('R', 'H') + ' = ' + R(1) + ' + ' + R(2) + ' + … + ' + R('n') + '</span></div><div class="formula"><span>' + S('I', 'H') + ' = ' + I(1) + ' = ' + I(2) + ' = … </span></div><div class="formula"><span>' + S('U', 'H') + ' = ' + U(1) + ' + ' + U(2) + ' + …</span></div></div>' +
+    '<p><strong>Vinnuröð:</strong> 1) leggja saman viðnámin, 2) ' + S('I', 'H') + ' = ' + S('U', 'H') + ' / ' + S('R', 'H') + ', 3) ' + U(1) + ' = ' + S('I', 'H') + ' · ' + R(1) + ' o.s.frv., 4) athuga að summa spennufalla = ' + S('U', 'H') + '.</p>' +
+    '<p>' + S('R', 'H') + ' er alltaf <strong>stærra</strong> en hvert einstakt viðnám. Mest spenna fellur yfir <strong>stærsta</strong> viðnámið. Ef ein mótstaða rofnar stöðvast straumurinn í allri rásinni.</p></div><div>' +
+    fig(D.series({ U: '24 V', R: ['10 Ω', '15 Ω', '23 Ω'], I: '0,5 A', drops: ['5 V', '7,5 V', '11,5 V'] }), '2.1.1 dæmi 1: 10 + 15 + 23 = 48 Ω; 24 V / 48 Ω = 0,5 A; 5 + 7,5 + 11,5 = 24 V ✓') + '</div></div>';
+  h += '<h3>Gerðir dæma í raðtengingu</h3><table><thead><tr><th style="width:22%">Gerð</th><th style="width:36%">Aðferð</th><th>Dæmi úr námsefninu</th></tr></thead><tbody>' +
+    '<tr><td>Jafnstórar mótstöður</td><td>' + S('R', 'H') + ' = ' + S('n') + ' · ' + R('') + ', ' + S('U', 'R') + ' = ' + S('U', 'H') + ' / ' + S('n') + '</td><td>3 × 30 Ω, 90 V: ' + S('R', 'H') + ' = 90 Ω, ' + I('') + ' = 1 A, 30 V yfir hverja</td></tr>' +
+    '<tr><td>Óþekkt mótstaða</td><td>' + R(4) + ' = ' + S('R', 'H') + ' − (' + R(1) + ' + ' + R(2) + ' + ' + R(3) + ')</td><td>1260 − (120 + 560 + 220) = 360 Ω; ' + U('') + ' = 0,18 A · 1260 Ω = 226,8 V</td></tr>' +
+    '<tr><td>Spenna út frá straumi</td><td>' + S('U', 'H') + ' = ' + I('') + ' · ' + S('R', 'H') + '</td><td>220+120+300+260 = 900 Ω, 0,03 A: 27 V; yfir 300 Ω: 9 V</td></tr>' +
+    '<tr><td>Mælalestur</td><td>' + U(1) + ' = ' + U('') + ' − ' + U(2) + ', svo ' + R(1) + ' = ' + U(1) + ' / ' + I('') + '</td><td>10 V, 20 mA, 5,6 V yfir ' + R(2) + ': ' + U(1) + ' = 4,4 V, ' + R(1) + ' = 220 Ω, ' + R(2) + ' = 280 Ω</td></tr>' +
+    '<tr><td>Fellimótstaða</td><td>' + S('U', 'R') + ' = ' + U('') + ' − ' + S('U', 'tæki') + ', ' + R('') + ' = ' + S('U', 'R') + ' / ' + I('') + '</td><td>110 V ljóskastari, 10 A, á 230 V: 120 V → 12 Ω</td></tr>' +
+    '<tr><td>Tæki í röð</td><td>' + S('n') + ' = ' + U('') + ' / ' + S('U', 'tæki') + '; sami straumur</td><td>1,8 V LED á 9 V: 5 stk., 25 mA</td></tr>' +
+    '<tr><td>Hámarks-/lágmarksstraumur</td><td>Reikna ' + S('I', 'H') + ' = ' + U('') + ' / ' + S('R', 'H') + ' og bera saman</td><td>Pera 450 Ω (9 V, 13–20 mA) á 24 V: ' + R(1) + ' = 15 V / 0,02 A = 750 Ω. Með 500 Ω: 24/950 ≈ 25 mA → brennur. Við 12 mA: ' + S('U', 'R2') + ' = 5,4 V, lýsir ekki</td></tr>' +
+    '</tbody></table>';
+
+  /* 5. Hliðtenging */
+  h += '<h2>5. Hliðtenging — sama spenna, straumurinn skiptist</h2><div class="cols"><div>' +
+    '<div class="box key"><div class="formula"><span>' + F('1', S('R', 'H')) + ' = ' + F('1', R(1)) + ' + ' + F('1', R(2)) + ' + … + ' + F('1', R('n')) + '</span></div><div class="formula"><span>' + S('I', 'H') + ' = ' + I(1) + ' + ' + I(2) + ' + …</span><span>' + S('U', 'H') + ' = ' + U(1) + ' = ' + U(2) + ' = …</span></div></div>' +
+    '<div class="box"><strong>Formúlan góða — aðeins fyrir tvö viðnám</strong><div class="formula"><span>' + S('R', 'H') + ' = ' + F(R(1) + ' · ' + R(2), R(1) + ' + ' + R(2)) + '</span></div></div>' +
+    '<p><strong>Vinnuröð:</strong> 1) ' + S('R', 'H') + ' með 1/R-formúlu og <strong>snúa við</strong> í lokin, 2) sama spenna ' + S('U', 'H') + ' yfir hverja grein, 3) ' + I(1) + ' = ' + S('U', 'H') + ' / ' + R(1) + ' o.s.frv., 4) ' + S('I', 'H') + ' = summa greinastrauma, 5) athuga ' + S('I', 'H') + ' = ' + S('U', 'H') + ' / ' + S('R', 'H') + '.</p></div><div>' +
+    fig(D.parallel({ U: '18 V', R: ['20 Ω', '60 Ω'], I: '1,2 A', currents: ['0,9 A', '0,3 A'] }), '2.2.1 dæmi 2: ' + S('R', 'H') + ' = 20·60/80 = 15 Ω; ' + S('I', 'H') + ' = 18/15 = 1,2 A = 0,9 + 0,3 ✓') +
+    '<p>' + S('R', 'H') + ' er alltaf <strong>minna</strong> en minnsta viðnámið. Mestur straumur fer um <strong>minnsta</strong> viðnámið. Tæki eru hliðtengd við net svo hvert fái fulla netspennu og virki óháð hinum.</p></div></div>';
+  h += '<h3>Gerðir dæma í hliðtengingu</h3><table><thead><tr><th style="width:22%">Gerð</th><th style="width:36%">Aðferð</th><th>Dæmi úr námsefninu (2.2.1)</th></tr></thead><tbody>' +
+    '<tr><td>Jafnstórar mótstöður</td><td>' + S('R', 'H') + ' = ' + R('') + ' / ' + S('n') + '</td><td>3 × 20 Ω ≈ 6,67 Ω; 4 × 20 Ω = 5 Ω; 3 × 100 Ω ≈ 33,3 Ω; 5 × 100 Ω = 20 Ω</td></tr>' +
+    '<tr><td>Hve mörg álög?</td><td>' + S('n') + ' = ' + R('') + ' / ' + S('R', 'H') + '</td><td>800 Ω, ' + S('R', 'H') + ' ≥ 40 Ω: 20 stk.</td></tr>' +
+    '<tr><td>Ná ákveðnu ' + S('R', 'H') + '</td><td>' + F('1', R(3)) + ' = ' + F('1', S('R', 'H')) + ' − ' + F('1', R(1)) + ' − ' + F('1', R(2)) + '</td><td>20 Ω og 40 Ω (13,3 Ω), á að verða 10 Ω: 0,1 − 0,05 − 0,025 = 0,025 → ' + R(3) + ' = 40 Ω</td></tr>' +
+    '<tr><td>Óþekkt grein</td><td>' + I(3) + ' = ' + S('I', 'H') + ' − ' + I(1) + ' − ' + I(2) + ', ' + R(3) + ' = ' + U('') + ' / ' + I(3) + '</td><td>240 V, 14,4 A, 100 Ω og 60 Ω: 2,4 + 4 A → ' + I(3) + ' = 8 A, ' + R(3) + ' = 30 Ω</td></tr>' +
+    '<tr><td>Ný grein bætist við</td><td>Hinar óbreyttar; ' + S('I', 'H') + ' eykst um nýja strauminn</td><td>20 Ω við 240 V: +12 A → 26,4 A. 10k,10k,5k með 0,4 A: ' + U('') + ' = 1000 V; 0,1 A í viðbót → 10 kΩ</td></tr>' +
+    '<tr><td>Grein rofnar</td><td>Hinar óbreyttar; ' + S('I', 'H') + ' minnkar</td><td>10, 20, 40 Ω við 10 V: 1 + 0,5 + 0,25 = 1,75 A → 1,5 A þegar 40 Ω rofnar</td></tr>' +
+    '<tr><td>Straumar og ' + R('') + '</td><td>Sama ' + U('') + ': ' + I('') + ' = ' + U('') + '/' + R('') + ', ' + R('') + ' = ' + U('') + '/' + I('') + '</td><td>32 V, 16 Ω, 4 Ω, ' + I(3) + ' = 4 A: 2 A, 8 A, ' + S('I', 'H') + ' = 14 A, ' + R(3) + ' = 8 Ω</td></tr>' +
+    '<tr><td>230 V net</td><td>Reikna hvern greinastraum og leggja saman</td><td>25, 20, 50 Ω: 9,2 + 11,5 + 4,6 = 25,3 A. 5, 1000, 2000 Ω: 46 A mest; munur á ' + S('I', 'H') + ' og honum 0,345 A</td></tr>' +
+    '</tbody></table>';
+
+  /* 6. Blönduð */
+  h += '<h2>6. Blönduð tenging — bæði lögmálin</h2><div class="cols"><div>' +
+    '<ol><li><strong>Greina:</strong> hvað er raðtengt (+) og hvað hliðtengt (‖)?</li>' +
+    '<li><strong>Einfalda innan frá:</strong> reikna innstu hópana fyrst í eitt viðnám (t.d. ' + S('R', '2,3') + ').</li>' +
+    '<li>Halda áfram út á við þar til ' + S('R', 'H') + ' er fundið.</li>' +
+    '<li>' + S('I', 'H') + ' = ' + S('U', 'H') + ' / ' + S('R', 'H') + '.</li>' +
+    '<li><strong>Vinna til baka:</strong> raðtengdur hluti → sami straumur, ' + U('') + ' = ' + I('') + '·' + R('') + '. Hliðtengdur hluti → sama spenna, ' + I('') + ' = ' + U('') + '/' + R('') + '.</li>' +
+    '<li><strong>Athuga</strong> með Kirchhoff: spennuföll í röð = ' + S('U', 'H') + ', greinastraumar = straumurinn inn.</li></ol>' +
+    '<p>Ef einn straumur er þekktur má oft finna hinn með frádrætti: ' + I(2) + ' = ' + S('I', 'H') + ' − ' + I(1) + '. Og spennu: ' + U(3) + ' = ' + U('') + ' − ' + U(2) + '.</p></div><div>' +
+    fig(D.network({ U: '9 V', tree: T1, labels: { 1: '20 Ω', 2: '45 Ω', 3: '90 Ω', 4: '40 Ω' }, I: '0,1 A' }), 'Sýnidæmi 1: ' + R(1) + ' + (' + R(2) + ' ‖ ' + R(3) + ') + ' + R(4)) + '</div></div>';
+  h += '<div class="ex"><h4>Sýnidæmi 1 reiknað (9 V; 20, 45, 90 og 40 Ω)</h4>' + steps(mix1.steps.slice(1)) + '</div>';
+  h += '<div class="cols"><div class="ex"><h4>Sýnidæmi 2: ' + R(1) + ' ‖ (' + R(2) + ' + ' + R(3) + ') ‖ ' + R(4) + ' við 8,7 V</h4>' +
+    '<p>' + S('R', '2,3') + ' = 20 + 60 = 80 Ω</p><p>' + F('1', S('R', 'H')) + ' = ' + F('1', '40') + ' + ' + F('1', '80') + ' + ' + F('1', '50') + ' → ' + S('R', 'H') + ' ≈ 17,4 Ω, ' + S('I', 'H') + ' ≈ 0,5 A</p>' +
+    '<p>' + I(1) + ' = 8,7/40 ≈ 0,22 A; ' + S('I', '2,3') + ' = 8,7/80 ≈ 0,109 A; ' + I(4) + ' = 8,7/50 ≈ 0,17 A</p><p>' + U(2) + ' = 0,109 · 20 ≈ 2,18 V; ' + U(3) + ' = 0,109 · 60 ≈ 6,53 V</p></div>' +
+    '<div class="ex"><h4>Sýnidæmi 3: fimm 12 Ω mótstöður við 7,5 V</h4>' + fig(D.network({ U: '7,5 V', tree: T3, labels: { 1: '12 Ω', 2: '12 Ω', 3: '12 Ω', 4: '12 Ω', 5: '12 Ω' } })) +
+    '<p>' + S('R', '4,5') + ' = 24 Ω → ' + S('R', '3,4,5') + ' = 8 Ω → ' + S('R', '2..5') + ' = 20 Ω → ' + S('R', 'H') + ' = 7,5 Ω; ' + S('I', 'H') + ' = 1 A</p>' +
+    '<p>' + I(1) + ' = 0,625 A; ' + I(2) + ' = 1 − 0,625 = 0,375 A; ' + U(2) + ' = 4,5 V; ' + U(3) + ' = 7,5 − 4,5 = 3 V; ' + I(3) + ' = 0,25 A; ' + S('I', '4,5') + ' = 0,125 A; ' + U(4) + ' = ' + U(5) + ' = 1,5 V</p></div></div>';
+
+  /* 7. Gátlisti og villur */
+  h += '<h2>7. Gátlisti í prófinu og algengar villur</h2><div class="cols"><div><h3>Gátlisti fyrir hvert dæmi</h3><ol>' +
+    '<li>Teikna tengimynd og merkja gefnar stærðir (og mæla ef beðið er um).</li><li>Rað-, hlið- eða blönduð tenging?</li><li>Skrifa „Uppgefið:“ og „Spurt um:“.</li><li>Breyta í V, A og Ω.</li>' +
+    '<li>Skrifa formúluna, setja inn tölur <em>með einingum</em>.</li><li>Halda fullri nákvæmni í reiknivélinni; námunda aðeins lokasvar.</li><li>Athuga með Kirchhoff og skynsemi (er ' + S('R', 'H') + ' stærra/minna en það á að vera?).</li></ol></div>' +
+    '<div><h3>Algengar villur</h3><ul><li>Gleyma að breyta 20 mA í 0,02 A eða 1 kΩ í 1000 Ω.</li><li>Halda að straumur skiptist í raðtengingu eða spenna í hliðtengingu.</li>' +
+    '<li>Gleyma að snúa við: 1/' + S('R', 'H') + ' er ekki ' + S('R', 'H') + '.</li><li>Nota formúluna góðu á þrjú viðnám.</li><li>Nota heildarspennu í stað spennufalls fyrir eina mótstöðu (t.d. fellimótstaða fær aðeins ' + U('') + ' − ' + S('U', 'tæki') + ').</li>' +
+    '<li>Rugla nýju ' + S('R', 'H') + ' saman við nýju mótstöðuna sem bætt er við.</li><li>Blönduð tenging: að byrja utan frá eða nota sömu reglu á alla hluta.</li></ul></div></div>';
+
+  /* 8. Æfingalisti */
+  h += '<h2>8. Æfingar til að kunna — hakaðu við</h2><div class="cols"><ul class="check">' +
+    '<li><strong>2.1.1 dæmi 1:</strong> 10, 15, 23 Ω við 24 V → 48 Ω, 0,5 A, 5 / 7,5 / 11,5 V</li>' +
+    '<li><strong>dæmi 2:</strong> ' + R(4) + ' = 360 Ω, ' + U('') + ' = 226,8 V</li>' +
+    '<li><strong>dæmi 3:</strong> ' + R(1) + ' = 220 Ω, ' + R(2) + ' = 280 Ω, ' + S('R', 'H') + ' = 500 Ω</li>' +
+    '<li><strong>dæmi 4:</strong> 900 Ω, 27 V, 9 V</li><li><strong>dæmi 5:</strong> 120 V, 12 Ω</li><li><strong>dæmi 6:</strong> 5 stk., 25 mA</li>' +
+    '<li><strong>dæmi 7:</strong> 15 V, 750 Ω; 500 Ω → ≈ 25 mA brennur; 12 mA → 5,4 V og 18,6 V, lýsir ekki</li>' +
+    '<li><strong>Glósur 2.1 dæmi 1–4:</strong> 50 Ω, 2 A; 90 Ω, 1 A, 30 V; 1020 Ω, 0,05 A, 50 V/1 V; 39 V, 470 Ω, 20 mA</li>' +
+    '<li><strong>2.3 sýnidæmi 1–3</strong> (sjá kafla 6)</li></ul><ul class="check">' +
+    '<li><strong>2.2.1 dæmi 1:</strong> hvers vegna hliðtengt við net</li><li><strong>dæmi 2:</strong> 15 Ω, 1,2 A, 0,9 / 0,3 A</li>' +
+    '<li><strong>dæmi 3:</strong> ≈ 5,71 Ω, 1,75 A (1 / 0,5 / 0,25 A); 40 Ω rofnar → 1,5 A</li><li><strong>dæmi 4:</strong> 20 stk.</li>' +
+    '<li><strong>dæmi 5:</strong> 13,3 Ω, ' + R(3) + ' = 40 Ω, 1 A, ' + I(3) + ' = 0,25 A</li><li><strong>dæmi 6:</strong> 25,3 A, 4,6 A</li>' +
+    '<li><strong>dæmi 7:</strong> ≈ 90,8 Ω, ≈ 2,53 A, ≈ 0,489 A (með 470 Ω)</li><li><strong>dæmi 8:</strong> ≈ 4,96 Ω, 46 A, munur 0,345 A</li>' +
+    '<li><strong>dæmi 9–10:</strong> ≈ 6,25 Ω; ≈ 684 Ω</li><li><strong>dæmi 11–14:</strong> 6,67 / 5 / 33,3 / 20 Ω</li>' +
+    '<li><strong>dæmi 15–18:</strong> ' + R(3) + ' = 30 Ω, 26,4 A; 2/8/14 A, 8 Ω; ' + R(1) + ' ≈ 3,32 kΩ; ' + R(4) + ' = 10 kΩ</li></ul></div>' +
+    '<p class="src">Ath.: Í 2.2.1 dæmi 7 stendur 470 Ω í texta en 4700 Ω í uppgefnum stærðum; hér er reiknað með 470 Ω. Svarsíður hliðtengingarskjalsins eru auðar, svo þau svör eru reiknuð hér. Æfingapróf, reiknivélar og allar þessar æfingar með lausnum eru á námsvefnum.</p>';
+  h += '<p class="foot">Minnisblað til undirbúnings fyrir próf í Rafmagnsfræði 1: lögmál Ohms, lögmál Kirchhoffs, rað-, hlið- og blönduð tenging.</p>';
+  document.getElementById('m').innerHTML = h;
+})();
+</script>
+</body>
+</html>
