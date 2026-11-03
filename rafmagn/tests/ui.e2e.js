@@ -261,6 +261,7 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
   const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.pdf': 'application/pdf' };
   const server = require('http').createServer((req, res) => {
     const f = path.join(root, decodeURIComponent(req.url.split('?')[0]).replace(/^\/$/, '/index.html'));
+    if (req.url === '/frame.html') { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end('<!doctype html><iframe id="f" src="/index.html#formulublad" style="width:1100px;height:800px"></iframe>'); return; }
     if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; }
     res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
     res.end(fs.readFileSync(f));
@@ -289,6 +290,21 @@ const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
   await ap.waitForFunction(() => window.__saved.length === 2);
   assert.equal(await ap.evaluate(() => window.__printed), 0, 'enginn prentgluggi inni í artifact');
   await ctx.close();
+  // Í ramma þar sem window.claude birtist seint: Prenta býður samt PDF og opnar ekki prentglugga.
+  const ctx2 = await browser.newContext();
+  const fp = await ctx2.newPage();
+  await fp.addInitScript(() => {
+    window.__saved = []; window.__printed = 0;
+    window.print = () => { window.__printed++; };
+    setTimeout(() => { window.claude = { use: (n) => Promise.resolve(n === 'downloads' ? { save: (req) => { window.__saved.push(req.filename); return Promise.resolve({ status: 'saved' }); } } : null) }; }, 600);
+  });
+  await fp.goto(HTTP.replace('index.html', 'frame.html'));
+  const frame = fp.frameLocator('#f');
+  await frame.locator('[data-print]').click();
+  const fr = fp.frames().find((f) => f.url().includes('index.html'));
+  await fr.waitForFunction(() => window.__saved.length === 1);
+  assert.equal(await fr.evaluate(() => window.__printed), 0);
+  await ctx2.close();
   server.close();
   ok('Inni í artifact: Prenta og Sækja PDF vista PDF-skjal í stað prentglugga');
 

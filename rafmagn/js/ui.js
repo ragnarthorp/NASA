@@ -331,7 +331,21 @@
   /* ---------- PDF og prentun ---------- */
   // Inni í Claude-artifact er vefurinn í lokuðum ramma þar sem prentgluggi vafrans opnast ekki.
   // Þar er tilbúna PDF-skjalið boðið til niðurhals í staðinn (downloads-hæfni).
-  function inArtifact() { return !!(root.claude && typeof root.claude.use === 'function'); }
+  function hasClaude() { return !!(root.claude && typeof root.claude.use === 'function'); }
+  function framed() { try { return root.self !== root.top; } catch (e) { return true; } }
+  // Í ramma (t.d. Claude-artifact) er prentgluggi vafrans oft lokaður, svo þar er PDF boðið í staðinn.
+  function inArtifact() { return hasClaude() || framed(); }
+  /** Bíður stutta stund eftir window.claude, sem getur birst eftir að síðan hleðst. */
+  function claudeDownloads() {
+    return new Promise(function (resolve) {
+      let waited = 0;
+      (function check() {
+        if (hasClaude()) { root.claude.use('downloads').then(resolve, function () { resolve(null); }); return; }
+        if (waited >= 2000) { resolve(null); return; }
+        waited += 100; setTimeout(check, 100);
+      })();
+    });
+  }
   let toastTimer = null;
   function toast(text) {
     const t = document.getElementById('toast');
@@ -352,7 +366,8 @@
       document.body.appendChild(a); a.click(); a.remove();
     };
     if (!inArtifact()) { fallback(); return Promise.resolve(); }
-    return root.claude.use('downloads').then(function (dl) {
+    toast('Undirbý PDF-skjal …');
+    return claudeDownloads().then(function (dl) {
       if (!dl) { fallback(); return; }
       return fetch(url).then(function (r) {
         if (!r.ok) throw { code: 'missing' };
@@ -364,7 +379,7 @@
       const code = e && e.code;
       if (code === 'declined') return;
       if (code === 'rate_limited') { toast('Bíddu andartak og reyndu aftur.'); return; }
-      toast('Ekki tókst að sækja PDF-skjalið hér. Opnaðu vefinn í nýjum flipa eða sæktu skrána af GitHub.');
+      toast('Ekki tókst að sækja PDF-skjalið hér. Opnaðu vefinn í nýjum flipa eða sæktu skrána af GitHub (rafmagn/pdf).');
     });
   }
   /** Prentar síðuna — eða, inni í artifact þar sem prentun er lokuð, býður PDF-skjalið. */

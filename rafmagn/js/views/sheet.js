@@ -9,7 +9,7 @@
     const R = function (i) { return S('R', i); };
     return '<div class="sheet-intro no-print section-head"><div><p class="eyebrow">Formúlublað</p><h1>Formúlublað</h1>' +
       '<p class="lead">Ein A4-síða með öllum lykilformúlum. Prentaðu blaðið eða vistaðu það sem PDF og taktu með í prófið.</p></div>' +
-      '<div class="actions"><button type="button" class="btn-primary" data-print>Prenta / vista sem PDF</button>' + UI.pdfLink('formulublad', 'Sækja PDF') + '<a class="btn" href="#glosur">Til baka í glósur</a></div></div>' +
+      '<div class="actions">' + UI.pdfLink('formulublad', 'Sækja formúlublaðið sem PDF', 'btn-primary') + '<button type="button" data-print>Prenta</button><a class="btn" href="#glosur">Til baka í glósur</a></div></div>' +
       '<article class="sheet" aria-label="Formúlublað til prentunar">' +
       '<h1>Formúlublað — rað- og hliðtenging viðnáma</h1>' +
       '<p class="sub"><strong>' + S('U') + '</strong> = spenna, volt (V) · <strong>' + S('I') + '</strong> = straumur, amper (A) · <strong>' + S('R') + '</strong> = viðnám, ohm (Ω) · <strong>H</strong> í undirskrift = heild, t.d. ' + S('R', 'H') + ', ' + S('I', 'H') + ', ' + S('U', 'H') + '</p>' +
