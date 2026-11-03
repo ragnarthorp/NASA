@@ -45,3 +45,18 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Rafmagnsfræði: rað- og hliðtenging
+
+`rafmagn/index.html` er sjálfstæður námsvefur fyrir nemendur sem undirbúa próf í raðtengingu, hliðtengingu og lögmáli Ohms. Hann þarf hvorki netþjón né nettengingu: opnaðu skrána í vafra.
+
+- **Yfirlit:** hvað þarf að kunna, flýtileiðir, samanburður á tengingunum, framvinda og „Prenta formúlublað“.
+- **Glósur:** tákn og einingar, lögmál Ohms, raðtenging, hliðtenging (með „formúlunni góðu“), einingabreytingar og algeng mistök, hver kafli með formúlu, tengimynd og reiknuðu dæmi. Prentvænar.
+- **Reiknivélar:** lögmál Ohms, raðtenging og hliðtenging (2–6 viðnám) með lausn skref fyrir skref, sannprófun og SVG-tengimynd.
+- **Æfingar:** 36 æfingar í 7 efnisflokkum með vísbendingum, lausnum og endurgjöf. 0,02 A og 20 mA teljast sama svar.
+- **Prófhamur:** 10 spurningar úr 51 spurningar banka, valfrjáls tímamælir, mat og útreikningar eftir skil.
+- **Formúlublað:** ein A4-síða, læsileg í svart-hvítu.
+
+Framvinda og stillingar vistast í `localStorage`. Útreikningar (`js/calc.js`), lausnarskref (`js/explain.js`), svaramat (`js/grade.js`), tengimyndir (`js/diagrams.js`) og verkefnabanki (`js/exercises.js`) eru aðskilin frá viðmótinu (`js/ui.js`, `js/views/`).
+
+Próf (Node 18+): `cd rafmagn && npm test` (útreikningar og svaramat) og `npm run test:ui` (vafrapróf, krefst Playwright og Chromium).

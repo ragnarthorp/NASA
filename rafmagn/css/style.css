@@ -1,0 +1,350 @@
+/* Rafmagnsfræði — undirbúningur fyrir próf. Rólegt, ljóst og læsilegt útlit. */
+:root {
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --ink: #13284a;
+  --muted: #475a78;
+  --line: #d3dce9;
+  --soft: #e9eff8;
+  --accent: #1c5bb8;
+  --accent-dark: #123f85;
+  --accent-soft: #e4edfb;
+  --series: #9a4a00;
+  --series-soft: #fff2e0;
+  --parallel: #0a6964;
+  --parallel-soft: #e0f4f2;
+  --ok: #1b6a39;
+  --ok-soft: #e5f4ea;
+  --bad: #a1251d;
+  --bad-soft: #fdecea;
+  --warn: #6f4b00;
+  --warn-soft: #fff5d6;
+  --focus: #e89b00;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(19, 40, 74, .06), 0 4px 14px rgba(19, 40, 74, .05);
+  --math: "Cambria Math", "STIX Two Math", "Latin Modern Math", Cambria, Georgia, serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 16px; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+img, svg { max-width: 100%; }
+a { color: var(--accent-dark); text-underline-offset: 2px; }
+h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 .5em; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); letter-spacing: -.01em; }
+h2 { font-size: clamp(1.3rem, 3vw, 1.6rem); }
+h3 { font-size: 1.15rem; }
+p { margin: 0 0 .8em; }
+ul, ol { margin: 0 0 .8em; padding-left: 1.4em; }
+li { margin: .2em 0; }
+var { font-family: var(--math); font-style: italic; font-size: 1.08em; }
+sub { font-size: .72em; font-style: normal; }
+small, .small { font-size: .88rem; }
+.muted { color: var(--muted); }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+.skip { position: absolute; left: 12px; top: -60px; background: var(--ink); color: #fff; padding: 8px 14px; border-radius: 8px; z-index: 10; }
+.skip:focus { top: 12px; }
+
+/* ---------- Haus og valmynd ---------- */
+.site-head { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+.site-head .wrap { display: flex; align-items: center; justify-content: space-between; gap: 10px 20px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 700; }
+.brand-mark { width: 36px; height: 36px; border-radius: 10px; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 20px; }
+.brand small { display: block; font-weight: 500; color: var(--muted); font-size: .8rem; line-height: 1.2; }
+.mainnav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.mainnav a {
+  display: block; padding: 7px 13px; border-radius: 999px; text-decoration: none; color: var(--ink);
+  font-weight: 600; font-size: .95rem; border: 1px solid transparent;
+}
+.mainnav a:hover { background: var(--soft); }
+.mainnav a[aria-current="page"] { background: var(--ink); color: #fff; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: 20px; padding-right: 20px; }
+main { padding: 26px 0 60px; outline: none; }
+main:focus, main:focus-visible { outline: none; }
+.site-foot { border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; padding: 18px 0 28px; }
+
+/* ---------- Grunneiningar ---------- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+.card + .card, .stack > * + * { margin-top: 18px; }
+.grid { display: grid; gap: 18px; }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.lead { font-size: 1.1rem; color: var(--muted); max-width: 62ch; }
+.eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.section-head h1, .section-head h2 { margin: 0; }
+
+button, .btn, input, select { font: inherit; color: inherit; }
+button, .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 42px; padding: 8px 16px; border-radius: 10px; border: 1px solid #b9c6da;
+  background: var(--surface); color: var(--ink); font-weight: 600; cursor: pointer; text-decoration: none; line-height: 1.2;
+}
+button:hover, .btn:hover { background: var(--soft); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-quiet { border-color: transparent; background: transparent; color: var(--accent-dark); text-decoration: underline; padding-left: 6px; padding-right: 6px; }
+.btn-danger { color: var(--bad); border-color: #e2b4af; }
+.btn-danger:hover { background: var(--bad-soft); }
+.btn-small { min-height: 34px; padding: 4px 11px; font-size: .9rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+
+label { font-weight: 600; }
+input[type="text"], select {
+  border: 1.5px solid #9fb0c9; border-radius: 9px; background: #fff; padding: 8px 11px; min-height: 44px;
+}
+input[type="text"] { width: 100%; min-width: 0; font-variant-numeric: tabular-nums; }
+input[aria-invalid="true"] { border-color: var(--bad); background: #fffafa; }
+select { padding-right: 28px; }
+.field { margin-bottom: 14px; }
+.field > label, .field > .label { display: block; margin-bottom: 4px; }
+.inputrow { display: flex; gap: 8px; align-items: stretch; }
+.inputrow input { flex: 1 1 auto; }
+.inputrow select, .unit-fixed { flex: 0 0 auto; min-width: 72px; }
+.unit-fixed { display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border-radius: 9px; background: var(--soft); font-weight: 600; }
+.help { font-size: .88rem; color: var(--muted); margin: 4px 0 0; }
+.msg { font-size: .92rem; margin: 6px 0 0; padding: 6px 10px; border-radius: 8px; }
+.msg:empty { display: none; }
+.msg-error { color: var(--bad); background: var(--bad-soft); }
+.msg-warn { color: var(--warn); background: var(--warn-soft); }
+fieldset { border: 0; padding: 0; margin: 0 0 14px; min-width: 0; }
+legend { font-weight: 700; margin-bottom: 6px; padding: 0; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice { display: flex; align-items: center; gap: 8px; border: 1.5px solid #b9c6da; border-radius: 10px; padding: 8px 14px; cursor: pointer; font-weight: 600; background: #fff; }
+.choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.choice input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+.choice:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ---------- Merki og litaáherslur (alltaf með texta) ---------- */
+.tag { display: inline-flex; align-items: center; gap: 5px; font-size: .8rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--soft); color: var(--ink); white-space: nowrap; }
+.tag-series { background: var(--series-soft); color: var(--series); }
+.tag-parallel { background: var(--parallel-soft); color: var(--parallel); }
+.tag-ok { background: var(--ok-soft); color: var(--ok); }
+.tag-bad { background: var(--bad-soft); color: var(--bad); }
+.tag-warn { background: var(--warn-soft); color: var(--warn); }
+.tone-series { border-top: 5px solid var(--series); }
+.tone-parallel { border-top: 5px solid var(--parallel); }
+.tone-ohm { border-top: 5px solid var(--accent); }
+
+/* ---------- Formúlur ---------- */
+.formula {
+  font-family: var(--math); font-size: 1.3rem; background: var(--soft); border-radius: 10px; padding: 10px 16px;
+  margin: 8px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px;
+}
+.formula > span { white-space: nowrap; }
+.formula var { font-size: 1em; }
+.formula-box { border: 2px solid var(--parallel); border-radius: 12px; padding: 12px 16px; background: var(--parallel-soft); margin: 12px 0; }
+.formula-box .formula { background: #fff; }
+.formula-box h4 { margin: 0 0 4px; color: var(--parallel); }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 .15em; line-height: 1.25; }
+.frac > .num { border-bottom: 1.5px solid currentColor; padding: 0 .25em .05em; }
+.frac > .den { padding: .05em .25em 0; }
+.math { font-family: var(--math); }
+
+/* ---------- Tengimyndir ---------- */
+.diagram { margin: 14px 0; padding: 10px; background: #fbfcfe; border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; text-align: center; }
+.diagram figcaption { font-size: .86rem; color: var(--muted); margin-top: 4px; text-align: left; }
+svg.circuit { display: block; margin: 0 auto; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+svg.circuit .w { fill: none; stroke: #13284a; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+svg.circuit .thick { stroke-width: 6; }
+svg.circuit .res { fill: #fff; stroke: #13284a; stroke-width: 2.5; }
+svg.circuit .dot { fill: #13284a; }
+svg.circuit .arrow { fill: #1c5bb8; }
+svg.circuit text { font-size: 15px; fill: #13284a; }
+svg.circuit .val { font-size: 14px; fill: #33476a; }
+svg.circuit .strong { font-weight: 700; }
+svg.circuit .drop { fill: #9a4a00; font-weight: 600; }
+svg.circuit .cur { fill: #1c4f9e; font-weight: 600; }
+svg.circuit .pol { font-size: 17px; font-weight: 700; }
+
+/* ---------- Yfirlit ---------- */
+.hero { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+.hero .card { height: 100%; }
+.quick a { display: block; text-decoration: none; color: inherit; height: 100%; }
+.quick a:hover .card { border-color: var(--accent); }
+.quick .card { height: 100%; }
+.quick h3 { color: var(--accent-dark); }
+.checklist { list-style: none; padding: 0; }
+.checklist li { padding-left: 1.6em; position: relative; }
+.checklist li::before { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 700; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-size: .9rem; background: var(--soft); }
+.table-wrap { overflow-x: auto; }
+.compare th:first-child { width: 24%; }
+.compare .h-series { color: var(--series); }
+.compare .h-parallel { color: var(--parallel); }
+
+.progress { height: 10px; background: var(--soft); border-radius: 999px; overflow: hidden; border: 1px solid var(--line); }
+.progress > span { display: block; height: 100%; background: var(--accent); }
+.topic-row { display: grid; grid-template-columns: minmax(0, 1fr) 140px auto; gap: 10px 16px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.topic-row:last-child { border-bottom: 0; }
+.stat { font-size: 2rem; font-weight: 800; line-height: 1.1; }
+
+/* ---------- Glósur ---------- */
+.notes-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 26px; align-items: start; }
+.toc { position: sticky; top: 84px; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc a { display: block; padding: 6px 10px; border-radius: 8px; text-decoration: none; color: var(--ink); font-weight: 600; font-size: .95rem; }
+.toc a:hover { background: var(--soft); }
+.note-section { scroll-margin-top: 84px; }
+.workorder { counter-reset: step; list-style: none; padding: 0; }
+.workorder li { counter-increment: step; padding-left: 2.4em; position: relative; margin: .5em 0; }
+.workorder li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 1.7em; height: 1.7em; border-radius: 50%; background: var(--ink); color: #fff; font-weight: 700; display: grid; place-items: center; font-size: .9em; }
+.example { background: #fbfcfe; border: 1px dashed #b5c3d8; border-radius: 12px; padding: 14px 16px; margin-top: 14px; }
+.example h4 { margin: 0 0 6px; }
+.pitfalls li { margin: .5em 0; }
+.choose-table td:first-child { font-weight: 600; }
+.ohm-triangle { max-width: 220px; margin: 0 auto; display: block; }
+
+/* ---------- Lausnarskref ---------- */
+.steps { list-style: none; padding: 0; margin: 0; counter-reset: s; }
+.steps > li { counter-increment: s; position: relative; padding: 10px 0 10px 2.6em; border-top: 1px solid var(--line); }
+.steps > li:first-child { border-top: 0; }
+.steps > li::before { content: counter(s); position: absolute; left: 0; top: 10px; width: 1.8em; height: 1.8em; border-radius: 50%; background: var(--accent-soft); color: var(--accent-dark); font-weight: 800; display: grid; place-items: center; }
+.steps h4 { margin: 0 0 4px; font-size: 1rem; }
+.steps .line { font-size: 1.08rem; margin: 4px 0; overflow-x: auto; }
+.steps .line .frac { font-size: .95em; }
+
+/* ---------- Reiknivélar ---------- */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid var(--line); margin-bottom: 18px; }
+.tabs [role="tab"] { border: 0; border-radius: 10px 10px 0 0; background: transparent; padding: 10px 16px; margin-bottom: -2px; border-bottom: 3px solid transparent; color: var(--muted); }
+.tabs [role="tab"][aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); background: var(--surface); }
+.calc-layout { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.r-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+.r-row label { font-family: var(--math); font-style: italic; font-size: 1.15rem; }
+.r-row .msg { grid-column: 2 / -1; margin-top: 0; }
+.r-count { font-size: .9rem; color: var(--muted); }
+.result-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.kv { background: var(--soft); border-radius: 10px; padding: 10px 12px; }
+.kv .k { font-size: .85rem; color: var(--muted); font-weight: 600; }
+.kv .v { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.notice { border-radius: 10px; padding: 12px 14px; background: var(--soft); }
+.notice-warn { background: var(--warn-soft); color: var(--warn); }
+.notice-ok { background: var(--ok-soft); color: var(--ok); }
+.notice-bad { background: var(--bad-soft); color: var(--bad); }
+
+/* ---------- Æfingar ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 18px; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.ex { scroll-margin-top: 84px; }
+.ex-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.ex-head h3 { margin: 4px 0 0; }
+.ex .prompt { font-size: 1.05rem; }
+.answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 4px 18px; }
+.fb { font-size: .95rem; margin: 6px 0 0; padding: 6px 10px; border-radius: 8px; }
+.fb:empty { display: none; }
+.fb-correct { background: var(--ok-soft); color: var(--ok); }
+.fb-wrong { background: var(--bad-soft); color: var(--bad); }
+.fb-invalid { background: var(--warn-soft); color: var(--warn); }
+.mc-options { display: grid; gap: 8px; }
+.mc-options .choice { font-weight: 500; }
+.mc-options .choice.is-correct { border-color: var(--ok); background: var(--ok-soft); }
+.mc-options .choice.is-wrong { border-color: var(--bad); background: var(--bad-soft); }
+.reveal { margin-top: 14px; border-radius: 12px; padding: 14px 16px; }
+.reveal h4 { margin: 0 0 6px; }
+.reveal-hint { background: var(--warn-soft); }
+.reveal-solution { background: #f7f9fd; border: 1px solid var(--line); }
+.overall { margin-top: 12px; font-weight: 700; }
+
+/* ---------- Prófhamur ---------- */
+.exam-bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.qnav { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; padding: 0; list-style: none; }
+.qnav button { min-width: 46px; min-height: 46px; padding: 4px; flex-direction: column; gap: 0; font-size: 1rem; line-height: 1.1; }
+.qnav button small { font-size: .62rem; font-weight: 600; }
+.qnav button.answered { background: var(--accent-soft); border-color: var(--accent); }
+.qnav button[aria-current="step"] { outline: 3px solid var(--ink); outline-offset: 1px; }
+.timer { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 1.2rem; }
+.timer.low { color: var(--bad); }
+.disclaimer { border-left: 5px solid var(--accent); }
+.score { font-size: 2.6rem; font-weight: 800; line-height: 1; }
+.review-answer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 18px; margin: 10px 0; }
+.review-answer dt { font-weight: 700; font-size: .9rem; color: var(--muted); }
+.review-answer dd { margin: 0 0 6px; }
+details.sol > summary { cursor: pointer; font-weight: 700; color: var(--accent-dark); padding: 6px 0; }
+
+/* ---------- Gluggi ---------- */
+dialog { border: 0; border-radius: 16px; padding: 24px; max-width: min(480px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(0, 0, 0, .25); color: var(--ink); }
+dialog::backdrop { background: rgba(19, 40, 74, .45); }
+dialog h2 { font-size: 1.3rem; }
+
+/* ---------- Formúlublað (A4) ---------- */
+.sheet { background: #fff; color: #000; max-width: 210mm; margin: 0 auto; padding: 12mm 12mm; border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 10.5pt; line-height: 1.38; }
+.sheet h1 { font-size: 17pt; margin: 0 0 1mm; }
+.sheet h2 { font-size: 11.5pt; margin: 0 0 1.5mm; padding-bottom: 1mm; border-bottom: 1.5px solid #000; }
+.sheet .sub { margin: 0 0 3mm; font-size: 9pt; }
+.sheet .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm 6mm; }
+.sheet section { break-inside: avoid; }
+.sheet .formula { font-size: 12pt; background: #fff; border: 1px solid #000; padding: 1.5mm 3mm; margin: 1.5mm 0; gap: 1mm 6mm; }
+.sheet .formula-box { border: 2px solid #000; background: #fff; padding: 1.5mm 3mm; margin: 1.5mm 0; }
+.sheet .formula-box h4 { color: #000; font-size: 10pt; }
+.sheet table { font-size: 9.5pt; }
+.sheet th, .sheet td { padding: 1mm 1.6mm; border: 1px solid #000; }
+.sheet thead th { background: #fff; }
+.sheet ul, .sheet ol { margin: 0; padding-left: 4.5mm; }
+.sheet li { margin: .3mm 0; }
+.sheet .diagram { padding: 0; margin: 1mm 0; border: 0; background: #fff; }
+.sheet .diagram svg { max-height: 36mm; width: auto; min-width: 0 !important; }
+.sheet .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+.sheet .pair figure { margin: 0; text-align: center; }
+.sheet .pair figcaption { font-size: 9pt; font-weight: 700; }
+.sheet .foot { margin-top: 3mm; font-size: 8.5pt; }
+
+/* ---------- Skjástærðir ---------- */
+@media (max-width: 900px) {
+  .hero, .notes-layout, .calc-layout { grid-template-columns: minmax(0, 1fr); }
+  .toc { position: static; }
+  .toc ol { display: flex; flex-wrap: wrap; gap: 4px; }
+  .toc { min-width: 0; }
+  .toc a { border: 1px solid var(--line); background: #fff; }
+}
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .wrap { padding-left: 16px; padding-right: 16px; }
+  .card { padding: 16px; }
+  .site-head { position: static; }
+  .mainnav { width: 100%; }
+  .mainnav ul { gap: 4px; }
+  .mainnav a { padding: 6px 10px; font-size: .9rem; }
+  .formula { font-size: 1.12rem; padding: 8px 12px; }
+  .topic-row { grid-template-columns: 1fr auto; }
+  .topic-row .progress { grid-column: 1 / -1; grid-row: 2; }
+  .review-answer { grid-template-columns: 1fr; }
+  .r-row { grid-template-columns: 36px minmax(0, 1fr) auto; }
+  .r-row .remove { grid-column: 2 / -1; justify-self: start; }
+  .sheet { padding: 6mm; }
+  .sheet .cols, .sheet .pair { grid-template-columns: 1fr; }
+}
+
+/* ---------- Prentun ---------- */
+@page { size: A4; margin: 10mm; }
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .site-head, .site-foot, .no-print, .skip, .toc, button, .actions, dialog { display: none !important; }
+  main { padding: 0; }
+  .wrap { max-width: none; padding: 0; }
+  .card { box-shadow: none; border: 1px solid #888; break-inside: avoid; }
+  .note-section { break-inside: auto; }
+  .notes-layout { display: block; }
+  .formula, .kv, .example, .formula-box { background: #fff !important; border: 1px solid #555; }
+  .tag { border: 1px solid #555; background: #fff !important; color: #000 !important; }
+  .tone-series, .tone-parallel, .tone-ohm { border-top: 3px solid #000; }
+  a { color: #000; text-decoration: none; }
+  svg.circuit text, svg.circuit .val, svg.circuit .drop, svg.circuit .cur { fill: #000 !important; }
+  svg.circuit .w, svg.circuit .res { stroke: #000; }
+  svg.circuit .arrow, svg.circuit .dot { fill: #000; }
+  .diagram { border: 0; background: #fff; overflow: visible; }
+  .diagram svg { min-width: 0 !important; }
+  /* Formúlublaðið fyllir eina A4-síðu. */
+  body.print-sheet .sheet { border: 0; box-shadow: none; padding: 0; max-width: none; font-size: 9.4pt; }
+  body.print-sheet .sheet-intro, body.print-sheet > .sr-only { display: none; }
+  body.print-sheet .sheet .diagram svg { max-height: 34mm; }
+  .diagram figcaption { color: #000; }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "rafmagn-rad-hlidtenging",
+  "private": true,
+  "description": "Glósur, reiknivélar, æfingar og æfingapróf í rað- og hliðtengingu viðnáma",
+  "scripts": {
+    "test": "node --test tests/calc.test.js tests/grade.test.js",
+    "test:ui": "node tests/ui.e2e.js",
+    "check": "for f in js/*.js js/views/*.js; do node --check \"$f\" || exit 1; done"
+  }
+}
