@@ -216,7 +216,7 @@ RF._jsPDF = require(path.join(root, 'vendor/jspdf.umd.min.js')).jsPDF;
   const po = await RF.pdf.problemOverview();
   ok(po.pages >= 1, 'verkefnayfirlit ' + po.pages + ' bls.');
   const sg = await RF.pdf.studyGuide();
-  ok(sg.pages === 36, 'dæmaleiðarvísir er 36 bls. (' + sg.pages + ', kvarði ' + sg.scale + ')');
+  ok(sg.pages === 38, 'dæmaleiðarvísir er 38 bls. (' + sg.pages + ', kvarði ' + sg.scale + ')');
   const ex = await RF.pdf.practiceExam();
   ok(ex.pages >= 5 && ex.pages <= 12, 'æfingapróf ' + ex.pages + ' bls.');
   const head = Buffer.from(fs.doc.output('arraybuffer')).slice(0, 5).toString();

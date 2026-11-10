@@ -44,7 +44,7 @@ node tools/build-pdfs.js
 | Hugtakaspurningar | `js/data/concepts.js` |
 | Kennsluefni í fjórum köflum | `js/data/lessons.js` |
 | PDF-útflutningur (jsPDF og innfellt letur) | `js/pdf.js` |
-| Dæmaleiðarvísir (36 bls., myndrænn) | `js/guide-pdf.js` |
+| Dæmaleiðarvísir (38 bls., myndrænn, með forsíðu og flipum) | `js/guide-pdf.js` |
 | Æfingapróf á blaði með lausnablaði | `js/exam-pdf.js` |
 | Viðmót: græjur, dæmi og einkakennari, síður og leiðarkerfi | `js/ui/*.js` |
 
