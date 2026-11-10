@@ -43,6 +43,9 @@
     { id: 'c2-14', ch: 2, cat: 'eiginleikar', q: 'Hvaða efni hefur MEST eðlisviðnám?', opts: ['Krómnikkel', 'Kopar', 'Ál', 'Silfur'], a: 0, ex: 'Krómnikkel ≈ 1,1 Ω·mm²/m – hentar í hitaþræði.', src: 'almennt' },
     { id: 'c2-15', ch: 2, cat: 'eiginleikar', q: 'Hvernig er þverflatarmál reiknað út frá þvermáli d?', opts: ['A = π·d²/4', 'A = π·d²', 'A = 2·π·d', 'A = d²'], a: 0, ex: 'A = π·r² og r = d/2, svo A = π·d²/4. Dæmi: d = 2 mm → A = 3,14 mm².', src: '3.3' },
     { id: 'c2-16', ch: 2, cat: 'eiginleikar', q: 'Koparleiðari og álleiðari eru jafnlangir og eiga að hafa sama viðnám. Hvor þarf stærra þverflatarmál?', opts: ['Álleiðarinn', 'Koparleiðarinn', 'Þeir þurfa jafnt'], a: 0, ex: 'Ál hefur meira ρ og þarf því gildari leiðara: A_ál = A_kopar·0,0278/0,0178 ≈ 1,56·A_kopar.', src: '3.3' },
+    { id: 'c2-17', ch: 2, cat: 'eiginleikar', q: 'Eðlisviðnám kopars er 0,0178 Ω·mm²/m. Hver er eðlisleiðni kopars (γ = 1/ρ)?', opts: ['Um 56 m/(Ω·mm²)', 'Um 0,018 m/(Ω·mm²)', 'Um 5,6 m/(Ω·mm²)', 'Um 178 m/(Ω·mm²)'], a: 0, ex: 'γ = 1/0,0178 = 56,2 m/(Ω·mm²).', src: '3.3' },
+    { id: 'c2-18', ch: 2, cat: 'eiginleikar', q: 'Vír hefur viðnámið 0,5 Ω. Hver er leiðni hans (G = 1/R)?', opts: ['2 S (siemens)', '0,5 S', '0,2 S', '5 S'], a: 0, ex: 'G = 1/R = 1/0,5 = 2 S. Lítið viðnám → mikil leiðni.', src: 'almennt' },
+    { id: 'c2-19', ch: 2, cat: 'eiginleikar', q: 'Dæmi gefur eðlisleiðni γ í stað eðlisviðnáms. Hvernig reiknarðu viðnámið?', opts: ['R = l/(γ·A)', 'R = γ·l/A', 'R = γ·A/l', 'R = A/(γ·l)'], a: 0, ex: 'ρ = 1/γ, svo R = ρ·l/A = l/(γ·A).', src: '3.3' },
     /* ---- Kafli 3 ---- */
     { id: 'c3-1', ch: 3, cat: 'vidnam', q: 'Hvaða formúla gefur viðnám leiðara?', opts: ['R = ρ·l/A', 'R = ρ·A/l', 'R = l·A/ρ', 'R = ρ/(l·A)'], a: 0, ex: 'Lengd í teljara, þverflatarmál í nefnara.', src: '3.3' },
     { id: 'c3-2', ch: 3, cat: 'vidnam', q: 'Hvaða formúla gefur lengd leiðara?', opts: ['l = R·A/ρ', 'l = R·ρ/A', 'l = ρ·A/R', 'l = R/(ρ·A)'], a: 0, ex: 'Úr R = ρ·l/A: margfalda með A, deila með ρ.', src: '3.3' },
@@ -67,6 +70,7 @@
     { id: 'c4-10', ch: 4, cat: 'spennufall', q: 'Þegar spennufall er reiknað í prósentum, með hvaða spennu er deilt?', opts: ['Spennu spennugjafans U₁', 'Spennunni á álaginu U₂', 'Spennufallinu ΔU', 'Straumnum'], a: 0, ex: '% = ΔU/U₁·100.', src: '3.4' },
     { id: 'c4-11', ch: 4, cat: 'spennufall', q: 'Leyft viðnám tvíleiðara er 0,5 Ω og R·A/ρ = 42 m. Hve langt má vera að álaginu?', opts: ['21 m', '42 m', '84 m', '10,5 m'], a: 0, ex: '42 m er heildarlengd vírsins (fram og til baka). Fjarlægðin er helmingur: 21 m.', src: '3.4' },
     { id: 'c4-12', ch: 4, cat: 'spennufall', q: 'Hvaða stærðir þarftu til að reikna spennufall í tvíleiðara? (Veldu öll sem eiga við.)', opts: ['Straum I', 'Fjarlægð l', 'Þverflatarmál A', 'Eðlisviðnám ρ', 'Lit kapalsins', 'Spennu álagsins'], a: [0, 1, 2, 3], ex: 'ΔU = I·ρ·l·2/A.', src: '3.4' },
+    { id: 'c4-13', ch: 4, cat: 'spennufall', q: 'Tafla gefur 220 V. Ofninn hefur 21,6 Ω og leiðslan 0,4 Ω samtals. Hver er straumurinn?', opts: ['10 A', '10,2 A', '550 A', '9,8 A'], a: 0, ex: 'R_H = 0,4 + 21,6 = 22 Ω. I = U/R_H = 220/22 = 10 A. Nota heildarviðnámið!', src: '3.4' },
   ];
   RF.concept = (id) => RF.concepts.find((c) => c.id === id);
   RF.conceptCorrect = (c, chosen) => {

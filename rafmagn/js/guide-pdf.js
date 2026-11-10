@@ -22,6 +22,10 @@
     π: ['π', 'Pí', 'Alltaf um 3,14. Er notað þegar reiknað er með hringjum.', '–', 'R'],
     sub: ['t_1  t_2', 'Litlu tölurnar niðri', '1 = í byrjun, 2 = í lokin. U_1 = við spennugjafann, U_2 = við tækið (álagið).', '–', 'U'],
     Rl: ['R_l', 'Litla l-ið niðri = leiðsla', 'R_l er viðnám leiðslunnar sjálfrar (víranna), ekki tækisins.', 'Ω', 'U'],
+    γ: ['γ', 'Eðlisleiðni (gamma, á glærum G)', 'Hve VEL efnið leiðir. Öfugt við ρ: γ = 1/ρ. Kopar ≈ 56.', 'm/(Ω·mm²)', 'R'],
+    G: ['G', 'Leiðni', 'Hve vel EINN vír eða hlutur leiðir. Öfugt við viðnám: G = 1/R.', 'S (siemens)', 'R'],
+    ohm: ['U=I·R', 'Ohmslögmál', 'Spenna = straumur sinnum viðnám. Má snúa við: I = U/R og R = U/I.', '–', 'U'],
+    RH: ['R_H', 'Heildarviðnám', 'Viðnám leiðslunnar og tækisins lagt saman: R_H = R_l + R_álag.', 'Ω', 'U'],
     pct: ['%', 'Prósent', 'Hluti af hundraði. 5 % af 230 V = 11,5 V.', '%', 'U'],
   };
 
@@ -56,8 +60,8 @@
       measure(doc, w, s) {
         const { mathBox } = L();
         this.lines = L().Para({ src: meaning, size: 10.2 }).measure(doc, w - 74 * s, s);
-        this.h = Math.max(11.4 * s, 5.2 * s + this.lines);
-        return this.h + 1.0 * s;
+        this.h = Math.max(10.2 * s, 4.8 * s + this.lines);
+        return this.h + 0.8 * s;
       },
       draw(doc, x, y, w, s) {
         const { mathBox, draw, setF, famColor, lighten, Para, INK, MUTED } = L();
@@ -65,10 +69,10 @@
         doc.setFillColor(lighten(col, 0.97)); doc.setDrawColor(lighten(col, 0.6)); doc.setLineWidth(0.25 * s);
         doc.roundedRect(x, y, w, this.h, 2.5 * s, 2.5 * s, 'FD');
         doc.setFillColor('#ffffff'); doc.setDrawColor(col); doc.setLineWidth(0.7 * s);
-        doc.roundedRect(x + 2 * s, y + this.h / 2 - 5.4 * s, 20 * s, 10.8 * s, 5.4 * s, 5.4 * s, 'FD');
-        let b = mathBox(doc, sym, 17 * s, true);
-        if (b.w > 17 * s) b = mathBox(doc, sym, 17 * s * (17 * s) / b.w, true);
-        draw(doc, b, x + 12 * s - b.w / 2, y + this.h / 2 + 2.2 * s, col);
+        doc.roundedRect(x + 2 * s, y + this.h / 2 - 4.5 * s, 20 * s, 9 * s, 4.5 * s, 4.5 * s, 'FD');
+        let b = mathBox(doc, sym, 15 * s, true);
+        if (b.w > 17 * s) b = mathBox(doc, sym, 15 * s * (17 * s) / b.w, true);
+        draw(doc, b, x + 12 * s - b.w / 2, y + this.h / 2 + 1.9 * s, col);
         setF(doc, 'bold', 11.5 * s); doc.setTextColor(INK);
         doc.text(name, x + 26 * s, y + 5.6 * s);
         Para({ src: meaning, size: 10.2 }).measure(doc, w - 74 * s, s);
@@ -293,7 +297,7 @@
   }
 
   function tablesPage1() {
-    const { Break, Para, Table, famColor } = L();
+    const { Break, Para, Table, Box, famColor } = L();
     const alphaRow = (k) => { const m = RF.mat(k); const a = m.alpha; return [(m.srcA === 'kennari' ? '**' + m.name + '**' : m.name + '*'), a >= 0.001 ? RF.util.fmt(a, 5) : '≈ 0', a >= 0.001 ? 'Um ' + RF.util.fmt(a * 100, 2) + ' % á hverja gráðu' : 'Breytist nær ekkert', a >= 0.001 ? RF.util.fmt(10 * (1 + a * 10), 3) + ' Ω' : '10 Ω']; };
     return [
       Break(),
@@ -301,17 +305,44 @@
       Label('Eðlisviðnám ρ – hve tregt er efnið?', famColor('R'), { n: 'A' }),
       Para({ src: '**Stutt súla = lítið ρ = góður leiðari.**  Eining: Ω·mm²/m (við 20 °C).  Kopar er grænn: hann er notaður mest.', size: 11, gapAfter: 1.5 }),
       RhoBars(['silfur', 'kopar', 'gull', 'al', 'volfram', 'nikkel', 'platina', 'jarn']),
+      Box([Para({ src: '**Eðlisleiðni γ = 1/ρ** – hve VEL efnið leiðir (öfugt við ρ). Mikið γ = góður leiðari.', size: 11, gapAfter: 0.6 }), Para({ src: 'Silfur **59,9** · Kopar **56,2** · Gull **41,0** · Ál **36,0** · Járn **10,0**   (m/(Ω·mm²))', size: 11, gapAfter: 0.6 }), Para({ src: 'Fáirðu γ í dæmi: **ρ = 1/γ**, t.d. 1/56 = 0,0179. Sjá dæmi L1 á bls. ' + pageOf('L1') + '.', size: 10.5, color: '#3d4a55', gapAfter: 0 })], { color: famColor('R'), pad: 1.8, gapAfter: 2.5 }),
       Para({ src: '**Mótstöðuefni** hafa MIKIÐ ρ. Þau eru notuð þegar maður VILL fá viðnám og hita:', size: 11, gapAfter: 1 }),
       Table([['Efni', 'ρ (Ω·mm²/m)', 'Miðað við kopar', 'Notkun'], ...['manganin', 'konstantan', 'kromnikkel'].map((k) => { const m = RF.mat(k); return [(m.src === 'kennari' ? '**' + m.name + '**' : m.name + '*'), RF.util.fmt(m.rho, 4), 'um ' + Math.round(m.rho / 0.0178) + ' sinnum meira', m.use]; })], [1.2, 1, 1.3, 2.6], { size: 10.5, zebra: true, gapAfter: 1 }),
       Para({ src: '**Feitletrað** = gildi frá kennara.  * = almennt gildi úr handbókum (ekki í gögnum kennara).', size: 9.5, color: '#55636f', gapAfter: 3 }),
       Label('Hitastuðull α – hve mikið breytist viðnámið við hita?', famColor('T'), { n: 'B' }),
       Table([['Efni', 'α (1/°C)', 'Á mannamáli', '10 Ω hitað um 10 °C verður'], ...['kopar', 'nikkel', 'al', 'silfur', 'platina', 'jarn', 'volfram', 'manganin'].map(alphaRow)], [1.3, 0.9, 2.1, 1.6], { size: 10.5, zebra: true, gapAfter: 3 }),
+      Break(),
+      mark(headerBand('Mikilvægar töflur: flokkar efna', 'Leiðarar, einangrarar og galvanhúðun', null, 'bls. ' + pageOf('flokkar')), 'flokkar'),
       Label('Flokkar efna – hvað ber strauminn?', famColor('U'), { n: 'C' }),
-      Table([['Flokkur', 'Hvað ber strauminn?', 'Dæmi'], ['**Málmar**', 'Frjálsar rafeindir', 'Kopar, ál, silfur, gull'], ['**Vökvar** (raflausnir)', 'Jónir (hlaðnar agnir)', 'Saltvatn, sýra, rafgeymir'], ['**Lofttegundir**', 'Aðeins jónað gas', 'Elding, neisti, flúrpera'], ['**Hálfleiðarar**', 'Rafeindir – meira þegar heitt', 'Kísill, german, díóður'], ['**Einangrarar**', 'Nær ekkert', 'Gler, postulín, plast, gúmmí']], [1.4, 1.8, 2], { size: 10.5, zebra: true, gapAfter: 0.5 }),
-      Para({ src: 'Flokkunin byggir á almennri þekkingu – glærur 3.1/3.2 fylgdu ekki með gögnunum.', size: 9, color: '#55636f', gapAfter: 0 }),
+      Table([['Flokkur', 'Hvað ber strauminn?', 'Dæmi'], ['**Málmar**', 'Frjálsar rafeindir', 'Kopar, ál, silfur, gull'], ['**Vökvar** (raflausnir)', 'Jónir (hlaðnar agnir)', 'Saltvatn, sýra, rafgeymir'], ['**Lofttegundir**', 'Aðeins jónað gas', 'Elding, neisti, flúrpera'], ['**Hálfleiðarar**', 'Rafeindir – meira þegar heitt', 'Kísill, german, díóður'], ['**Einangrarar**', 'Nær ekkert', 'Gler, postulín, plast, gúmmí']], [1.4, 1.8, 2], { size: 12, zebra: true, gapAfter: 0.5 }),
+      Para({ src: 'Flokkunin byggir á almennri þekkingu – glærur 3.1/3.2 fylgdu ekki með gögnunum.', size: 9, color: '#55636f', gapAfter: 2.5 }),
+      Label('Galvanhúðun (galvanísering) – straumur í vökva', famColor('U'), { n: 'D' }),
+      Side(62, 40, galvFig, [
+        Para({ src: '**Til hvers?** Að setja þunnt málmlag (sink, nikkel, króm, silfur) á hlut, svo hann ryðgi ekki eða verði fallegri.', size: 11, gapAfter: 1.2 }),
+        Para({ src: '**1.** Hluturinn fer á **mínusskautið (−)**.', size: 11, gapAfter: 0.5 }),
+        Para({ src: '**2.** Húðunarmálmurinn fer á **plússkautið (+)**.', size: 11, gapAfter: 0.5 }),
+        Para({ src: '**3.** Bæði ofan í **raflausn**. Straumurinn ber **jákvæðar málmjónir** yfir á hlutinn, þar sem þær setjast sem lag.', size: 11, gapAfter: 1.2 }),
+        Para({ src: '**Mundu:** plúsjónir fara alltaf að **mínus**. Heitgalvanísering (stáli dýft í bráðið sink) notar ekki straum.', size: 10.2, color: '#3d4a55', gapAfter: 0 }),
+      ]),
     ];
   }
 
+  function galvFig(doc, x, y, w, h, s) {
+    const { setF } = L();
+    const tx = x + 4 * s, tw = w - 10 * s, ty = y + 12 * s, th = 26 * s;
+    doc.setFillColor('#eef8f6'); doc.setDrawColor('#0b7a70'); doc.setLineWidth(0.5 * s);
+    doc.rect(tx, ty, tw, th, 'FD');
+    const ax = tx + 9 * s, kx = tx + tw - 13 * s;
+    doc.setFillColor('#fbeee3'); doc.setDrawColor('#b8692f'); doc.rect(ax, ty - 6 * s, 4 * s, th, 'FD');
+    doc.setFillColor('#f1f3f5'); doc.setDrawColor('#55636f'); doc.rect(kx, ty - 6 * s, 4 * s, th, 'FD');
+    setF(doc, 'bold', 12 * s); doc.setTextColor('#b8692f'); doc.text('+', ax + 0.6 * s, ty - 7.5 * s);
+    doc.setTextColor('#55636f'); doc.text('−', kx + 0.6 * s, ty - 7.5 * s);
+    setF(doc, 'normal', 7.5 * s); doc.setTextColor('#14202b');
+    doc.text('sink', ax - 1 * s, ty + th + 4 * s); doc.text('hlutur', kx - 2 * s, ty + th + 4 * s);
+    doc.setDrawColor('#b8692f'); doc.setLineWidth(0.5 * s);
+    [0, 1, 2].forEach((i) => { const yy = ty + 6 * s + i * 7 * s, x1 = ax + 7 * s, x2 = kx - 3 * s; doc.circle(x1 + (x2 - x1) * (0.2 + i * 0.25), yy, 1.6 * s, 'S'); doc.line(x1 + (x2 - x1) * (0.2 + i * 0.25) + 2.5 * s, yy, x2, yy); doc.line(x2, yy, x2 - 1.5 * s, yy - 1 * s); doc.line(x2, yy, x2 - 1.5 * s, yy + 1 * s); });
+    setF(doc, 'normal', 7 * s); doc.setTextColor('#0b7a70'); doc.text('raflausn', tx + tw / 2 - 5 * s, ty + th - 1.5 * s);
+  }
   function circleFig(doc, x, y, w, h, s) {
     const { setF, draw, mathBox } = L();
     const cx = x + w / 2 - 2 * s, cy = y + 22 * s, R = 17 * s;
@@ -331,7 +362,7 @@
     const { Break, Para, Table, Formula, Box, famColor } = L();
     const f = RF.util.fmtS, g2 = (x) => RF.util.fmt(x, 3);
     const ds = [0.5, 0.8, 1, 1.13, 1.38, 1.6, 1.78, 2, 2.26, 2.5, 3];
-    const forms = [['Viðnám', 'R = \\f{ρ·l}{A}', 'V1'], ['Lengd', 'l = \\f{R·A}{ρ}', 'V2'], ['Eðlisviðnám', 'ρ = \\f{R·A}{l}', 'V3'], ['Þverflatarmál', 'A = \\f{ρ·l}{R}', 'V4'], ['Hitastig', 'Δt = \\f{R_{t2} − R_{t1}}{R_{t1}·α}', 'V5'], ['Viðnám við nýjan hita', 'R_{t2} = R_{t1} ± R_{t1}·α·Δt', 'V6'], ['Viðnám kapals (2 vírar)', 'R_l = \\f{ρ·l·2}{A}', 'S1'], ['Spennufall', 'ΔU = I·R_l', 'S2'], ['Spennufall í %', '% = \\f{ΔU}{U_1}·100', 'S3'], ['Leyft viðnám', 'R = \\f{ΔU}{I}', 'S4'], ['Spenna á tæki / gjafa', 'U_2 = U_1 − ΔU', 'S7']];
+    const forms = [['Viðnám', 'R = \\f{ρ·l}{A}', 'V1'], ['Lengd', 'l = \\f{R·A}{ρ}', 'V2'], ['Eðlisviðnám', 'ρ = \\f{R·A}{l}', 'V3'], ['Þverflatarmál', 'A = \\f{ρ·l}{R}', 'V4'], ['Eðlisleiðni', 'γ = \\f{1}{ρ}', 'L1'], ['Leiðni vírs', 'G = \\f{1}{R}', 'L1'], ['Viðnám út frá γ', 'R = \\f{l}{γ·A}', 'L1'], ['Hitastig', 'Δt = \\f{R_{t2} − R_{t1}}{R_{t1}·α}', 'V5'], ['Viðnám við nýjan hita', 'R_{t2} = R_{t1} ± R_{t1}·α·Δt', 'V6'], ['Viðnám kapals (2 vírar)', 'R_l = \\f{ρ·l·2}{A}', 'S1'], ['Spennufall', 'ΔU = I·R_l', 'S2'], ['Spennufall í %', '% = \\f{ΔU}{U_1}·100', 'S3'], ['Leyft viðnám', 'R = \\f{ΔU}{I}', 'S4'], ['Spenna á tæki / gjafa', 'U_2 = U_1 − ΔU', 'S7'], ['Heildarviðnám', 'R_H = R_l + R_{álag}', 'H1'], ['Straumur (Ohmslögmál)', 'I = \\f{U}{R_H}', 'H1']];
     return [
       Break(),
       mark(headerBand('Mikilvægar töflur: sverleiki og einingar', 'Þvermál → mm², kaplar, einingar, allar formúlur', null, 'bls. ' + pageOf('tables2')), 'tables2'),
@@ -353,8 +384,9 @@
       Table([['Ef þú sérð …', 'Breyttu í …', 'Dæmi'], ['km (kílómetrar)', 'm: sinnum 1000', '0,2 km = 200 m'], ['cm / mm (lengd)', 'm: deilt með 100 / 1000', '50 cm = 0,5 m'], ['kΩ (kíló-óm)', 'Ω: sinnum 1000', '2,2 kΩ = 2200 Ω'], ['mA (milliamper)', 'A: deilt með 1000', '500 mA = 0,5 A'], ['kV (kílóvolt)', 'V: sinnum 1000', '0,4 kV = 400 V'], ['% (prósent)', 'hlutfall: deilt með 100', '5 % = 0,05']], [1.5, 1.7, 1.5], { size: 10.5, zebra: true, gapAfter: 3.5 }),
       Break(),
       mark(headerBand('Allar formúlurnar á einum stað', 'Finndu það sem þú átt að finna – farðu svo á síðuna', null, 'bls. ' + pageOf('forms')), 'forms'),
+      Box([Para({ src: '**Svona lestu formúlu:**   strik = **deilt með** (efra deilt með neðra)  ·  punktur **·** = **sinnum**  ·  **=** „er jafnt og“', size: 10.8, gapAfter: 0.2 }), Formula('R = \\f{ρ·l}{A}   →   „R er ρ sinnum l, deilt með A“', { size: 13, gap: 0.2 })], { color: '#1b3a57', gapAfter: 3 }),
       Para({ src: 'Vinstra megin er það sem spurt er um. Í miðjunni er formúlan. Til hægri er síðan þar sem dæmið er útskýrt.', size: 11.5, gapAfter: 2.5 }),
-      Table([['Ég á að finna …', 'Formúla', 'Dæmi', 'Bls.'], ...forms.map(([a, fm, id]) => [a, fm, '**' + id + '**', String(pageOf(id))])], [1.9, 2.6, 0.6, 0.6], { size: 14, zebra: true, gapAfter: 3 }),
+      Table([['Ég á að finna …', 'Formúla', 'Dæmi', 'Bls.'], ...forms.map(([a, fm, id]) => [a, fm, '**' + id + '**', String(pageOf(id))])], [1.9, 2.6, 0.6, 0.6], { size: 12, zebra: true, gapAfter: 3 }),
       Box([Para({ src: '**Spennufall í kapli með tveimur vírum, í einu skrefi:**', size: 12, gapAfter: 0.8 }), Formula('ΔU = I·\\f{ρ·l·2}{A}', { size: 18, gap: 0.6, indent: 4 }), Para({ src: '**Hámarkslengd:**  l = R·A/(ρ·2)      **Nauðsynlegt þverflatarmál:**  A = ρ·l·2/R', size: 12, gapAfter: 0 })], { color: famColor('U'), gapAfter: 0 }),
     ];
   }
@@ -364,8 +396,7 @@
     return [
       mark(headerBand('Hvað þýða stafirnir?', 'Orðabók – flettu hingað þegar þú ert óviss', null, 'bls. 1'), 'sym'),
       Box([Para({ src: '**Hugsaðu um rafmagn eins og vatn í slöngu:**  spennan **U** ýtir · straumurinn **I** rennur · viðnámið **R** þrengir að.', size: 11.5, gapAfter: 0.3 })], { color: '#0b7a70', fill: '#e3f6f3', gapAfter: 2.4 }),
-      ...['R', 'I', 'U', 'ρ', 'l', 'A', 'd', 'r', 't', 'α', 'Δ', 'π', 'sub', 'Rl', 'pct'].map(SymRow),
-      Box([Para({ src: '**Svona lestu formúlu:**   strik = **deilt með** (efra deilt með neðra)  ·  punktur **·** = **sinnum**  ·  **=** „er jafnt og“', size: 10.8, gapAfter: 0.2 }), Formula('R = \\f{ρ·l}{A}   →   „R er ρ sinnum l, deilt með A“', { size: 13, gap: 0.2 })], { color: '#1b3a57', gapAfter: 0 }),
+      ...['R', 'I', 'U', 'ohm', 'ρ', 'γ', 'G', 'l', 'A', 'd', 'r', 't', 'α', 'Δ', 'π', 'sub', 'Rl', 'RH', 'pct'].map(SymRow),
     ];
   }
 
@@ -393,11 +424,11 @@
       arrow(qx + qw, y + 16 * s + bh / 2, rx, y + 16 * s + bh / 2, 'JÁ');
       box(rx, y + 16 * s, rw, bh, lighten(C.T, 0.94), C.T, '**HITI**\nbls. ' + pageOf('V5') + '–' + (pageOf('V6') + 1), 12, true, C.T);
       arrow(qx + qw / 2, y + 16 * s + bh, qx + qw / 2, y + 37 * s, 'NEI');
-      box(qx, y + 37 * s, qw, bh, '#ffffff', C.U, 'Er **A** (straumur), **V** (spenna),\nkapall eða tvíleiðari?', 11, false);
+      box(qx, y + 37 * s, qw, bh, '#ffffff', C.U, 'Er **A** (straumur), **V** (spenna),\nkapall, tvíleiðari eða tæki/álag?', 11, false);
       arrow(qx + qw, y + 37 * s + bh / 2, rx, y + 37 * s + bh / 2, 'JÁ');
-      box(rx, y + 37 * s, rw, bh, lighten(C.U, 0.94), C.U, '**SPENNUFALL**\nbls. ' + pageOf('S1') + '–' + (pageOf('S7') + 1), 12, true, C.U);
+      box(rx, y + 37 * s, rw, bh, lighten(C.U, 0.94), C.U, '**SPENNUFALL**\nbls. ' + pageOf('S1') + '–' + (pageOf('H1') + 1), 12, true, C.U);
       arrow(qx + qw / 2, y + 37 * s + bh, qx + qw / 2, y + 58 * s, 'NEI');
-      box(qx, y + 58 * s, qw, bh, lighten(C.R, 0.94), C.R, '**VÍR OG EFNI**  (m, mm², Ω, kopar …)\nbls. ' + pageOf('V1') + '–' + (pageOf('V4') + 1), 11.5, true, C.R);
+      box(qx, y + 58 * s, qw, bh, lighten(C.R, 0.94), C.R, '**VÍR OG EFNI**  (m, mm², Ω, kopar …)\nbls. ' + pageOf('V1') + '–' + (pageOf('L1') + 1), 11.5, true, C.R);
     });
   }
   function famPanel(fam, title, rows) {
@@ -410,9 +441,9 @@
       Break(),
       mark(headerBand('Hvaða dæmi er þetta?', 'Svaraðu spurningunum – fylgdu örvunum', null, 'bls. ' + pageOf('which')), 'which'),
       flowChart(),
-      famPanel('R', 'Vír og efni  ·  m, mm², Ω, kopar, ál', [['Hve mikið bremsar vírinn?  (viðnám R)', 'V1'], ['Hve langur er vírinn?  (lengd l)', 'V2'], ['Úr hvaða efni?  (ρ)', 'V3'], ['Nýtt efni, sama viðnám  (A)', 'V4']]),
+      famPanel('R', 'Vír og efni  ·  m, mm², Ω, kopar, ál', [['Hve mikið bremsar vírinn?  (viðnám R)', 'V1'], ['Hve langur er vírinn?  (lengd l)', 'V2'], ['Úr hvaða efni?  (ρ)', 'V3'], ['Nýtt efni, sama viðnám  (A)', 'V4'], ['Hve VEL leiðir vírinn?  (leiðni G, eðlisleiðni γ)', 'L1']]),
       famPanel('T', 'Hiti  ·  °C, hitnar, kólnar, α', [['Hve heitt varð?  (tvö viðnám gefin)', 'V5'], ['Nýtt viðnám við nýjan hita  (tvö hitastig gefin)', 'V6']]),
-      famPanel('U', 'Spennufall  ·  A, V, kapall, tvíleiðari', [['Viðnám kapalsins  (R_l)', 'S1'], ['Hve mörg volt tapast?  (ΔU)', 'S2'], ['Hve mörg % tapast?', 'S3'], ['Hve langur má kapallinn vera?', 'S4'], ['Hve sver þarf kapallinn að vera?  (mm²)', 'S5'], ['Volt sem tapast í langri leiðslu', 'S6'], ['Spenna gjafans  (U₁)', 'S7']]),
+      famPanel('U', 'Spennufall  ·  A, V, kapall, tvíleiðari', [['Viðnám kapalsins  (R_l)', 'S1'], ['Hve mörg volt tapast?  (ΔU)', 'S2'], ['Hve mörg % tapast?', 'S3'], ['Hve langur má kapallinn vera?', 'S4'], ['Hve sver þarf kapallinn að vera?  (mm²)', 'S5'], ['Volt sem tapast í langri leiðslu', 'S6'], ['Spenna gjafans  (U₁)', 'S7'], ['Heildarviðnám og straumur  (R_H, I)', 'H1']]),
       Box([Para({ src: '**1.**  Kapall / tvíleiðari → rafmagnið fer **fram og til baka** → **× 2**', size: 12, gapAfter: 1 }), Para({ src: '**2.**  Lengd í **metrum**, sverleiki í **mm²**. Þvermál er ekki það sama og mm².', size: 12, gapAfter: 1 }), Para({ src: '**3.**  Skrifaðu alltaf **einingu** með svarinu (Ω, m, mm², V, °C, %).', size: 12, gapAfter: 0 })], { title: 'Þrjár reglur sem gilda alltaf', color: '#123047', gapAfter: 0 }),
     ];
   }
@@ -466,11 +497,83 @@
     return out;
   }
 
+
+  /* Handskrifaðar dæmasíður fyrir efni sem ekki er í æfingadæmum kennarans */
+  const MANUAL = {
+    L1: {
+      title: 'Leiðni og eðlisleiðni', fam: 'R', pic: 'wire', source: 'æfingadæmi (byggt á glærum 3.3)',
+      say: 'Hve VEL leiðir vírinn? Leiðni er andstæðan við viðnám.',
+      clues: ['„**leiðni**“ / „**eðlisleiðni**“', 'eining **S** (siemens)', 'eining **m/(Ω·mm²)**', 'γ eða G gefið í stað ρ'],
+      find: 'Leiðni **G** eða eðlisleiðni **γ**', syms: ['γ', 'ρ', 'G', 'R'],
+      formulas: ['γ = \\f{1}{ρ}', 'G = \\f{1}{R}', 'R = \\f{l}{γ·A}'],
+      text: 'Koparvír er 100 m langur og 2,5 mm² að þverflatarmáli. Eðlisviðnám kopars er 0,0178 Ω·mm²/m. a) Hver er eðlisleiðni kopars? b) Hvert er viðnám vírsins? c) Hver er leiðni vírsins?',
+      given: ['**l** = 100 m  (lengd)', '**A** = 2,5 mm²  (þverflatarmál)', '**ρ** = 0,0178 Ω·mm²/m  (kopar)'],
+      steps: [
+        ['a) Eðlisleiðnin', 'Eðlisleiðni er 1 deilt með ρ. Lítið ρ → mikil eðlisleiðni → góður leiðari.', ['γ = \\f{1}{ρ} = \\f{1}{0,0178} = 56,18 m/(Ω·mm²)']],
+        ['b) Viðnám vírsins', 'Venjulega formúlan R = ρ·l/A. Ef dæmið gefur γ í stað ρ: deildu með γ í staðinn, R = l/(γ·A). Útkoman er sú sama.', ['R = \\f{ρ·l}{A} = \\f{0,0178·100}{2,5} = 0,712 Ω', 'eða:  R = \\f{l}{γ·A} = \\f{100}{56,18·2,5} = 0,712 Ω']],
+        ['c) Leiðni vírsins', 'Leiðni er 1 deilt með viðnáminu. Lítið viðnám → mikil leiðni. Eining: siemens (S).', ['G = \\f{1}{R} = \\f{1}{0,712} = 1,40 S']],
+      ],
+      answer: 'γ = **56,18 m/(Ω·mm²)** · R = **0,712 Ω** · G = **1,40 S**',
+      trap: 'Á glærum kennarans er **G** notað um eðlisleiðni. Í mörgum bókum er G = leiðni vírs (1/R) og eðlisleiðni táknuð **γ** eða **σ**. Skoðaðu **eininguna**: S = leiðni vírs, m/(Ω·mm²) = eðlisleiðni efnis.',
+    },
+    H1: {
+      title: 'Heildarviðnám og straumur', fam: 'U', pic: 'two', source: 'byggt á glæru 3.4, dæmi 1',
+      say: 'Leiðslan og tækið eru í röð. Hvert er heildarviðnámið og hve mikill straumur rennur?',
+      clues: ['viðnám **tækisins** (álagsins)', 'viðnám **víranna**', 'spenna **V**', 'spurt um **straum A**'],
+      find: 'Heildarviðnám **R_H** og straumur **I**', syms: ['RH', 'Rl', 'I', 'U'],
+      formulas: ['R_H = R_l + R_{álag}', 'I = \\f{U}{R_H}'],
+      text: 'Rafmagnsofn er tengdur við 220 V töflu. Viðnám ofnsins er 21,6 Ω og hvor vír leiðslunnar hefur viðnámið 0,2 Ω. a) Hvert er heildarviðnámið? b) Hver er straumurinn? c) Hvert er spennufallið í leiðslunni og spennan yfir ofninum?',
+      given: ['**U₁** = 220 V  (taflan)', '**R_{álag}** = 21,6 Ω  (ofninn)', '0,2 Ω  (hvor vír)'],
+      steps: [
+        ['Viðnám leiðslunnar', 'Tveir vírar, 0,2 Ω hvor. Straumurinn fer í gegnum báða, svo þú leggur saman.', ['R_l = 0,2 + 0,2 = 0,4 Ω']],
+        ['a) Heildarviðnám', 'Straumurinn fer í gegnum leiðsluna OG ofninn. Viðnám í röð leggjast saman.', ['R_H = R_l + R_{álag} = 0,4 + 21,6 = 22 Ω']],
+        ['b) Straumurinn (Ohmslögmál)', 'Spenna deilt með HEILDARviðnámi gefur strauminn.', ['I = \\f{U}{R_H} = \\f{220}{22} = 10 A']],
+        ['c) Spennufall og spenna á ofninum', 'Volt sem tapast í vírunum = straumur sinnum viðnám víranna. Ofninn fær afganginn (sjá S2 og S7).', ['ΔU = I·R_l = 10·0,4 = 4 V', 'U_2 = U_1 − ΔU = 220 − 4 = 216 V']],
+      ],
+      answer: 'R_H = **22 Ω** · I = **10 A** · ΔU = **4 V** · U₂ = **216 V**',
+      trap: 'Notaðu **heildarviðnámið** (vírar + tæki) til að finna strauminn – ekki bara viðnám tækisins.',
+    },
+  };
+  function manualPage(id) {
+    const { Para, Box, Formula, Break, famColor, setF, MUTED } = L();
+    const d = MANUAL[id], col = famColor(d.fam);
+    const famName = { R: 'Vír og efni', U: 'Spennufall' }[d.fam];
+    const out = [Break(), mark(headerBand(id + '  ' + d.title, famName, d.fam, 'bls. ' + pageOf(id)), id)];
+    out.push(Custom(44, (doc, x, y, w, s) => {
+      const lw = w * 0.56;
+      const p = Para({ src: d.say, size: 16, bold: true, color: '#14202b' });
+      p.measure(doc, lw, s);
+      setF(doc, 'bold', 9 * s); doc.setTextColor(col); doc.text('Á MANNAMÁLI', x, y + 4 * s);
+      p.draw(doc, x, y + 6 * s, lw, s);
+      PICS[d.pic](doc, x + lw + 6 * s, y, w - lw - 6 * s, 42 * s, s, col);
+    }));
+    out.push(Label('Þú þekkir dæmið á þessu', col, { n: '1' }), Chips(d.clues, col, { size: 12.5, gapAfter: 4 }));
+    out.push(Label('Þú átt að finna', col, { n: '2' }), Chips([d.find], col, { size: 14, gapAfter: 4 }));
+    out.push(Label('Formúlan', col, { n: '3' }));
+    const legend = d.syms.map((k) => '**' + SYM[k][0] + '** = ' + SYM[k][1].toLowerCase().replace(/ \(.*\)/, '')).join('   ·   ');
+    out.push(Box([FormulaRow(d.formulas), Para({ src: legend, size: 10.5, color: MUTED, gapAfter: 0 })], { color: col, gapAfter: 4 }));
+    out.push(Box([Para({ src: '**Næsta síða:** dæmi reiknað skref fyrir skref, með skýringu á hverju skrefi.', size: 11.5, gapAfter: 0 })], { color: col, fill: '#ffffff', gapAfter: 0 }));
+    out.push(Break(), headerBand(id + '  Svona reiknarðu', d.title, d.fam, 'bls. ' + (pageOf(id) === '?' ? '?' : pageOf(id) + 1)));
+    out.push(Label('Svona reiknarðu – ' + d.source, col, { n: '4' }));
+    out.push(Box([Para({ src: d.text, size: 11, color: '#33414d', gapAfter: 0 })], { color: '#9aa7b2', fill: '#f4f6f8', pad: 2.2, gapAfter: 3.5 }));
+    out.push(Para({ src: '**Hvað er gefið?**  Skrifaðu tölurnar niður með einingum:', size: 11.5, color: '#14202b', gapAfter: 1 }));
+    out.push(Chips(d.given, '#55636f', { size: 11, gapAfter: 3.5 }));
+    d.steps.forEach(([h, why, ms], i) => {
+      out.push(Para({ src: '**' + (i + 1) + '.  ' + h + '**', size: 12.5, color: col, gapAfter: 0.4 }));
+      out.push(Para({ src: why, size: 10.8, color: '#3d4a55', indent: 5, gapAfter: 0.8 }));
+      ms.forEach((ml) => out.push(Formula(ml, { size: 15.5, gap: 1.6, indent: 6 })));
+      out.push(Custom(2, () => {}));
+    });
+    out.push(Box([Para({ src: '**Svar:**  ' + d.answer, size: 12.5, gapAfter: 0 })], { color: '#11704a', fill: '#e2f5ea', pad: 2.4, gapAfter: 3 }));
+    out.push(Box([Para({ src: '**Passaðu þig!**  ' + d.trap, size: 13, gapAfter: 0 })], { color: '#b4530a', fill: '#fdeedd', pad: 2.6, gapAfter: 0 }));
+    return out;
+  }
+
   RF.pdf.studyGuide = async function () {
     await RF.pdf.ensure();
     const { render, out } = L();
     const cfg = { maxScale: 1, margin: 12, cols: 1, gap: 0, headH: 8, title: 'Dæmaleiðarvísir – Rafmagnsfræði 1', subtitle: 'Hvaða dæmi er þetta og hvernig reikna ég það?' };
-    const blocks = () => [...page1(), ...tablesPage1(), ...tablesPage2(), ...page2(), ...ORDER.flatMap(typePage)];
+    const blocks = () => [...page1(), ...tablesPage1(), ...tablesPage2(), ...page2(), ...['V1', 'V2', 'V3', 'V4'].flatMap(typePage), ...manualPage('L1'), ...['V5', 'V6', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7'].flatMap(typePage), ...manualPage('H1')];
     const { flow, fit } = L();
     for (let pass = 0; pass < 2; pass++) {
       const fr = fit(blocks, cfg, 99, 1);

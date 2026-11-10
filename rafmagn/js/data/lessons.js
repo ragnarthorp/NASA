@@ -68,9 +68,9 @@
           id: 'k2-rho', title: 'Eðlisviðnám og eðlisleiðni',
           html: `<p><b>Eðlisviðnám</b> <f>ρ</f> (gríski stafurinn „hró“) er viðnám leiðara úr efninu sem er <b>1 m langur</b> og <b>1 mm²</b> að þverflatarmáli, við 20 °C.</p>
 <p>Eining: <f>Ω·mm²/m</f>. (Á glærunum stendur bara „Ohm“, en fullgilda einingin passar við l í metrum og A í mm².)</p>
-<p><b>Eðlisleiðni</b> er andhverfan: <f>\\f{1}{ρ}</f>. Kopar: <f>\\f{1}{0,0178}</f> ≈ 56 m/(Ω·mm²).</p>
+<p><b>Eðlisleiðni</b> er andhverfan: <f>γ = \\f{1}{ρ}</f>. Kopar: <f>\\f{1}{0,0178}</f> ≈ 56 m/(Ω·mm²). Ef dæmi gefur γ: <f>R = \\f{l}{γ·A}</f>.</p><p><b>Leiðni</b> eins vírs eða hlutar er andhverfa viðnámsins: <f>G = \\f{1}{R}</f>, eining siemens (S). Dæmi: 0,5 Ω → 2 S.</p>
 <div class="note"><b>Um táknin:</b> Á glærum kennarans er eðlisleiðni táknuð <b>G</b> með einingu siemens. Í mörgum bókum er eðlisleiðni táknuð <b>σ</b> (sigma) eða <b>γ</b>, og þá er <b>G</b> notað um <i>leiðni hlutar</i>, <f>G = \\f{1}{R}</f>. Notaðu táknin sem kennarinn notar í prófinu – aðalatriðið er að leiðni er andhverfa viðnáms.</div>`,
-          quiz: ['c2-4', 'c2-5', 'c2-6', 'c2-7'],
+          quiz: ['c2-4', 'c2-5', 'c2-6', 'c2-7', 'c2-17', 'c2-18', 'c2-19'],
         },
         {
           id: 'k2-thvermal', title: 'Þvermál, radíus og þverflatarmál',
@@ -160,7 +160,7 @@
 <p>Spennufall verður af því að leiðararnir hafa viðnám. Leiðsla og álag eru raðtengd:</p>
 <fb>R_H = R_l + R_{álag}</fb>
 <div data-widget="drop"></div>`,
-          quiz: ['c4-1', 'c4-2', 'c4-5'],
+          quiz: ['c4-1', 'c4-2', 'c4-5', 'c4-13'],
         },
         {
           id: 'k4-tvi', title: 'Tvíleiðari – fram og til baka',
