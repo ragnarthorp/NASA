@@ -45,3 +45,7 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Prófundirbúningur – Rafmagnsfræði 1
+
+`rafmagn/index.html` er sjálfstæður námsvefur um rafleiðara, viðnám og spennuföll. Hann inniheldur kennslu, dæmabanka með einkakennara, prófhermi, formúluleit og PDF-glósur. Sjá `rafmagn/README.md`.
