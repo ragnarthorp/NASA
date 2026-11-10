@@ -5,13 +5,13 @@ const fs = require('fs');
 const root = path.join(__dirname, '..');
 global.window = global;
 require(path.join(root, 'vendor/pdf-fonts.js'));
-for (const f of ['js/core/util.js', 'js/core/physics.js', 'js/data/methods.js', 'js/data/problems.js', 'js/data/concepts.js', 'js/data/lessons.js', 'js/core/checker.js', 'js/pdf.js', 'js/guide-pdf.js']) require(path.join(root, f));
+for (const f of ['js/core/util.js', 'js/core/physics.js', 'js/data/methods.js', 'js/data/problems.js', 'js/data/concepts.js', 'js/data/lessons.js', 'js/core/checker.js', 'js/pdf.js', 'js/guide-pdf.js', 'js/exam-pdf.js']) require(path.join(root, f));
 RF._jsPDF = require(path.join(root, 'vendor/jspdf.umd.min.js')).jsPDF;
 
 (async () => {
   const outDir = path.join(root, 'pdf');
   fs.mkdirSync(outDir, { recursive: true });
-  const jobs = [['formulaSheet', 'formulublad.pdf'], ['examNotes', 'profglosur.pdf'], ['problemOverview', 'verkefnayfirlit.pdf'], ['studyGuide', 'daemaleidarvisir.pdf']];
+  const jobs = [['formulaSheet', 'formulublad.pdf'], ['examNotes', 'profglosur.pdf'], ['problemOverview', 'verkefnayfirlit.pdf'], ['studyGuide', 'daemaleidarvisir.pdf'], ['practiceExam', 'aefingaprof.pdf']];
   for (const [fn, name] of jobs) {
     const r = await RF.pdf[fn]();
     fs.writeFileSync(path.join(outDir, name), Buffer.from(r.doc.output('arraybuffer')));

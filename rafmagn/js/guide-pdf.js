@@ -580,6 +580,7 @@
       const res = flow(RF.pdf._mdoc(), blocks(fr.s), cfg, fr.s, false);
       Object.assign(PG, res.marks);
     }
+    RF.pdf._guidePG = PG;
     return out(render('Dæmaleiðarvísir – Rafmagnsfræði 1', blocks, cfg, 99, 1));
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
