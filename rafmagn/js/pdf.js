@@ -504,5 +504,6 @@
       return out(render(N.title || 'Mínar prófglósur', RF.pdf.notesBlocks(N), RF.pdf.notesCfg(N), N.pages, 0.74));
     },
   };
+  RF.pdf._lib = { Para, Head, Formula, Box, Table, Gap, Break, ColBreak, TwoWire, MethodCard, matTable, flow, decorate, render, fit, mathBox, draw, setF, clean, lighten, famColor, drawStar, A4, PT, INK, MUTED, LINE, out };
   RF.valueTextPlain = (part, v) => (part.kind === 'choice' ? (Array.isArray(v) ? v : [v]).map((x) => (part.options.find((o) => o.v === x) || { label: x }).label).join(' / ') : f(v) + ' ' + (part.unit || ''));
 })(typeof globalThis !== 'undefined' ? globalThis : window);

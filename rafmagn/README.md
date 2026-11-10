@@ -44,6 +44,7 @@ node tools/build-pdfs.js
 | Hugtakaspurningar | `js/data/concepts.js` |
 | Kennsluefni í fjórum köflum | `js/data/lessons.js` |
 | PDF-útflutningur (jsPDF og innfellt letur) | `js/pdf.js` |
+| Dæmaleiðarvísir (15 bls., myndrænn) | `js/guide-pdf.js` |
 | Viðmót: græjur, dæmi og einkakennari, síður og leiðarkerfi | `js/ui/*.js` |
 
 **Nýtt afbrigði af dæmi:** bættu `{ level: 'midl', p: { … } }` í `presets` viðkomandi dæmagerðar í `js/data/problems.js`. **Ný hugtakaspurning:** bættu hlut í `RF.concepts` í `js/data/concepts.js`. Ekki þarf að breyta forritinu sjálfu.
