@@ -62,13 +62,13 @@
       draw(doc, x, y, w, s) {
         const { mathBox, draw, setF, famColor, lighten, Para, INK, MUTED } = L();
         const col = famColor(fam);
-        doc.setFillColor(lighten(col, 0.9));
-        doc.roundedRect(x, y, w, this.h, 2.5 * s, 2.5 * s, 'F');
-        doc.setFillColor(col);
-        doc.roundedRect(x + 2 * s, y + this.h / 2 - 5.4 * s, 20 * s, 10.8 * s, 5.4 * s, 5.4 * s, 'F');
+        doc.setFillColor(lighten(col, 0.97)); doc.setDrawColor(lighten(col, 0.6)); doc.setLineWidth(0.25 * s);
+        doc.roundedRect(x, y, w, this.h, 2.5 * s, 2.5 * s, 'FD');
+        doc.setFillColor('#ffffff'); doc.setDrawColor(col); doc.setLineWidth(0.7 * s);
+        doc.roundedRect(x + 2 * s, y + this.h / 2 - 5.4 * s, 20 * s, 10.8 * s, 5.4 * s, 5.4 * s, 'FD');
         let b = mathBox(doc, sym, 17 * s, true);
         if (b.w > 17 * s) b = mathBox(doc, sym, 17 * s * (17 * s) / b.w, true);
-        draw(doc, b, x + 12 * s - b.w / 2, y + this.h / 2 + 2.2 * s, '#ffffff');
+        draw(doc, b, x + 12 * s - b.w / 2, y + this.h / 2 + 2.2 * s, col);
         setF(doc, 'bold', 11.5 * s); doc.setTextColor(INK);
         doc.text(name, x + 26 * s, y + 5.6 * s);
         Para({ src: meaning, size: 10.2 }).measure(doc, w - 74 * s, s);
@@ -97,7 +97,7 @@
       draw(doc, x, y, w, s) {
         const { draw, lighten } = L();
         this.items.forEach((it) => {
-          doc.setFillColor(lighten(color, 0.86)); doc.setDrawColor(color); doc.setLineWidth(0.35 * s);
+          doc.setFillColor(lighten(color, 0.95)); doc.setDrawColor(color); doc.setLineWidth(0.35 * s);
           doc.roundedRect(x + it.x, y + it.y, it.w, this.hh, this.hh / 2, this.hh / 2, 'FD');
           draw(doc, it.b, x + it.x + 3.4 * s, y + it.y + this.hh / 2 + it.b.a * 0.36, '#14202b');
         });
@@ -109,8 +109,8 @@
   function Label(text, color, o = {}) {
     return Custom(o.h || 10.5, (doc, x, y, w, s) => {
       const { setF, clean } = L();
-      doc.setFillColor(color); doc.circle(x + 2.2 * s, y + 3.6 * s, 2.2 * s, 'F');
-      setF(doc, 'bold', 8 * s); doc.setTextColor('#ffffff');
+      doc.setFillColor('#ffffff'); doc.setDrawColor(color); doc.setLineWidth(0.5 * s); doc.circle(x + 2.2 * s, y + 3.6 * s, 2.2 * s, 'FD');
+      setF(doc, 'bold', 8 * s); doc.setTextColor(color);
       const n = String(o.n || '');
       if (n) doc.text(n, x + 2.2 * s - doc.getTextWidth(n) / 2, y + 4.7 * s);
       setF(doc, 'bold', 12.5 * s); doc.setTextColor(color);
@@ -155,9 +155,8 @@
   function picWire(doc, x, y, w, h, s, col) {
     const { setF, draw, mathBox } = L();
     const cy = y + h * 0.45, r = 6 * s, x0 = x + 6 * s, x1 = x + w - 14 * s;
-    doc.setFillColor('#c9814a'); doc.rect(x0, cy - r, x1 - x0, 2 * r, 'F');
-    doc.setFillColor('#e7a873'); doc.rect(x0, cy - r, x1 - x0, r * 0.6, 'F');
-    doc.setFillColor('#f0b98a'); doc.setDrawColor('#7d4318'); doc.setLineWidth(0.4 * s);
+    doc.setFillColor('#fbeee3'); doc.setDrawColor('#b8692f'); doc.setLineWidth(0.5 * s); doc.rect(x0, cy - r, x1 - x0, 2 * r, 'FD');
+    doc.setFillColor('#f6dcc5'); doc.setDrawColor('#7d4318'); doc.setLineWidth(0.4 * s);
     doc.ellipse(x1, cy, r * 0.45, r, 'FD');
     doc.setDrawColor(col); doc.setLineWidth(0.5 * s);
     doc.line(x0, cy + r + 4 * s, x1, cy + r + 4 * s);
@@ -172,8 +171,8 @@
     const tx = x + 12 * s, top = y + 3 * s, bot = y + h - 9 * s;
     doc.setFillColor('#ffffff'); doc.setDrawColor('#55636f'); doc.setLineWidth(0.5 * s);
     doc.roundedRect(tx - 3 * s, top, 6 * s, bot - top, 3 * s, 3 * s, 'FD');
-    doc.setFillColor('#d64527'); doc.circle(tx, bot + 1.5 * s, 4.6 * s, 'F');
-    doc.rect(tx - 1.6 * s, top + (bot - top) * 0.3, 3.2 * s, (bot - top) * 0.72, 'F');
+    doc.setFillColor('#fbe3dd'); doc.setDrawColor('#d64527'); doc.setLineWidth(0.5 * s); doc.circle(tx, bot + 1.5 * s, 4.6 * s, 'FD');
+    doc.setFillColor('#f3b4a6'); doc.rect(tx - 1.6 * s, top + (bot - top) * 0.3, 3.2 * s, (bot - top) * 0.72, 'F');
     const T = (t, ax, ay, c, sz) => { const b = mathBox(doc, t, (sz || 10.5) * s, true); draw(doc, b, ax, ay, c); };
     T('t_1  →  t_2', x + 24 * s, y + 9 * s, col, 12);
     T('R_{t1}  →  R_{t2}', x + 24 * s, y + 18 * s, col, 12);
@@ -183,10 +182,10 @@
   function picSwap(doc, x, y, w, h, s, col) {
     const { draw, mathBox } = L();
     const T = (t, ax, ay, c, sz) => { const b = mathBox(doc, t, (sz || 10) * s, true); draw(doc, b, ax, ay, c); };
-    doc.setFillColor('#b9c3cc'); doc.rect(x + 4 * s, y + 6 * s, w - 26 * s, 9 * s, 'F');
+    doc.setFillColor('#f1f3f5'); doc.setDrawColor('#7a8794'); doc.setLineWidth(0.5 * s); doc.rect(x + 4 * s, y + 6 * s, w - 26 * s, 9 * s, 'FD');
     T('ál – sverari', x + 6 * s, y + 12.6 * s, '#14202b', 9);
-    doc.setFillColor('#c9814a'); doc.rect(x + 4 * s, y + 22 * s, w - 26 * s, 6 * s, 'F');
-    T('kopar – grennri', x + 6 * s, y + 26.8 * s, '#ffffff', 9);
+    doc.setFillColor('#fbeee3'); doc.setDrawColor('#b8692f'); doc.rect(x + 4 * s, y + 22 * s, w - 26 * s, 6 * s, 'FD');
+    T('kopar – grennri', x + 6 * s, y + 26.8 * s, '#7d4318', 9);
     T('= sama R', x + w - 20 * s, y + 20 * s, col, 11);
   }
   function picTwo(doc, x, y, w, h, s) {
@@ -200,10 +199,10 @@
     return Custom(19, (doc, x, y, w, s) => {
       const { setF, famColor, mathBox, draw } = L();
       const col = fam ? famColor(fam) : '#123047';
-      doc.setFillColor(col); doc.roundedRect(x, y, w, 16 * s, 3 * s, 3 * s, 'F');
-      const b = mathBox(doc, title, 19 * s, true); draw(doc, b, x + 5 * s, y + 10.5 * s, '#ffffff');
-      if (sub) { setF(doc, 'bold', 10 * s); const rw = right ? doc.getTextWidth(right) + 9 * s : 4 * s; let fs = 10 * s; setF(doc, 'normal', fs); const avail = w - (5 * s + b.w + 4 * s) - rw; if (doc.getTextWidth(sub) > avail) { fs *= Math.max(0.6, avail / doc.getTextWidth(sub)); setF(doc, 'normal', fs); } if (doc.getTextWidth(sub) <= avail) { doc.setTextColor('#e8f1f7'); doc.text(sub, x + 5 * s + b.w + 4 * s, y + 10.2 * s); } }
-      if (right) { setF(doc, 'bold', 10 * s); doc.setTextColor('#ffffff'); doc.text(right, x + w - 5 * s - doc.getTextWidth(right), y + 10.2 * s); }
+      doc.setFillColor(L().lighten(col, 0.94)); doc.setDrawColor(col); doc.setLineWidth(0.8 * s); doc.roundedRect(x, y, w, 16 * s, 3 * s, 3 * s, 'FD');
+      const b = mathBox(doc, title, 19 * s, true); draw(doc, b, x + 5 * s, y + 10.5 * s, col);
+      if (sub) { setF(doc, 'bold', 10 * s); const rw = right ? doc.getTextWidth(right) + 9 * s : 4 * s; let fs = 10 * s; setF(doc, 'normal', fs); const avail = w - (5 * s + b.w + 4 * s) - rw; if (doc.getTextWidth(sub) > avail) { fs *= Math.max(0.6, avail / doc.getTextWidth(sub)); setF(doc, 'normal', fs); } if (doc.getTextWidth(sub) <= avail) { doc.setTextColor('#55636f'); doc.text(sub, x + 5 * s + b.w + 4 * s, y + 10.2 * s); } }
+      if (right) { setF(doc, 'bold', 10 * s); doc.setTextColor(col); doc.text(right, x + w - 5 * s - doc.getTextWidth(right), y + 10.2 * s); }
     });
   }
 
@@ -281,8 +280,8 @@
           if (i % 2 === 0) { doc.setFillColor('#f4f7fa'); doc.rect(x, yy, w, 8.2 * s, 'F'); }
           setF(doc, m.src === 'kennari' ? 'bold' : 'normal', 11 * s); doc.setTextColor('#14202b');
           doc.text(m.name.replace(/ \(.*\)/, '') + (m.src === 'kennari' ? '' : '*'), x + 2 * s, yy + 5.6 * s);
-          doc.setFillColor(k === 'kopar' ? famColor('U') : lighten(famColor('R'), 0.15));
-          doc.roundedRect(bx, yy + 1.8 * s, Math.max(1, (m.rho / max) * bw), 4.6 * s, 1 * s, 1 * s, 'F');
+          const bc = k === 'kopar' ? famColor('U') : famColor('R'); doc.setFillColor(lighten(bc, 0.82)); doc.setDrawColor(bc); doc.setLineWidth(0.35 * s);
+          doc.roundedRect(bx, yy + 1.8 * s, Math.max(1, (m.rho / max) * bw), 4.6 * s, 1 * s, 1 * s, 'FD');
           setF(doc, 'bold', 11 * s); doc.setTextColor('#14202b');
           doc.text(RF.util.fmt(m.rho, 5), bx + bw + 3 * s, yy + 5.6 * s);
           setF(doc, 'normal', 9.4 * s); doc.setTextColor('#3d4a55');
@@ -316,7 +315,7 @@
   function circleFig(doc, x, y, w, h, s) {
     const { setF, draw, mathBox } = L();
     const cx = x + w / 2 - 2 * s, cy = y + 22 * s, R = 17 * s;
-    doc.setFillColor('#e7a873'); doc.setDrawColor('#7d4318'); doc.setLineWidth(0.6 * s);
+    doc.setFillColor('#fbeee3'); doc.setDrawColor('#7d4318'); doc.setLineWidth(0.6 * s);
     doc.circle(cx, cy, R, 'FD');
     doc.setDrawColor('#123047'); doc.setLineWidth(0.8 * s); doc.line(cx - R, cy, cx + R, cy);
     doc.setDrawColor('#b4530a'); doc.setLineWidth(0.8 * s); doc.setLineDashPattern([1.6 * s, 1.2 * s], 0); doc.line(cx, cy, cx, cy - R); doc.setLineDashPattern([], 0);
@@ -392,13 +391,13 @@
       arrow(qx + qw / 2, y + 11 * s, qx + qw / 2, y + 16 * s);
       box(qx, y + 16 * s, qw, bh, '#ffffff', C.T, 'Er **°C**, „hitnar“ eða „kólnar“ í dæminu?', 11, false);
       arrow(qx + qw, y + 16 * s + bh / 2, rx, y + 16 * s + bh / 2, 'JÁ');
-      box(rx, y + 16 * s, rw, bh, lighten(C.T, 0.85), C.T, '**HITI**\nbls. ' + pageOf('V5') + '–' + (pageOf('V6') + 1), 12, true, C.T);
+      box(rx, y + 16 * s, rw, bh, lighten(C.T, 0.94), C.T, '**HITI**\nbls. ' + pageOf('V5') + '–' + (pageOf('V6') + 1), 12, true, C.T);
       arrow(qx + qw / 2, y + 16 * s + bh, qx + qw / 2, y + 37 * s, 'NEI');
       box(qx, y + 37 * s, qw, bh, '#ffffff', C.U, 'Er **A** (straumur), **V** (spenna),\nkapall eða tvíleiðari?', 11, false);
       arrow(qx + qw, y + 37 * s + bh / 2, rx, y + 37 * s + bh / 2, 'JÁ');
-      box(rx, y + 37 * s, rw, bh, lighten(C.U, 0.85), C.U, '**SPENNUFALL**\nbls. ' + pageOf('S1') + '–' + (pageOf('S7') + 1), 12, true, C.U);
+      box(rx, y + 37 * s, rw, bh, lighten(C.U, 0.94), C.U, '**SPENNUFALL**\nbls. ' + pageOf('S1') + '–' + (pageOf('S7') + 1), 12, true, C.U);
       arrow(qx + qw / 2, y + 37 * s + bh, qx + qw / 2, y + 58 * s, 'NEI');
-      box(qx, y + 58 * s, qw, bh, lighten(C.R, 0.85), C.R, '**VÍR OG EFNI**  (m, mm², Ω, kopar …)\nbls. ' + pageOf('V1') + '–' + (pageOf('V4') + 1), 11.5, true, C.R);
+      box(qx, y + 58 * s, qw, bh, lighten(C.R, 0.94), C.R, '**VÍR OG EFNI**  (m, mm², Ω, kopar …)\nbls. ' + pageOf('V1') + '–' + (pageOf('V4') + 1), 11.5, true, C.R);
     });
   }
   function famPanel(fam, title, rows) {

@@ -195,9 +195,9 @@
       draw(doc, x, y, w, s) {
         let yy = y;
         this.rows.forEach((r, ri) => {
-          if (ri === 0 && o.header !== false) { doc.setFillColor(o.headFill || '#e8eef4'); doc.rect(x, yy, w, r.hgt, 'F'); }
-          else if (o.zebra && ri % 2 === 0) { doc.setFillColor('#f5f8fa'); doc.rect(x, yy, w, r.hgt, 'F'); }
-          if (o.rowColor && o.rowColor[ri]) { doc.setFillColor(lighten(o.rowColor[ri], 0.85)); doc.rect(x, yy, w, r.hgt, 'F'); }
+          if (ri === 0 && o.header !== false) { doc.setFillColor(o.headFill || '#f1f4f7'); doc.rect(x, yy, w, r.hgt, 'F'); }
+          else if (o.zebra && ri % 2 === 0) { doc.setFillColor('#fafbfc'); doc.rect(x, yy, w, r.hgt, 'F'); }
+          if (o.rowColor && o.rowColor[ri]) { doc.setFillColor(lighten(o.rowColor[ri], 0.94)); doc.rect(x, yy, w, r.hgt, 'F'); }
           let xx = x;
           r.cells.forEach((ls, ci) => { let ly = yy + 0.55 * s; ls.forEach((l) => { ly += l.a; draw(doc, l, xx + 0.8 * s, ly, ri === 0 && o.header !== false ? '#1b3a57' : INK); ly += l.d + 0.35 * s; }); xx += this.cw[ci]; });
           doc.setDrawColor(LINE); doc.setLineWidth(0.15);
@@ -221,18 +221,20 @@
       draw(doc, x, y, w, s) {
         const col = o.color || '#1b3a57';
         const hgt = this.hh + this.pad + this.ch.reduce((a, b) => a + b, 0) + this.pad * 0.6;
-        doc.setFillColor(o.fill || lighten(col, 0.93));
+        doc.setFillColor(o.fill ? lighten(o.fill, 0.45) : lighten(col, 0.97));
         doc.setDrawColor(col);
         doc.setLineWidth((o.star ? 0.7 : 0.3) * s);
         doc.roundedRect(x, y, w, hgt, 1.6 * s, 1.6 * s, 'FD');
         if (o.title) {
-          doc.setFillColor(col);
+          doc.setFillColor(lighten(col, 0.88));
           doc.roundedRect(x, y, w, this.hh, 1.6 * s, 1.6 * s, 'F');
           doc.rect(x, y + this.hh - 1.6 * s, w, 1.6 * s, 'F');
+          doc.setDrawColor(col); doc.setLineWidth(0.3 * s);
+          doc.line(x, y + this.hh, x + w, y + this.hh);
           let tx = x + 1.6 * s;
           if (o.num != null) {
-            doc.setFillColor('#ffffff');
-            doc.circle(x + 3.6 * s, y + this.hh / 2, 2.15 * s, 'F');
+            doc.setFillColor('#ffffff'); doc.setDrawColor(col); doc.setLineWidth(0.35 * s);
+            doc.circle(x + 3.6 * s, y + this.hh / 2, 2.15 * s, 'FD');
             setF(doc, 'bold', 8.6 * s);
             doc.setTextColor(col);
             const nw = doc.getTextWidth(String(o.num));
@@ -242,8 +244,8 @@
           const avail = x + w - tx - (o.star ? 6 : 1.4) * s;
           let tsz = 8.6 * s, tb = mathBox(doc, o.title, tsz, true);
           if (tb.w > avail) { tsz *= avail / tb.w; tb = mathBox(doc, o.title, tsz, true); }
-          draw(doc, tb, tx, y + this.hh / 2 + tsz * PT * 0.36, '#ffffff');
-          if (o.star) drawStar(doc, x + w - 3.4 * s, y + this.hh / 2, 1.9 * s, '#ffd447');
+          draw(doc, tb, tx, y + this.hh / 2 + tsz * PT * 0.36, col);
+          if (o.star) drawStar(doc, x + w - 3.4 * s, y + this.hh / 2, 1.9 * s, '#e3a500');
         }
         let yy = y + this.hh + this.pad;
         children.forEach((c, i) => { c.draw(doc, x + this.pad, yy, w - 2 * this.pad, s); yy += this.ch[i]; });
@@ -335,8 +337,8 @@
     for (let p = 1; p <= pages; p++) {
       doc.setPage(p);
       const M = cfg.margin;
-      doc.setFillColor('#123047');
-      doc.rect(0, 0, A4.w, 2.2, 'F');
+      doc.setDrawColor('#123047'); doc.setLineWidth(0.5);
+      doc.line(M, 3, A4.w - M, 3);
       setF(doc, 'bold', 12.5);
       doc.setTextColor('#123047');
       doc.text(clean(cfg.title), M, M + 3.2);
