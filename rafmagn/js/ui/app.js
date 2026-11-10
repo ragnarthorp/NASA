@@ -220,7 +220,7 @@
     root.append(
       h('h1', arg === 'pdf' ? 'Sækja PDF' : 'Prófglósur'),
       h('section.panel#pdf', h('h2', 'Tilbúin PDF-skjöl (A4)'), h('div.pdfgrid',
-        h('div', h('h3', 'Dæmaleiðarvísir – 15 bls.'), h('p.small', 'Einfaldast að byrja hér. Hvað stafirnir þýða, hvaða dæmi er þetta, og ein síða fyrir hverja dæmagerð á mannamáli.'), dl('Sækja dæmaleiðarvísi', 'studyGuide', 'daemaleidarvisir.pdf', 'daemaleidarvisir.pdf')),
+        h('div', h('h3', 'Dæmaleiðarvísir – 31 bls.'), h('p.small', 'Einfaldast að byrja hér. Hvað stafirnir þýða, töflur (ρ, α, þvermál → mm², einingar), allar formúlur, hvaða dæmi er þetta – og tvær síður fyrir hverja dæmagerð.'), dl('Sækja dæmaleiðarvísi', 'studyGuide', 'daemaleidarvisir.pdf', 'daemaleidarvisir.pdf')),
         h('div', h('h3', 'Formúlublað – 1 bls.'), h('p.small', 'Öll aðferðaspjöldin 1–12, tafla yfir ρ og α, tvíleiðarareglan, tákn og lausnarskref.'), dl('Sækja formúlublað', 'formulaSheet', 'formulublad.pdf', 'formulublad.pdf')),
         h('div', h('h3', 'Prófglósur – 2 bls.'), h('p.small', 'Bls. 1: leiðarar, eiginleikar, viðnám, hiti. Bls. 2: spennuföll, tvíleiðarar, dæmagerðir og algeng mistök.'), dl('Sækja prófglósur', 'examNotes', 'profglosur.pdf', 'profglosur.pdf')),
         h('div', h('h3', 'Verkefnayfirlit'), h('p.small', 'Öll 13 dæmi kennarans með aðferð, lausn og svari.'), dl('Sækja verkefnayfirlit', 'problemOverview', 'verkefnayfirlit.pdf', 'verkefnayfirlit.pdf')))),

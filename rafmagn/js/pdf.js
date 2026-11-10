@@ -312,6 +312,7 @@
     startPage();
     const nextCol = () => { col++; y = top; if (col >= cfg.cols) { col = 0; page++; startPage(); } };
     const placed = [];
+    const marks = {};
     for (let i = 0; i < blocks.length; i++) {
       const b = blocks[i];
       if (b.pagebreak) { if (col !== 0 || y !== top) { col = cfg.cols; nextCol(); } continue; }
@@ -324,10 +325,11 @@
       if (y + hgt > bottom) overflow = true;
       const x = M + col * (colW + cfg.gap);
       if (drawIt) b.draw(doc, x, y, colW, s);
+      if (b.mark) marks[b.mark] = page + 1;
       placed.push({ page, col, y });
       y += hgt;
     }
-    return { pages: page + 1, overflow };
+    return { pages: page + 1, overflow, marks };
   }
   function decorate(doc, cfg, pages) {
     for (let p = 1; p <= pages; p++) {
@@ -504,6 +506,7 @@
       return out(render(N.title || 'Mínar prófglósur', RF.pdf.notesBlocks(N), RF.pdf.notesCfg(N), N.pages, 0.74));
     },
   };
+  RF.pdf._mdoc = mdoc;
   RF.pdf._lib = { Para, Head, Formula, Box, Table, Gap, Break, ColBreak, TwoWire, MethodCard, matTable, flow, decorate, render, fit, mathBox, draw, setF, clean, lighten, famColor, drawStar, A4, PT, INK, MUTED, LINE, out };
   RF.valueTextPlain = (part, v) => (part.kind === 'choice' ? (Array.isArray(v) ? v : [v]).map((x) => (part.options.find((o) => o.v === x) || { label: x }).label).join(' / ') : f(v) + ' ' + (part.unit || ''));
 })(typeof globalThis !== 'undefined' ? globalThis : window);

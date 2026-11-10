@@ -215,7 +215,7 @@ RF._jsPDF = require(path.join(root, 'vendor/jspdf.umd.min.js')).jsPDF;
   const po = await RF.pdf.problemOverview();
   ok(po.pages >= 1, 'verkefnayfirlit ' + po.pages + ' bls.');
   const sg = await RF.pdf.studyGuide();
-  ok(sg.pages === 15, 'dæmaleiðarvísir er 15 bls. (' + sg.pages + ', kvarði ' + sg.scale + ')');
+  ok(sg.pages === 31, 'dæmaleiðarvísir er 31 bls. (' + sg.pages + ', kvarði ' + sg.scale + ')');
   const head = Buffer.from(fs.doc.output('arraybuffer')).slice(0, 5).toString();
   ok(head === '%PDF-', 'raunveruleg PDF-skrá');
   const N1 = { title: 'Próf', pages: 1, cards: [1, 7], forget: [7], types: ['S7'], comments: { 7: 'Muna ×2' }, own: [{ title: 'Mitt', text: 'ΔU = 4 V' }], showTable: false, showTraps: false };
