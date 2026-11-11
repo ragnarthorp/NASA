@@ -207,6 +207,7 @@ require(path.join(root, 'vendor/pdf-fonts.js'));
 require(path.join(root, 'js/pdf.js'));
 require(path.join(root, 'js/guide-pdf.js'));
 require(path.join(root, 'js/exam-pdf.js'));
+require(path.join(root, 'js/sources-pdf.js'));
 RF._jsPDF = require(path.join(root, 'vendor/jspdf.umd.min.js')).jsPDF;
 (async () => {
   const fs = await RF.pdf.formulaSheet();
@@ -219,6 +220,8 @@ RF._jsPDF = require(path.join(root, 'vendor/jspdf.umd.min.js')).jsPDF;
   ok(sg.pages === 38, 'dæmaleiðarvísir er 38 bls. (' + sg.pages + ', kvarði ' + sg.scale + ')');
   const ex = await RF.pdf.practiceExam();
   ok(ex.pages >= 5 && ex.pages <= 12, 'æfingapróf ' + ex.pages + ' bls.');
+  const sm = await RF.pdf.sourceMap();
+  ok(sm.pages >= 3 && sm.pages <= 8, 'hvar er hvað ' + sm.pages + ' bls.');
   const head = Buffer.from(fs.doc.output('arraybuffer')).slice(0, 5).toString();
   ok(head === '%PDF-', 'raunveruleg PDF-skrá');
   const N1 = { title: 'Próf', pages: 1, cards: [1, 7], forget: [7], types: ['S7'], comments: { 7: 'Muna ×2' }, own: [{ title: 'Mitt', text: 'ΔU = 4 V' }], showTable: false, showTraps: false };
