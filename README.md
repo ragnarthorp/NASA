@@ -45,3 +45,16 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Námið – áminningarforrit
+
+`nam/index.html` er lítið forrit sem heldur utan um nám í Tækniskólanum: stundaskrá, skóladagatal 2026–2027, kennsluáætlanir og skil.
+
+- **Í dag:** hvaða tími er núna og næst, tímar dagsins, skil næstu tvær vikur og hvað er á döfinni. Á frídögum og námsmatsdögum falla tímar niður.
+- **Vikan:** vikutafla með viðburðum, efni vikunnar úr kennsluáætlun og hægt er að breyta stundaskrá.
+- **Skil:** verkefni og próf með skiladegi, vægi og áfanga.
+- **Áfangar:** upplýsingar um hvern áfanga og kennsluáætlun viku fyrir viku.
+- **Dagatal:** skóladagatalið ásamt skilum. Hægt er að bæta við eigin viðburðum.
+- **Stillingar:** `.ics`-skrá fyrir dagatal símans, með áminningum fyrir tíma, skil og frídaga. Þar eru líka tilkynningar meðan forritið er opið og afrit (JSON).
+
+Grunngögnin eru í `nam/data.js`. Allt vistast í vafranum (`localStorage`). Forritið má setja á heimaskjá símans (PWA).
