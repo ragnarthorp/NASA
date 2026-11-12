@@ -14,6 +14,28 @@
     } catch (e) { /* tómt eða læst */ }
     return clone(D);
   }
+  // Kennsluáætlanir úr aaetlanir.js eru settar inn einu sinni hver.
+  function applyPacks(st) {
+    st.applied = st.applied || [];
+    (window.NAM_PACKS || []).forEach((p) => {
+      if (st.applied.includes(p.id)) return;
+      const c = st.courses.find((x) => x.id === p.course);
+      if (c && p.info) Object.keys(p.info).forEach((k) => { if (p.info[k] != null && p.info[k] !== '') c[k] = p.info[k]; });
+      const list = st.plans[p.course] = st.plans[p.course] || [];
+      (p.plan || []).forEach((row) => {
+        const ex = list.find((x) => x.week === row.week);
+        if (!ex) list.push(Object.assign({ id: Math.random().toString(36).slice(2, 10), notes: '' }, row));
+        else if (!ex.topic) Object.assign(ex, row);
+      });
+      list.sort((a, b) => a.week.localeCompare(b.week));
+      (p.tasks || []).forEach((t) => {
+        if (!st.tasks.some((x) => x.id === t.id)) st.tasks.push(Object.assign({ course: p.course, done: false }, t));
+      });
+      st.applied.push(p.id);
+      st.dirty = true;
+    });
+    return st;
+  }
   function normalize(s) {
     const base = clone(D);
     const out = Object.assign(base, s);
@@ -22,7 +44,7 @@
     out.tasks = out.tasks || [];
     return out;
   }
-  let S = load();
+  let S = applyPacks(load());
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Ekki tókst að vista í vafranum'); }
   }
@@ -107,6 +129,8 @@
     return null;
   }
 
+  if (S.dirty) { delete S.dirty; save(); }
+
   /* ---------- Birting ---------- */
   const TABS = [
     ['idag', 'Í dag', '◉'],
@@ -139,7 +163,7 @@
       <input type="checkbox" data-act="toggleTask" data-id="${t.id}" ${t.done ? 'checked' : ''} aria-label="Lokið: ${esc(t.title)}">
       <button class="task-body" data-act="editTask" data-id="${t.id}">
         <span class="t-title">${esc(t.title)}</span>
-        <span class="t-meta">${c ? chip(c) : ''}<span class="badge">${esc(TASK_KIND[t.kind] || 'Verkefni')}</span>${t.weight ? `<span class="badge">${esc(t.weight)}%</span>` : ''}<span>${esc(when)}</span></span>
+        <span class="t-meta">${c ? chip(c) : ''}<span class="badge">${esc(TASK_KIND[t.kind] || 'Verkefni')}</span>${t.weight ? `<span class="badge">${esc(t.weight)}%</span>` : ''}<span>${esc(when)}</span>${t.submitted ? `<span>Skilað ${esc(fmtShort(t.submitted))}</span>` : ''}${t.score ? `<span class="badge k-sponn">${esc(t.score)}</span>` : ''}</span>${t.notes && !t.done ? `<span class="t-notes">${esc(t.notes)}</span>` : ''}
       </button></li>`;
   }
 
@@ -336,6 +360,7 @@
       html += `<section class="panel course" style="--c:${esc(c.color)}">
         <div class="row-head"><h2>${chip(c)} ${esc(c.name)}</h2><button class="small" data-act="editCourse" data-id="${esc(c.id)}">Breyta</button></div>
         <p class="muted">${[c.group, c.room && 'Stofa ' + c.room, c.teacher].filter(Boolean).map(esc).join(' · ')}${when ? `<br>${esc(when)}` : ''}${c.link ? `<br><a href="${esc(c.link)}" target="_blank" rel="noopener">Opna áfangasíðu</a>` : ''}</p>
+        ${c.notes ? `<p class="course-notes">${esc(c.notes).replace(/\n/g, '<br>')}</p>` : ''}
         ${missing.length ? `<p class="hint">Vantar: ${missing.join(', ')}.</p>` : ''}
         <details ${plan.some((p) => p.topic) ? '' : ''}><summary><b>Kennsluáætlun</b> <span class="muted">${plan.filter((p) => p.topic).length ? plan.filter((p) => p.topic).length + ' vikur skráðar' : 'vantar'}</span></summary>
         ${terms.map((t) => planTable(c, t)).join('')}</details>
@@ -351,13 +376,13 @@
     for (let w = monday(t.start); w <= t.end; w = addDays(w, 7)) rows.push(w);
     const plan = S.plans[c.id] || [];
     const tw = monday(today());
-    return `<table class="plan"><caption>${esc(t.name)}</caption><thead><tr><th>Vika</th><th>Efni</th><th>Lesefni / athugasemdir</th></tr></thead><tbody>
+    return `<table class="plan"><caption>${esc(t.name)}</caption><thead><tr><th>Vika</th><th>Efni · athugasemdir</th></tr></thead><tbody>
       ${rows.map((w) => {
         const p = plan.find((x) => x.week === w) || {};
         const evs = [0, 1, 2, 3, 4].map((i) => addDays(w, i)).map(noClass).filter(Boolean);
         return `<tr class="${w === tw ? 'is-now' : ''}"><th scope="row">${isoWeek(w)}<small>${parse(w).getDate()}/${parse(w).getMonth() + 1}</small></th>
-          <td><input data-plan="${esc(c.id)}" data-week="${w}" data-f="topic" value="${esc(p.topic)}" placeholder="${evs.length ? esc(evs[0].title) : ''}" aria-label="Efni viku ${isoWeek(w)}"></td>
-          <td><input data-plan="${esc(c.id)}" data-week="${w}" data-f="reading" value="${esc(p.reading)}" aria-label="Lesefni viku ${isoWeek(w)}"></td></tr>`;
+          <td><textarea rows="${Math.max(1, Math.ceil((p.topic || '').length / 34))}" data-plan="${esc(c.id)}" data-week="${w}" data-f="topic" placeholder="${evs.length ? esc(evs[0].title) : 'Efni'}" aria-label="Efni viku ${isoWeek(w)}">${esc(p.topic)}</textarea>
+          <textarea class="sub" rows="${Math.max(1, Math.ceil((p.reading || '').length / 38))}" data-plan="${esc(c.id)}" data-week="${w}" data-f="reading" placeholder="Athugasemdir" aria-label="Athugasemdir viku ${isoWeek(w)}">${esc(p.reading)}</textarea></td></tr>`;
       }).join('')}</tbody></table>`;
   }
 
@@ -441,7 +466,8 @@
       <label>Tegund<select name="kind">${Object.keys(TASK_KIND).map((k) => `<option value="${k}" ${k === t.kind ? 'selected' : ''}>${TASK_KIND[k]}</option>`).join('')}</select></label></div>
       <div class="two"><label>Skiladagur<input type="date" name="due" value="${esc(t.due)}"></label>
       <label>Klukkan<input type="time" name="time" value="${esc(t.time)}"></label></div>
-      <label>Vægi (%)<input type="number" name="weight" min="0" max="100" step="0.5" value="${esc(t.weight)}"></label>
+      <div class="two"><label>Vægi (%)<input type="number" name="weight" min="0" max="100" step="0.5" value="${esc(t.weight)}"></label>
+      <label>Einkunn<input name="score" value="${esc(t.score)}" placeholder="t.d. 85%"></label></div>
       <label>Athugasemdir<textarea name="notes" rows="3">${esc(t.notes)}</textarea></label>
       <div class="dlg-actions">${isNew ? '' : '<button value="delete" class="danger" formnovalidate>Eyða</button>'}<span></span><button value="cancel" formnovalidate>Hætta við</button><button class="primary" value="save">Vista</button></div>`,
     (data, mode) => {
@@ -461,7 +487,8 @@
       <label>Stofa<input name="room" value="${esc(c.room)}"></label></div>
       <div class="two"><label>Kennari<input name="teacher" value="${esc(c.teacher)}"></label>
       <label>Litur<input type="color" name="color" value="${esc(c.color)}"></label></div>
-      <label>Tengill (t.d. á Innu eða Moodle)<input type="url" name="link" value="${esc(c.link)}"></label>
+      <label>Tengill (t.d. á Innu eða kennslukerfi)<input type="url" name="link" value="${esc(c.link)}"></label>
+      <label>Athugasemdir<textarea name="notes" rows="3">${esc(c.notes)}</textarea></label>
       <div class="dlg-actions">${isNew ? '' : '<button value="delete" class="danger" formnovalidate>Eyða áfanga</button>'}<span></span><button value="cancel" formnovalidate>Hætta við</button><button class="primary" value="save">Vista</button></div>`,
     (data, mode) => {
       if (mode === 'delete') {
@@ -482,7 +509,7 @@
     week: (el) => { const n = Number(el.dataset.n); weekOf = n ? addDays(weekOf, n) : monday(today()); render(); },
     newTask: (el) => taskDialog(null, el.dataset.course),
     editTask: (el) => taskDialog(S.tasks.find((t) => t.id === el.dataset.id)),
-    toggleTask: (el) => { const t = S.tasks.find((x) => x.id === el.dataset.id); if (t) { t.done = el.checked; save(); setTimeout(render, 250); } },
+    toggleTask: (el) => { const t = S.tasks.find((x) => x.id === el.dataset.id); if (t) { t.done = el.checked; if (t.done && !t.submitted) t.submitted = today(); if (!t.done) delete t.submitted; save(); setTimeout(render, 250); } },
     filter: (el) => { taskFilter = el.dataset.k; render(); },
     newCourse: () => courseDialog(null),
     editCourse: (el) => courseDialog(S.courses.find((c) => c.id === el.dataset.id)),
@@ -493,7 +520,7 @@
     import: () => $('#file').click(),
     reset: () => {
       if (!confirm('Eyða öllu og byrja aftur með upphaflegu stundaskránni og dagatalinu?')) return;
-      S = clone(D); save(); render(); toast('Byrjað upp á nýtt');
+      S = applyPacks(clone(D)); save(); render(); toast('Byrjað upp á nýtt');
     }
   };
 

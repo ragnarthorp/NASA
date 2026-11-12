@@ -184,3 +184,9 @@ dialog::backdrop{background:rgba(10,20,15,.45)}
   .ev-date{width:auto}
   .two{grid-template-columns:1fr}
 }
+.t-notes{font-size:13px;color:var(--muted)}
+.task.late .t-notes{color:var(--warn)}
+.course-notes{font-size:14px;border-left:3px solid var(--c);padding:4px 10px;background:var(--soft);border-radius:0 8px 8px 0}
+table.plan textarea{display:block;min-height:0;resize:none;padding:4px 7px;font-size:14px;line-height:1.4;border-color:transparent;background:transparent;field-sizing:content;font-weight:600}
+table.plan textarea.sub{font-weight:400;color:var(--muted);font-size:13px}
+table.plan textarea:hover,table.plan textarea:focus{border-color:var(--line);background:var(--card)}
