@@ -417,7 +417,8 @@
     return `<header class="day-head"><h1>Stillingar</h1></header>
     <section class="panel"><h2>Áminningar í símann</h2>
       <p>Áreiðanlegasta leiðin er að setja allt í dagatal símans. Þá koma áminningar þótt forritið sé lokað.</p>
-      <form data-form="ics" class="stack">
+      ${window.NAM_ARTIFACT ? '<p class="hint">Dagatalsskráin (.ics) virkar ekki í þessari útgáfu forritsins. Hún virkar þegar forritið er hýst á eigin vefslóð, t.d. á GitHub Pages.</p>' : ''}
+      <form data-form="ics" class="stack" ${window.NAM_ARTIFACT ? 'hidden' : ''}>
         <label class="check"><input type="checkbox" name="cls" checked> Kennslustundir það sem eftir er af spönninni</label>
         <label class="check"><input type="checkbox" name="tasks" checked> Skil og próf</label>
         <label class="check"><input type="checkbox" name="events" checked> Skóladagatal (frí, námsmat, frestir)</label>
@@ -441,6 +442,18 @@
   };
 
   /* ---------- Gluggar ---------- */
+  // Staðfesting inni á síðunni (confirm() virkar ekki alls staðar).
+  function ask(msg, yes) {
+    return new Promise((resolve) => setTimeout(() => {
+      const dlg = $('#dlg');
+      dlg.innerHTML = `<form method="dialog" class="dlg-form"><p>${esc(msg)}</p><div class="dlg-actions"><span></span><button value="no">Hætta við</button><button class="danger" value="yes">${esc(yes)}</button></div></form>`;
+      dlg.returnValue = '';
+      const onClose = () => { if (dlg.open) return; dlg.removeEventListener('close', onClose); resolve(dlg.returnValue === 'yes'); };
+      dlg.addEventListener('close', onClose);
+      dlg.showModal();
+    }, 0));
+  }
+
   function openDialog(html, onSubmit) {
     const dlg = $('#dlg');
     dlg.innerHTML = `<form method="dialog" class="dlg-form">${html}</form>`;
@@ -492,12 +505,15 @@
       <div class="dlg-actions">${isNew ? '' : '<button value="delete" class="danger" formnovalidate>Eyða áfanga</button>'}<span></span><button value="cancel" formnovalidate>Hætta við</button><button class="primary" value="save">Vista</button></div>`,
     (data, mode) => {
       if (mode === 'delete') {
-        if (!confirm(`Eyða ${c.code} ásamt tímum, kennsluáætlun og skilum?`)) return;
-        S.courses = S.courses.filter((x) => x !== c);
-        S.slots = S.slots.filter((s) => s.course !== c.id);
-        S.tasks = S.tasks.filter((t) => t.course !== c.id);
-        delete S.plans[c.id];
-        save(); return;
+        ask(`Eyða ${c.code} ásamt tímum, kennsluáætlun og skilum?`, 'Eyða áfanga').then((ok) => {
+          if (!ok) return;
+          S.courses = S.courses.filter((x) => x !== c);
+          S.slots = S.slots.filter((s) => s.course !== c.id);
+          S.tasks = S.tasks.filter((t) => t.course !== c.id);
+          delete S.plans[c.id];
+          save(); render();
+        });
+        return;
       }
       Object.assign(c, data);
       if (isNew) { c.id = uid(); S.courses.push(c); }
@@ -519,8 +535,10 @@
     export: () => download(`namid-${today()}.json`, JSON.stringify(S, null, 2), 'application/json'),
     import: () => $('#file').click(),
     reset: () => {
-      if (!confirm('Eyða öllu og byrja aftur með upphaflegu stundaskránni og dagatalinu?')) return;
-      S = applyPacks(clone(D)); save(); render(); toast('Byrjað upp á nýtt');
+      ask('Eyða öllu og byrja aftur með upphaflegu stundaskránni, dagatalinu og kennsluáætlunum?', 'Byrja upp á nýtt').then((ok) => {
+        if (!ok) return;
+        S = applyPacks(clone(D)); delete S.dirty; save(); render(); toast('Byrjað upp á nýtt');
+      });
     }
   };
 
@@ -594,7 +612,15 @@
   });
 
   /* ---------- Skrár ---------- */
-  function download(name, text, type) {
+  async function download(name, text, type) {
+    if (window.claude && window.claude.use) {
+      const dl = await window.claude.use('downloads').catch(() => null);
+      if (dl) {
+        try { await dl.save({ filename: name, data: new Blob([text], { type }) }); toast('Skrá vistuð'); }
+        catch (e) { toast(e && e.code === 'declined' ? 'Hætt við' : 'Ekki tókst að vista skrána hér'); }
+        return;
+      }
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([text], { type }));
     a.download = name;
