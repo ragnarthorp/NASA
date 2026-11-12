@@ -57,4 +57,4 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - **Dagatal:** skóladagatalið ásamt skilum. Hægt er að bæta við eigin viðburðum.
 - **Stillingar:** `.ics`-skrá fyrir dagatal símans, með áminningum fyrir tíma, skil og frídaga. Þar eru líka tilkynningar meðan forritið er opið og afrit (JSON).
 
-Grunngögnin eru í `nam/data.js` og kennsluáætlanir í `nam/aaetlanir.js`. Hver áætlun er sett inn einu sinni, líka hjá þeim sem eru þegar byrjaðir að nota forritið, og breytingar notandans haldast. Allt vistast í vafranum (`localStorage`). Forritið má setja á heimaskjá símans (PWA).
+Grunngögnin eru í `nam/data.js` og kennsluáætlanir, gátlistar (`NAM_STUDY`) og æfingapróf (`NAM_QUIZ`) í `nam/aaetlanir.js`. Hver áætlun er sett inn einu sinni, líka hjá þeim sem eru þegar byrjaðir að nota forritið, og breytingar notandans haldast. Allt vistast í vafranum (`localStorage`). Forritið má setja á heimaskjá símans (PWA).

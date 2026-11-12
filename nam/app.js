@@ -187,6 +187,8 @@
       <p class="${!t.done && t.due && t.due < today() ? 'warn' : 'muted'}">${esc(when)}</p>
       ${p.total ? `<div class="prog" aria-hidden="true"><i style="width:${Math.round(100 * p.done / p.total)}%"></i></div><p class="muted small" data-prog>${progText(p)}</p>` : ''}
       ${st.intro ? `<p>${esc(st.intro)}</p>` : ''}
+      ${quizOf(t) ? `<div class="quiz-cta"><div><b>Æfingapróf</b><span class="muted small">${quizOf(t).length} spurningar í bankanum${t.quiz ? ` · síðast ${t.quiz.last}%, best ${t.quiz.best}%` : ''}</span></div>
+        <div class="toolbar"><button class="primary" data-act="quizStart" data-id="${esc(t.id)}" data-n="15">15 spurningar</button><button data-act="quizStart" data-id="${esc(t.id)}" data-n="all">Allar ${quizOf(t).length}</button></div></div>` : ''}
       ${t.notes && t.notes !== st.intro ? `<p class="hint">${esc(t.notes)}</p>` : ''}
       ${st.how ? `<h3>Hvernig best er að fara að</h3><ol class="how">${st.how.map((h) => `<li>${esc(h)}</li>`).join('')}</ol>` : ''}
       ${(st.sections || []).map((s) => `<h3>${esc(s.title)}</h3><ul class="checks">${s.items.map((i) => checkLi(t, i.id, i.text, i.hint)).join('')}</ul>`).join('')}
@@ -198,6 +200,67 @@
     if (!dlg.open) dlg.showModal();
     dlg.scrollTop = scroll;
   }
+  /* ---------- Æfingapróf ---------- */
+  const quizOf = (t) => (window.NAM_QUIZ || {})[t.id] || null;
+  let Q = null;
+  function shuffle(a) {
+    a = a.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  // Teiknitákn eins og á verkefnablöðunum.
+  function symSvg(type) {
+    const arm = (deg) => {
+      const r = (deg * Math.PI) / 180, cx = 60, cy = 50;
+      const x1 = cx + 7 * Math.cos(r), y1 = cy + 7 * Math.sin(r), x2 = cx + 26 * Math.cos(r), y2 = cy + 26 * Math.sin(r);
+      const f = r + Math.PI / 2, x3 = x2 + 9 * Math.cos(f), y3 = y2 + 9 * Math.sin(f);
+      return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}L${x3.toFixed(1)} ${y3.toFixed(1)}"/>`;
+    };
+    const arms = { einfaldur: [-60], krono: [-60, -120], sam: [-60, 120], kross: [-60, -120, 60, 120] }[type];
+    let body = '';
+    if (arms) body = `<circle cx="60" cy="50" r="7" fill="none"/>` + arms.map(arm).join('');
+    else if (type === 'tengill') body = '<path d="M44 34A16 16 0 0 0 76 34"/><path d="M42 50H78M60 50V78M60 50V40"/>';
+    else if (type === 'ljos') body = '<path d="M42 32L78 68M78 32L42 68"/>';
+    return `<svg viewBox="0 0 120 100" width="120" height="100" role="img" aria-label="Teiknitákn" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+  }
+  function startQuiz(t, n) {
+    const bank = quizOf(t);
+    const qs = shuffle(bank).slice(0, n === 'all' ? bank.length : Number(n) || bank.length)
+      .map((q) => Object.assign({}, q, { order: shuffle(q.a.map((_, i) => i)) }));
+    Q = { task: t.id, qs, i: 0, picked: null, right: 0, wrong: [], n };
+    quizView();
+  }
+  function quizView() {
+    const dlg = $('#dlg');
+    const t = S.tasks.find((x) => x.id === Q.task);
+    const total = Q.qs.length;
+    let html;
+    if (Q.i >= total) {
+      const pct = Math.round((100 * Q.right) / total);
+      const msg = pct >= 90 ? 'Frábært. Undirbúningurinn skilar sér.' : pct >= 70 ? 'Gott. Rifjaðu upp atriðin hér fyrir neðan og taktu prófið aftur.' : 'Farðu yfir atriðin hér fyrir neðan og í gátlistanum, og taktu svo prófið aftur.';
+      html = `<div class="detail quiz"><p class="eyebrow">Æfingapróf · ${esc(t.title)}</p>
+        <h2>${Q.right} af ${total} rétt <span class="muted">(${pct}%)</span></h2><p>${esc(msg)}</p>
+        ${Q.wrong.length ? `<h3>Rifjaðu þetta upp</h3><ul class="review">${Q.wrong.map((q) => `<li><b>${esc(q.q)}</b>${q.sym ? `<span class="sym sm">${symSvg(q.sym)}</span>` : ''}<span>Rétt svar: ${esc(q.a[q.c])}</span><small>${esc(q.why)}</small></li>`).join('')}</ul>
+        <button data-act="quizUncheck">Taka hak af þessum atriðum í gátlistanum</button>` : ''}
+        <div class="dlg-actions"><button data-act="quizStart" data-id="${esc(t.id)}" data-n="${esc(Q.n)}">Taka aftur</button><span></span><button class="primary" data-act="quizBack">Aftur í gátlistann</button></div></div>`;
+    } else {
+      const q = Q.qs[Q.i], answered = Q.picked !== null, ok = Q.picked === q.c;
+      html = `<div class="detail quiz"><div class="row-head"><p class="eyebrow">Spurning ${Q.i + 1} af ${total} · ${Q.right} rétt</p><button class="small ghost" data-act="quizBack">Hætta</button></div>
+        <div class="prog" aria-hidden="true"><i style="width:${Math.round((100 * Q.i) / total)}%"></i></div>
+        ${q.sym ? `<div class="sym">${symSvg(q.sym)}</div>` : ''}<h2>${esc(q.q)}</h2>
+        <div class="opts">${q.order.map((i) => {
+          const cls = answered ? (i === q.c ? 'right' : i === Q.picked ? 'wrong' : '') : '';
+          return `<button class="opt ${cls}" data-act="quizAnswer" data-i="${i}" ${answered ? 'disabled' : ''}>${esc(q.a[i])}</button>`;
+        }).join('')}</div>
+        ${answered ? `<p class="feedback ${ok ? 'ok' : 'bad'}" role="status"><b>${ok ? 'Rétt.' : 'Rangt.'}</b> ${esc(q.why)}</p>
+        <div class="dlg-actions"><span></span><button class="primary" id="quizNext" data-act="quizNext">${Q.i + 1 < total ? 'Næsta spurning' : 'Sjá niðurstöðu'}</button></div>` : ''}</div>`;
+    }
+    dlg.innerHTML = html;
+    if (!dlg.open) dlg.showModal();
+    dlg.scrollTop = 0;
+    const nx = $('#quizNext'); if (nx) nx.focus();
+  }
+
   const detailTask = () => { const el = $('#dlg .detail'); return el && S.tasks.find((t) => t.id === el.dataset.task); };
 
   function taskRow(t) {
@@ -590,6 +653,34 @@
       save(); render(); taskDetail(t, true);
     },
     closeDlg: () => $('#dlg').close(),
+    quizStart: (el) => { const t = S.tasks.find((x) => x.id === (el.dataset.id || (Q && Q.task))); if (t && quizOf(t)) startQuiz(t, el.dataset.n); },
+    quizAnswer: (el) => {
+      if (!Q || Q.picked !== null) return;
+      const q = Q.qs[Q.i];
+      Q.picked = Number(el.dataset.i);
+      if (Q.picked === q.c) Q.right++; else Q.wrong.push(q);
+      quizView();
+    },
+    quizNext: () => {
+      if (!Q) return;
+      Q.i++; Q.picked = null;
+      if (Q.i >= Q.qs.length) {
+        const t = S.tasks.find((x) => x.id === Q.task);
+        const pct = Math.round((100 * Q.right) / Q.qs.length);
+        t.quiz = { last: pct, best: Math.max(pct, (t.quiz && t.quiz.best) || 0), date: today() };
+        save(); render();
+      }
+      quizView();
+    },
+    quizUncheck: () => {
+      const t = S.tasks.find((x) => x.id === Q.task);
+      const refs = [...new Set(Q.wrong.map((q) => q.ref).filter(Boolean))];
+      t.checked = t.checked || {};
+      refs.forEach((r) => { t.checked[r] = false; });
+      save(); render();
+      toast(`Hak tekið af ${refs.length} atriðum`);
+    },
+    quizBack: () => { const t = Q && S.tasks.find((x) => x.id === Q.task); Q = null; if (t) taskDetail(t); else $('#dlg').close(); },
     toggleTask: (el) => { const t = S.tasks.find((x) => x.id === el.dataset.id); if (t) { t.done = el.checked; if (t.done && !t.submitted) t.submitted = today(); if (!t.done) delete t.submitted; save(); setTimeout(render, 250); } },
     filter: (el) => { taskFilter = el.dataset.k; render(); },
     newCourse: () => courseDialog(null),
