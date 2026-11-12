@@ -1,5 +1,5 @@
 /* Einfaldur þjónustuþráður: forritið virkar án nettengingar og getur birt tilkynningar. */
-const CACHE = 'namid-v2';
+const CACHE = 'namid-v3';
 const FILES = ['./', 'index.html', 'style.css', 'data.js', 'aaetlanir.js', 'app.js', 'icon.svg', 'manifest.webmanifest'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => {

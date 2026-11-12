@@ -198,3 +198,21 @@ dialog::backdrop{background:rgba(10,20,15,.45)}
 table.plan textarea{display:block;min-height:0;resize:none;padding:4px 7px;font-size:14px;line-height:1.4;border-color:transparent;background:transparent;field-sizing:content;font-weight:600}
 table.plan textarea.sub{font-weight:400;color:var(--muted);font-size:13px}
 table.plan textarea:hover,table.plan textarea:focus{border-color:var(--line);background:var(--card)}
+dialog{max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain}
+.detail{display:flex;flex-direction:column;gap:8px;padding:18px}
+.detail h2{font-size:21px;margin:2px 0 0;text-wrap:balance}
+.detail h3{margin:14px 0 2px}
+.detail p{margin:0}
+.prog{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--k-sponn);transition:width .25s}
+ol.how{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+ul.checks{list-style:none;margin:0;padding:0}
+ul.checks li{display:flex;align-items:flex-start;gap:6px;padding:7px 0;border-top:1px solid var(--line)}
+ul.checks li:first-child{border-top:0}
+ul.checks label.check{align-items:flex-start;flex:1;font-size:15px;cursor:pointer}
+ul.checks label.check input{margin-top:2px}
+ul.checks small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+ul.checks li.on label>span{color:var(--muted)}
+.add-check{display:flex;gap:8px}
+.add-check input{flex:1}
+.detail .dlg-actions{flex-wrap:wrap;position:sticky;bottom:-18px;background:var(--card);padding:10px 0 4px;border-top:1px solid var(--line)}

@@ -155,6 +155,51 @@
   const chip = (c) => `<span class="chip" style="--c:${esc(c.color)}">${esc(c.code)}</span>`;
   const kindBadge = (k) => `<span class="badge k-${esc(k)}">${esc(KIND[k] || k)}</span>`;
 
+  /* ---------- Gátlistar ---------- */
+  const studyOf = (t) => (window.NAM_STUDY || {})[t.id] || null;
+  function checkKeys(t) {
+    const st = studyOf(t), keys = [];
+    if (st) (st.sections || []).forEach((s) => s.items.forEach((i) => keys.push(i.id)));
+    (t.check || []).forEach((i) => keys.push('own:' + i.id));
+    return keys;
+  }
+  function progress(t) {
+    const keys = checkKeys(t), ch = t.checked || {};
+    return { done: keys.filter((k) => ch[k]).length, total: keys.length };
+  }
+  const progText = (p) => `${p.done} af ${p.total} atriðum`;
+
+  function checkLi(t, key, text, hint, own) {
+    const on = t.checked && t.checked[key];
+    return `<li class="${on ? 'on' : ''}"><label class="check"><input type="checkbox" data-check="${esc(key)}" ${on ? 'checked' : ''}><span>${esc(text)}${hint ? `<small>${esc(hint)}</small>` : ''}</span></label>${own ? `<button class="small ghost" data-act="delCheck" data-k="${esc(key)}" aria-label="Eyða atriði">✕</button>` : ''}</li>`;
+  }
+
+  function taskDetail(t, keepScroll) {
+    const dlg = $('#dlg');
+    const scroll = keepScroll ? dlg.scrollTop : 0;
+    const c = t.course ? course(t.course) : null;
+    const st = studyOf(t) || {};
+    const p = progress(t);
+    const when = t.due ? `${fmtLong(t.due)}${t.time ? ' kl. ' + fmtTime(t.time) : ''} · ${relDays(t.due)}` : 'Engin dagsetning';
+    dlg.innerHTML = `<div class="detail" data-task="${esc(t.id)}">
+      <div class="t-meta">${c ? chip(c) : ''}<span class="badge">${esc(TASK_KIND[t.kind] || 'Verkefni')}</span>${t.weight ? `<span class="badge">${esc(t.weight)}%</span>` : ''}${t.done ? '<span class="badge k-spönn">Lokið</span>' : ''}${t.score ? `<span class="badge k-spönn">${esc(t.score)}</span>` : ''}</div>
+      <h2>${esc(t.title)}</h2>
+      <p class="${!t.done && t.due && t.due < today() ? 'warn' : 'muted'}">${esc(when)}</p>
+      ${p.total ? `<div class="prog" aria-hidden="true"><i style="width:${Math.round(100 * p.done / p.total)}%"></i></div><p class="muted small" data-prog>${progText(p)}</p>` : ''}
+      ${st.intro ? `<p>${esc(st.intro)}</p>` : ''}
+      ${t.notes && t.notes !== st.intro ? `<p class="hint">${esc(t.notes)}</p>` : ''}
+      ${st.how ? `<h3>Hvernig best er að fara að</h3><ol class="how">${st.how.map((h) => `<li>${esc(h)}</li>`).join('')}</ol>` : ''}
+      ${(st.sections || []).map((s) => `<h3>${esc(s.title)}</h3><ul class="checks">${s.items.map((i) => checkLi(t, i.id, i.text, i.hint)).join('')}</ul>`).join('')}
+      <h3>Mín atriði</h3>
+      ${(t.check || []).length ? `<ul class="checks">${t.check.map((i) => checkLi(t, 'own:' + i.id, i.text, '', true)).join('')}</ul>` : ''}
+      <form data-form="addCheck" class="add-check"><input id="addCheckText" name="text" placeholder="Nýtt atriði á listann" required aria-label="Nýtt atriði"><button>Bæta við</button></form>
+      <div class="dlg-actions"><button data-act="editTask" data-id="${esc(t.id)}" data-edit="1">Breyta</button><button data-act="doneTask" data-id="${esc(t.id)}">${t.done ? 'Opna aftur' : 'Merkja lokið'}</button><span></span><button class="primary" data-act="closeDlg">Loka</button></div>
+    </div>`;
+    if (!dlg.open) dlg.showModal();
+    dlg.scrollTop = scroll;
+  }
+  const detailTask = () => { const el = $('#dlg .detail'); return el && S.tasks.find((t) => t.id === el.dataset.task); };
+
   function taskRow(t) {
     const c = t.course ? course(t.course) : null;
     const late = !t.done && t.due && t.due < today();
@@ -163,7 +208,7 @@
       <input type="checkbox" data-act="toggleTask" data-id="${t.id}" ${t.done ? 'checked' : ''} aria-label="Lokið: ${esc(t.title)}">
       <button class="task-body" data-act="editTask" data-id="${t.id}">
         <span class="t-title">${esc(t.title)}</span>
-        <span class="t-meta">${c ? chip(c) : ''}<span class="badge">${esc(TASK_KIND[t.kind] || 'Verkefni')}</span>${t.weight ? `<span class="badge">${esc(t.weight)}%</span>` : ''}<span>${esc(when)}</span>${t.submitted ? `<span>Skilað ${esc(fmtShort(t.submitted))}</span>` : ''}${t.score ? `<span class="badge k-sponn">${esc(t.score)}</span>` : ''}</span>${t.notes && !t.done ? `<span class="t-notes">${esc(t.notes)}</span>` : ''}
+        <span class="t-meta">${c ? chip(c) : ''}<span class="badge">${esc(TASK_KIND[t.kind] || 'Verkefni')}</span>${t.weight ? `<span class="badge">${esc(t.weight)}%</span>` : ''}<span>${esc(when)}</span>${(() => { const p = progress(t); return p.total && !t.done ? `<span class="badge k-frestur">Gátlisti ${p.done}/${p.total}</span>` : ''; })()}${t.submitted ? `<span>Skilað ${esc(fmtShort(t.submitted))}</span>` : ''}${t.score ? `<span class="badge k-sponn">${esc(t.score)}</span>` : ''}</span>${t.notes && !t.done ? `<span class="t-notes">${esc(t.notes)}</span>` : ''}
       </button></li>`;
   }
 
@@ -459,13 +504,14 @@
     dlg.innerHTML = `<form method="dialog" class="dlg-form">${html}</form>`;
     const f = dlg.querySelector('form');
     f.addEventListener('submit', (ev) => {
+      ev.stopPropagation();
       const btn = ev.submitter;
       if (btn && btn.value === 'cancel') return;
       if (btn && btn.value === 'delete') { onSubmit(null, 'delete'); render(); return; }
       onSubmit(Object.fromEntries(new FormData(f)), 'save');
       save(); render();
     });
-    dlg.showModal();
+    if (!dlg.open) dlg.showModal();
     const first = f.querySelector('input:not([type=hidden]),select,textarea');
     if (first) first.focus();
   }
@@ -524,7 +570,26 @@
   const ACT = {
     week: (el) => { const n = Number(el.dataset.n); weekOf = n ? addDays(weekOf, n) : monday(today()); render(); },
     newTask: (el) => taskDialog(null, el.dataset.course),
-    editTask: (el) => taskDialog(S.tasks.find((t) => t.id === el.dataset.id)),
+    editTask: (el) => {
+      const t = S.tasks.find((x) => x.id === el.dataset.id);
+      if (t) (el.dataset.edit ? taskDialog(t) : taskDetail(t));
+    },
+    doneTask: (el) => {
+      const t = S.tasks.find((x) => x.id === el.dataset.id);
+      if (!t) return;
+      t.done = !t.done;
+      if (t.done && !t.submitted) t.submitted = today();
+      if (!t.done) delete t.submitted;
+      save(); render(); taskDetail(t, true);
+    },
+    delCheck: (el) => {
+      const t = detailTask(); if (!t) return;
+      const id = el.dataset.k.slice(4);
+      t.check = (t.check || []).filter((i) => i.id !== id);
+      if (t.checked) delete t.checked[el.dataset.k];
+      save(); render(); taskDetail(t, true);
+    },
+    closeDlg: () => $('#dlg').close(),
     toggleTask: (el) => { const t = S.tasks.find((x) => x.id === el.dataset.id); if (t) { t.done = el.checked; if (t.done && !t.submitted) t.submitted = today(); if (!t.done) delete t.submitted; save(); setTimeout(render, 250); } },
     filter: (el) => { taskFilter = el.dataset.k; render(); },
     newCourse: () => courseDialog(null),
@@ -543,6 +608,13 @@
   };
 
   const FORMS = {
+    addCheck: (f) => {
+      const t = detailTask(); if (!t) return;
+      const text = f.elements.text.value.trim(); if (!text) return;
+      (t.check = t.check || []).push({ id: uid(), text });
+      save(); render(); taskDetail(t, true);
+      $('#addCheckText').focus();
+    },
     slot: (f) => {
       const v = Object.fromEntries(new FormData(f));
       if (v.end <= v.start) { toast('Tíminn þarf að enda eftir að hann byrjar'); return; }
@@ -590,6 +662,16 @@
   });
   document.addEventListener('change', (ev) => {
     const el = ev.target;
+    if (el.dataset && el.dataset.check) {
+      const t = detailTask(); if (!t) return;
+      (t.checked = t.checked || {})[el.dataset.check] = el.checked;
+      el.closest('li').classList.toggle('on', el.checked);
+      const p = progress(t);
+      const bar = $('#dlg .prog i'); if (bar) bar.style.width = Math.round(100 * p.done / p.total) + '%';
+      const txt = $('#dlg [data-prog]'); if (txt) txt.textContent = progText(p);
+      save(); render();
+      return;
+    }
     if (!el.dataset || !el.dataset.plan) return;
     const list = S.plans[el.dataset.plan] = S.plans[el.dataset.plan] || [];
     let p = list.find((x) => x.week === el.dataset.week);
