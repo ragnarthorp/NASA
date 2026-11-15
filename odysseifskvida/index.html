@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="is" data-theme="ljost" data-font="serif">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#fbfaf7">
+<title>Ódysseifskviða – lestrarstofa</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<a class="skip" href="#lestur">Fara beint í lestrartexta</a>
+
+<header class="topbar">
+  <button type="button" id="btnToc" class="tb" aria-haspopup="dialog">
+    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h11"/></svg><span>Efnisyfirlit</span>
+  </button>
+  <div class="doc-title">
+    <span class="dt-main">Ódysseifskviða – endursögn</span>
+    <span class="dt-sub" id="curSection"></span>
+  </div>
+  <button type="button" id="btnSettings" class="tb" aria-haspopup="dialog">
+    <span class="aa" aria-hidden="true">Aa</span><span>Lestrarstillingar</span>
+  </button>
+  <button type="button" id="btnNotes" class="tb" aria-expanded="false" aria-controls="notesPanel">
+    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h5"/></svg><span>Glósur</span><span class="badge" id="noteCount">0</span>
+  </button>
+</header>
+
+<div id="banners" class="banners"></div>
+
+<div class="layout" id="layout">
+  <main id="lestur" tabindex="-1">
+    <article id="article" class="reading"></article>
+    <nav class="chapnav" id="chapnav" aria-label="Fyrri og næsti kafli"></nav>
+  </main>
+
+  <div class="panel-backdrop" id="panelBackdrop" hidden></div>
+  <aside id="notesPanel" class="notes" aria-labelledby="notesTitle" hidden>
+    <div class="np-head">
+      <h2 id="notesTitle" tabindex="-1">Mínar glósur</h2>
+      <button type="button" class="icon-btn" id="btnCloseNotes" aria-label="Fela glósuspjald">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="np-filters">
+      <label>Kafli<select id="fSection"></select></label>
+      <label>Tegund<select id="fType"></select></label>
+    </div>
+    <p class="np-info" id="filterInfo" aria-live="polite"></p>
+    <ol class="note-list" id="noteList"></ol>
+    <div class="np-foot">
+      <p class="save-status" id="saveStatus" role="status" aria-live="polite"></p>
+      <button type="button" class="primary wide" id="btnExport">Flytja út</button>
+      <div class="wf-row">
+        <button type="button" id="btnSaveWf">Vista vinnuskrá</button>
+        <button type="button" id="btnOpenWf">Opna vinnuskrá</button>
+      </div>
+      <p class="fine">Glósurnar vistast sjálfkrafa í þessum vafra á þessu tæki – <strong>ekki</strong> á Google Drive. Vistaðu vinnuskrá áður en þú hættir, t.d. í Files eða á Drive.</p>
+    </div>
+  </aside>
+</div>
+
+<div id="selbar" class="selbar" role="toolbar" aria-label="Aðgerðir fyrir valinn texta" hidden>
+  <p class="sb-info" id="sbInfo"></p>
+  <div class="sb-actions">
+    <button type="button" id="sbOwn" class="primary">Skrifa eigin glósu</button>
+    <button type="button" id="sbRecycle">Endurvinna valinn texta</button>
+  </div>
+</div>
+
+<!-- Efnisyfirlit -->
+<dialog id="tocDlg" class="dlg side-dlg" aria-labelledby="tocTitle">
+  <div class="dlg-head"><h2 id="tocTitle">Efnisyfirlit</h2>
+    <button type="button" class="icon-btn" data-close aria-label="Loka efnisyfirliti"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <nav aria-labelledby="tocTitle"><ol class="toc" id="tocList"></ol></nav>
+</dialog>
+
+<!-- Lestrarstillingar -->
+<dialog id="settingsDlg" class="dlg" aria-labelledby="setTitle">
+  <div class="dlg-head"><h2 id="setTitle">Lestrarstillingar</h2>
+    <button type="button" class="icon-btn" data-close aria-label="Loka lestrarstillingum"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dlg-body settings">
+    <div class="set-group" role="group" aria-labelledby="fsLabel">
+      <span class="set-label" id="fsLabel">Leturstærð</span>
+      <div class="stepper">
+        <button type="button" id="fsDown" aria-label="Minnka letur">A−</button>
+        <output id="fsValue" aria-live="polite" for="fsDown fsUp">20 px</output>
+        <button type="button" id="fsUp" aria-label="Stækka letur">A+</button>
+      </div>
+    </div>
+    <fieldset class="set-group"><legend class="set-label">Leturgerð</legend>
+      <div class="seg">
+        <label><input type="radio" name="font" value="serif"><span class="f-serif">Serif</span></label>
+        <label><input type="radio" name="font" value="sans"><span class="f-sans">Sans-serif</span></label>
+      </div>
+    </fieldset>
+    <fieldset class="set-group"><legend class="set-label">Línubil</legend>
+      <div class="seg">
+        <label><input type="radio" name="lineHeight" value="thett"><span>Þétt</span></label>
+        <label><input type="radio" name="lineHeight" value="venjulegt"><span>Venjulegt</span></label>
+        <label><input type="radio" name="lineHeight" value="rumt"><span>Rúmt</span></label>
+      </div>
+    </fieldset>
+    <fieldset class="set-group"><legend class="set-label">Breidd textadálks</legend>
+      <div class="seg">
+        <label><input type="radio" name="width" value="mjor"><span>Mjór</span></label>
+        <label><input type="radio" name="width" value="midlungs"><span>Miðlungs</span></label>
+        <label><input type="radio" name="width" value="breidur"><span>Breiður</span></label>
+      </div>
+    </fieldset>
+    <fieldset class="set-group"><legend class="set-label">Bakgrunnur</legend>
+      <div class="seg themes">
+        <label><input type="radio" name="theme" value="ljost"><span class="sw sw-ljost">Ljós</span></label>
+        <label><input type="radio" name="theme" value="hlytt"><span class="sw sw-hlytt">Hlýr</span></label>
+        <label><input type="radio" name="theme" value="dokkt"><span class="sw sw-dokkt">Dökkur</span></label>
+      </div>
+    </fieldset>
+    <button type="button" id="btnResetSettings">Endurstilla lestrarstillingar</button>
+  </div>
+</dialog>
+
+<!-- Ritspjald -->
+<dialog id="editorDlg" class="dlg editor" aria-labelledby="edTitle">
+  <div class="ed-head">
+    <h2 id="edTitle">Ný glósa</h2>
+    <p class="ed-loc" id="edLoc"></p>
+  </div>
+  <div class="ed-scroll" id="edScroll">
+    <details class="ed-src" id="edSrcWrap" open>
+      <summary>Valinn frumtexti <span class="muted">(breytist ekki)</span></summary>
+      <blockquote id="edSrc" class="src-quote"></blockquote>
+    </details>
+    <fieldset class="types" id="edTypes"><legend>Tegund glósu</legend><div class="type-row" id="edTypeRow"></div></fieldset>
+    <p class="guide" id="edGuide" hidden></p>
+    <div class="ed-insert" id="edInsertRow" hidden>
+      <button type="button" id="edInsert">Afrita frumtextann í ritreitinn</button>
+    </div>
+    <label class="ed-label" for="edBody">Mín glósa</label>
+    <textarea id="edBody" rows="6" spellcheck="true" lang="is" autocomplete="off"></textarea>
+    <p class="ed-note" id="edNote" aria-live="polite"></p>
+  </div>
+  <div class="ed-foot">
+    <button type="button" id="edCancel">Hætta við</button>
+    <button type="button" id="edSave" class="primary">Vista glósu</button>
+  </div>
+</dialog>
+
+<!-- Flytja út -->
+<dialog id="exportDlg" class="dlg" aria-labelledby="exTitle">
+  <div class="dlg-head"><h2 id="exTitle">Flytja út</h2>
+    <button type="button" class="icon-btn" data-close aria-label="Loka útflutningi"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dlg-body">
+    <p class="muted">PDF og Markdown eru til lestrar og skila. Til að halda áfram síðar skaltu nota vinnuskrá.</p>
+    <fieldset class="set-group"><legend class="set-label">Snið</legend>
+      <div class="seg">
+        <label><input type="radio" name="exFormat" value="pdf" checked><span>PDF</span></label>
+        <label><input type="radio" name="exFormat" value="md"><span>Markdown (.md)</span></label>
+      </div>
+    </fieldset>
+    <fieldset class="set-group"><legend class="set-label">Glósur</legend>
+      <div class="stack">
+        <label class="check"><input type="radio" name="exScope" value="all" checked><span id="exAllLabel">Allar glósur</span></label>
+        <label class="check"><input type="radio" name="exScope" value="filter"><span id="exFilterLabel">Núverandi sía</span></label>
+      </div>
+    </fieldset>
+    <fieldset class="set-group"><legend class="set-label">Röð</legend>
+      <div class="stack">
+        <label class="check"><input type="radio" name="exOrder" value="texti" checked><span>Röð í textanum</span></label>
+        <label class="check"><input type="radio" name="exOrder" value="stofnun"><span>Í þeirri röð sem glósurnar voru skrifaðar</span></label>
+      </div>
+    </fieldset>
+    <label class="check"><input type="checkbox" id="exQuote" checked><span>Hafa valinn frumtexta með</span></label>
+    <p class="err" id="exError" role="alert" hidden></p>
+    <button type="button" class="primary wide" id="exBuild">Búa til skrá</button>
+    <hr>
+    <h3>Vinnuskrá</h3>
+    <p class="muted">Allar glósur, tengingar og stillingar í einni JSON-skrá. Opnaðu hana aftur með „Opna vinnuskrá“.</p>
+    <button type="button" class="wide" id="exWorkfile">Vista vinnuskrá</button>
+  </div>
+</dialog>
+
+<!-- Skrá tilbúin -->
+<dialog id="fileDlg" class="dlg" aria-labelledby="fileTitle">
+  <div class="dlg-head"><h2 id="fileTitle">Skráin er tilbúin</h2>
+    <button type="button" class="icon-btn" data-close aria-label="Loka"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dlg-body">
+    <p id="fileInfo"></p>
+    <button type="button" class="primary wide" id="fileShare" hidden>Deila eða vista í Files…</button>
+    <button type="button" class="wide" id="fileDownload">Sækja skrá</button>
+    <p class="fine" id="fileHelp">Í deilivalmyndinni má velja „Vista í Files“ (Save to Files) og þar t.d. Google Drive ef það er tengt tækinu. Vefurinn getur ekki staðfest hvar skráin endar – athugaðu að hún sé komin á réttan stað.</p>
+    <p class="ok" id="fileResult" role="status" aria-live="polite"></p>
+  </div>
+</dialog>
+
+<!-- Staðfesting / skilaboð -->
+<dialog id="confirmDlg" class="dlg" aria-labelledby="cfTitle" aria-describedby="cfBody">
+  <div class="dlg-head"><h2 id="cfTitle"></h2></div>
+  <div class="dlg-body"><div id="cfBody"></div><div class="cf-actions" id="cfActions"></div></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<input type="file" id="fileInput" accept=".json,application/json" hidden>
+
+<script src="data/odysseifskvida.js"></script>
+<script src="js/core.js"></script>
+<script src="js/store.js"></script>
+<script src="js/pdfexport.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

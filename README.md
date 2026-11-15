@@ -45,3 +45,7 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Lestrarstofa – Ódysseifskviða
+
+`odysseifskvida/` er sjálfstæður vefur fyrir nemendur: lestur á *Ódysseifskviðu – endursögn* (úr PDF-skjali í merkingarbæran HTML-texta), textaval, endurvinnsla og eigin glósur, vistun í tækinu, vinnuskrá og útflutningur í PDF og Markdown. Hann er hannaður fyrir iPad í Safari. Sjá `odysseifskvida/README.md`.
