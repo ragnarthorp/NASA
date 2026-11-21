@@ -45,3 +45,13 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Annars stigs jöfnur (STÆ2AH, kafli 7)
+
+`annars-stigs/index.html` er sjálfstæður æfingarvefur. Kjarninn er **algebruvél**: liðir eru dregnir yfir = (formerkið snýst), tala fyrir framan sviga er dregin inn í hann, svigi er dreginn á annan sviga (hver liður við hvern), líkir liðir eru dregnir saman, og hægt er að velja liði og taka út fyrir sviga. Hvert skref skráist sem lína „á blaði“ með merki af formúlublaðinu (Þ1, Þ2, Þ3, A1).
+
+1. **Hvað er annars stigs jafna?** Einkennið x², x² = k á grafi (af hverju ±), fleygbogi með sleðum (0, 1 eða 2 lausnir) og þrjú stig af „þekktu hana í sjón“.
+2. **Raðaðu á staðalform** í vélinni, í öruggum skrefum: færa yfir =, sameina, raða, svigar, mínus fyrir framan sviga, svigi í öðru veldi, tveir svigar, A mínus, allt saman og eigið dæmi. Ný slembidæmi fást með „+ Nýtt dæmi“.
+3. **A, B og C:** lesa af með formerkjum, liður sem vantar, og raða fyrst og lesa svo af.
+
+Framvinda vistast í vafranum (`localStorage`).
