@@ -59,3 +59,5 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 6. **Prófaðu þig:** slembipróf (5, 8 eða 10 dæmi; létt, miðlungs, erfitt eða blandað) sem leyst er á blaði. Lausn hvers dæmis er sýnd línu fyrir línu; nemandinn merkir rétt/rangt og getur bent á línuna þar sem hann fór út af. Út frá því birtist hvað þarf að æfa, með ráðum og tengli á æfingu.
 
 Framvinda vistast í vafranum (`localStorage`).
+
+**Vinnubók til útprentunar:** `annars-stigs/vinnubok/vinnubok-annars-stigs.pdf` (26 síður A4, svart/hvítt) fylgir hlutum 1–6: spurningar með rúmum skriflínum, formúlureitir (A1, A2, A3, Þ1–Þ4), hnitakerfi til að teikna fleygboga með 0, 1 og 2 núllstöðvum, matskvarði (auðvelt–erfitt) á spássíu, 10 reitir fyrir sjálfsprófið og drög að glósublaðinu. Búin til með `vinnubok/vinnubok.py` (Python + reportlab; keyrð tvisvar svo efnisyfirlitið fái blaðsíðutöl).
