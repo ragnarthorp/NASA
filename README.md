@@ -53,5 +53,6 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 1. **Hvað er annars stigs jafna?** Einkennið x², x² = k á grafi (af hverju ±), fleygbogi með sleðum (0, 1 eða 2 lausnir) og þrjú stig af „þekktu hana í sjón“.
 2. **Raðaðu á staðalform** í vélinni, í öruggum skrefum: færa yfir =, sameina, raða, svigar, mínus fyrir framan sviga, svigi í öðru veldi, tveir svigar, A mínus, allt saman og eigið dæmi. Ný slembidæmi fást með „+ Nýtt dæmi“.
 3. **A, B og C:** lesa af með formerkjum, liður sem vantar, og raða fyrst og lesa svo af.
+4. **Lausnarformúlan:** sýnidæmi skref fyrir skref, reikna D (A2) og hvað það segir, lausnarformúlan (A3) í föstum skrefum (A, B, C → D → √D → −B og 2A → x), ein lausn eða engin, brot og liðir sem vantar, og allt saman frá óraðaðri jöfnu. Nemandinn fyllir í reiti, fær endurgjöf sniðna að formerkjavillum, sér lausnirnar á fleygboganum og prófar þær með því að setja inn í jöfnuna.
 
 Framvinda vistast í vafranum (`localStorage`).
