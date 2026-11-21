@@ -348,6 +348,18 @@ input[type=range]{width:100%;accent-color:var(--k7);height:30px}
 .slot.ok{border-style:solid;border-color:var(--ok);background:var(--ok-tint);animation:pop .35s ease}
 .slot.no{animation:shake .35s;border-color:var(--bad)}
 .sv-msg.ok{background:var(--ok-tint)}
+.dc-expr{font-size:clamp(1.45rem,4vw,1.9rem)}
+.dc-lines{color:var(--muted);font-size:1.1rem;line-height:1.6}
+.sv-li.done .sv-math>div{line-height:1.6}
+.dtk,.dop{display:inline-block;border-radius:9px;padding:.02em .2em;border:2px solid var(--k7);background:var(--surface);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;line-height:1.25}
+.dop{border-style:dotted;cursor:pointer;min-width:1.2em;text-align:center}
+.dtk:hover,.dop:hover{background:var(--k7-tint)}
+.dtk.sel{background:var(--k7);color:var(--on-k7)}
+.dtk.over,.dop.over{background:var(--k7);color:var(--on-k7)}
+.dc-help{font-size:.85rem;color:var(--muted)}
+.sv-math .btn{font-family:var(--font);font-size:.85rem;vertical-align:middle}
+.dc-prompt:empty{display:none}
+.dc-prompt .sv-math{background:var(--k7-tint);border-radius:12px;padding:.3em .6em}
 /* ---------- Sími ---------- */
 @media (max-width:980px){
   .engine{grid-template-columns:minmax(0,1fr)}
@@ -1425,17 +1437,9 @@ function Solver(host,src,cfg={}){
     why:'Í formúlunni D = B² − 4AC kemur B, A og C í staðinn fyrir stafina. Sviginn heldur formerkinu með tölunni.',
     math:b=>`<i>D</i> = <i>B</i><sup>2</sup> − 4<i>AC</i> = (${b(0)})<sup>2</sup> − 4 · (${b(1)}) · (${b(2)})`,
     exp:[B,A,C],drag:{src:'vals',keys:['A','B','C'],want:['B','A','C']},hintDrag:'Dragðu B, A og C á sinn stað í formúlunni.',check:v=>[['B',B],['A',A],['C',C]].map(([L,e],i)=>v[i]===null||v[i]===undefined?'Skrifaðu tölu í hvern reit.':v[i].eq(e)?'':v[i].abs().eq(e.abs())?`Hér á ${L} að koma með formerkinu: ${L} = ${nH(e)}.`:`Hér á ${L} að koma. Þú fannst ${L} = ${nH(e)} í skrefinu á undan.`)});
-  steps.push({ref:'A2',t:'Reiknaðu D',
-    why:`Fyrst veldið: ${pB}² = ${nH(B2)}. Svo 4 · ${pA} · ${pC} = ${nH(AC4)}. Loks ${nH(B2)} − ${AC4.isNeg()?'('+nH(AC4)+')':nH(AC4)} = ${nH(D)}.`,
-    math:b=>`<i>D</i> = ${pB}<sup>2</sup> − 4 · ${pA} · ${pC} = ${b(0)}`,
-    exp:[D],check:(v,tries)=>{const x=v[0];
-      if(x===null||x===undefined)return['Skrifaðu tölu.'];
-      if(x.eq(D))return[''];
-      if(B.isNeg()&&x.eq(B2.neg().sub(AC4)))return[`${pB}² er ${nH(B2)}, ekki ${nH(B2.neg())}. Mínus sinnum mínus er plús.`];
-      if(x.eq(B2.add(AC4)))return[`Athugaðu formerkið á 4AC: 4 · ${pA} · ${pC} = ${nH(AC4)}, og svo kemur mínus fyrir framan.`];
-      if(x.eq(B2.sub(A.mul(C)))||x.eq(B2.sub(A.mul(C).mul(2))))return['Mundu 4-una: 4 · A · C.'];
-      if(x.eq(B.sub(AC4))||x.eq(B.mul(2).sub(AC4)))return[`B í öðru veldi er B · B: ${pB} · ${pB} = ${nH(B2)}.`];
-      return[tries>=1?`Reiknaðu í tveimur hlutum: ${pB}² = ${nH(B2)} og 4 · ${pA} · ${pC} = ${nH(AC4)}.`:'Ekki rétt. Reiknaðu veldið fyrst, svo 4 · A · C, og dragðu frá.'];}});
+  steps.push({ref:'A2',t:'Reiknaðu D í réttri röð',dcalc:true,exp:[D],
+    why:'Röð aðgerða: ① veldið ② margföldunin 4 · A · C ③ síðast plús eða mínus.',
+    math:()=>dChainH(E.dlines||canonLines())});
   steps.push({ref:'A2',t:'Hvað segir D?',choice:[['2','2 lausnir'],['1','1 lausn'],['0','Engin lausn']],exp:String(cnt),
     why:'D &gt; 0: tvær lausnir. D = 0: ein lausn. D &lt; 0: engin lausn, því engin tala í öðru veldi verður neikvæð.',
     math:()=>`<i>D</i> = ${nH(D)} &nbsp; ${cnt===2?'&gt; 0':cnt===1?'= 0':'&lt; 0'}`,
@@ -1491,7 +1495,16 @@ function Solver(host,src,cfg={}){
     if(state==='todo')return `<li class="sv-li todo">${num}<div class="sv-body"><div class="sv-t">${s.t}</div></div></li>`;
     if(state==='done')return `<li class="sv-li done">${num}<div class="sv-body"><div class="sv-t">${s.t} <span class="ref">${s.ref}</span></div><div class="sv-math">${s.choice?s.math():s.math(i=>nH(s.exp[i]))}</div></div></li>`;
     let m;
-    if(s.choice)m=`<div class="sv-math">${s.math()}</div><div class="row">${s.choice.map(c=>`<button class="btn" data-ch="${c[0]}">${c[1]}</button>`).join('')}</div>`;
+    if(s.dcalc&&!cfg.demo){
+      const d=E.dc;
+      m=`<div class="dc-lines sv-math">${d.lines.slice(0,-1).map((l,j)=>`<div>${j?'= ':'<i>D</i> = '}${l}</div>`).join('')}</div>
+        <div class="sv-math dc-expr">${d.lines.length>1?'= ':'<i>D</i> = '}${dExprH(d,true)}</div>
+        <div class="dc-help">Dragðu tvær tölur saman til að margfalda, eða smelltu á það sem þú vilt reikna. <b>Röð:</b> ① veldi ② margföldun ③ plús/mínus.</div>
+        <div class="dc-prompt"></div>
+        <div class="row"><button class="btn sm" data-dhint>Vísbending</button><button class="btn sm ghost" data-dshow hidden>Sýna svar</button></div>`;
+    }
+    else if(s.choice)m=`<div class="sv-math">${s.math()}</div><div class="row">${s.choice.map(c=>`<button class="btn" data-ch="${c[0]}">${c[1]}</button>`).join('')}</div>`;
+    else if(cfg.demo&&s.dcalc)m=`<div class="sv-math dc-lines">${dChainH(canonLines())}</div>`;
     else if(cfg.demo)m=`<div class="sv-math">${s.math(i=>filledVal(s,i))}</div>`;
     else if(s.drag){
       E.chips=chipsFor(s);E.filled=s.drag.want.map(()=>false);E.pick=null;
@@ -1506,6 +1519,7 @@ function Solver(host,src,cfg={}){
       ${cfg.demo&&!s.choice?`<div class="row"><button class="btn pri sm" data-demo>Næsta skref →</button></div>`:''}</div></li>`;
   }
   function render(){
+    if(steps[E.i]&&steps[E.i].dcalc&&E.dcStep!==E.i){E.dcStep=E.i;E.dc=dNew();E.dlines=null}
     list.innerHTML=steps.map((s,k)=>stepHTML(s,k,k<E.i?'done':k===E.i?'act':'todo')).join('');
     const ref=steps[E.i]&&steps[E.i].ref;
     host.querySelectorAll('.fm').forEach(f=>f.classList.toggle('on',f.dataset.ref===ref));
@@ -1544,6 +1558,118 @@ function Solver(host,src,cfg={}){
     host.querySelectorAll('.fm').forEach(f=>f.classList.remove('on'));
     if(!E.fired){E.fired=true;cfg.onDone&&cfg.onDone()}
   }
+  /* --- D reiknað í röð aðgerða --- */
+  function dNew(){const d={P:null,fac:[{v:new F(4),par:false},{v:A,par:true},{v:C,par:true}],op:'−',lines:[],sel:null,pr:null,done:false};d.lines.push(dExprH(d,false));return d}
+  const fShow=f=>f.par||f.v.isNeg()?'('+nH(f.v)+')':nH(f.v);
+  function dExprH(d,I){
+    const tk=(k,h)=>I?`<span class="dtk${d.sel===k?' sel':''}" data-k="${k}" tabindex="0" role="button">${h}</span>`:h;
+    if(d.done)return tk('R',nH(D));
+    const P=tk('P',d.P?nH(d.P):`(${nH(B)})<sup>2</sup>`);
+    const op=I?`<span class="dop" data-k="op" tabindex="0" role="button">${d.op}</span>`:d.op;
+    return `${P} ${op} ${d.fac.map((f,i)=>tk('f'+i,d.op==='+'?nH(f.v):fShow(f))).join(' · ')}`;
+  }
+  const dChainH=lines=>lines.map((l,j)=>`<div>${j?'= ':'<i>D</i> = '}${l}</div>`).join('');
+  function dApply(d,pr){
+    if(pr.t==='pow')d.P=B2;
+    else if(pr.t==='mul'){const[i,j]=pr.ij;const a=Math.min(i,j);d.fac.splice(Math.max(i,j),1);d.fac[a]={v:pr.exp,par:false}}
+    else if(pr.t==='flip'){d.op='+';d.fac[0]={v:pr.exp,par:false}}
+    else if(pr.t==='fin')d.done=true;
+    d.lines.push(dExprH(d,false));d.sel=null;d.pr=null;
+  }
+  function canonLines(){
+    const d=dNew();
+    dApply(d,dMk('pow'));
+    while(d.fac.length>1)dApply(d,dMk('mul',[0,1],d));
+    if(d.fac[0].v.isNeg())dApply(d,dMk('flip',null,d));
+    dApply(d,dMk('fin',null,d));
+    return d.lines;
+  }
+  function dMk(t,ij,d){
+    d=d||E.dc;
+    if(t==='pow')return{t,lhs:`(${nH(B)})<sup>2</sup> = (${nH(B)}) · (${nH(B)})`,exp:B2};
+    if(t==='mul'){const[a,b]=[d.fac[ij[0]],d.fac[ij[1]]];return{t,ij,a:a.v,b:b.v,lhs:`${fShow(a)} · ${fShow(b)}`,exp:a.v.mul(b.v)}}
+    const q=d.fac[0].v;
+    if(t==='flip')return{t,q,lhs:`−(${nH(q)})`,exp:q.neg()};
+    return{t:'fin',lhs:`${nH(d.P)} ${d.op} ${d.op==='+'?nH(q):fShow(d.fac[0])}`,exp:D};
+  }
+  function dMsg(h,cls='no'){const box=list.querySelector('.sv-li.act .sv-msg');if(box){box.className='sv-msg '+cls;box.innerHTML=h}}
+  function dOpen(pr){
+    const d=E.dc;d.pr=pr;d.sel=null;E.tries=0;
+    list.querySelectorAll('.dtk.sel').forEach(x=>x.classList.remove('sel'));
+    const pe=list.querySelector('.dc-prompt');
+    pe.innerHTML=`<div class="sv-math">${pr.lhs} = <input class="blank" id="dcin${n}" autocomplete="off" spellcheck="false" aria-label="Útkoma"> <button class="btn pri sm" data-dchk>Athuga</button> <button class="btn sm" data-dsign>± formerki</button></div>`;
+    dMsg('','');const inp=pe.querySelector('input');inp.focus({preventScroll:true});
+    const sh=list.querySelector('[data-dshow]');if(sh)sh.hidden=true;
+  }
+  function dNext(){const d=E.dc;if(!d.P)return'pow';if(d.fac.length>1)return'mul';if(d.op==='−'&&d.fac[0].v.isNeg())return'flip';return'fin'}
+  function dAct(a,b){
+    const d=E.dc;if(d.done)return;
+    const isF=k=>k&&k[0]==='f';
+    if(isF(a)&&isF(b)){if(a===b){d.sel=null;return dRedraw()}return dOpen(dMk('mul',[+a.slice(1),+b.slice(1)]))}
+    if(a==='P'&&!b){if(!d.P)return dOpen(dMk('pow'));return dAct('op')}
+    if(isF(a)&&!b){d.sel=d.sel===a?null:a;return dRedraw()}
+    // samsetning: veldi/útkoma og 4AC
+    if(!d.P)return dMsg(`Röð aðgerða: <b>fyrst veldið</b>. Smelltu á (${nH(B)})².`);
+    if(d.fac.length>1){
+      const four=[a,b].some(k=>isF(k)&&d.fac[+k.slice(1)].v.eq(4)&&!d.fac[+k.slice(1)].par&&d.fac.length===3);
+      return dMsg(four?`4-an tilheyrir margfölduninni <b>4 · A · C</b>, ekki B². Margfaldaðu hana við A og C fyrst.`:'Röð aðgerða: <b>margföldun á undan frádrætti</b>. Reiknaðu 4 · A · C fyrst, svo það verði ein tala.');
+    }
+    if(d.op==='−'&&d.fac[0].v.isNeg())return dOpen(dMk('flip'));
+    return dOpen(dMk('fin'));
+  }
+  function dRedraw(){const ex=list.querySelector('.dc-expr');if(ex)ex.innerHTML=(E.dc.lines.length>1?'= ':'<i>D</i> = ')+dExprH(E.dc,true)}
+  function dCheck(){
+    const d=E.dc,pr=d.pr;if(!pr)return;
+    const inp=list.querySelector('#dcin'+n),v=parseNum(inp.value);
+    let m='';
+    if(v===null||v===undefined)m='Skrifaðu tölu.';
+    else if(!v.eq(pr.exp)){
+      if(pr.t==='pow')m=v.eq(B2.neg())?(B.isNeg()?`(${nH(B)}) · (${nH(B)}): mínus sinnum mínus er plús.`:'Tala í öðru veldi verður aldrei neikvæð.'):v.eq(B.mul(2))?'Í öðru veldi er talan sinnum sjálf sig, ekki sinnum 2.':`Reiknaðu (${nH(B)}) · (${nH(B)}).`;
+      else if(pr.t==='mul')m=v.eq(pr.exp.neg())?(pr.a.isNeg()!==pr.b.isNeg()?'Formerkið: plús sinnum mínus er mínus.':'Formerkið: mínus sinnum mínus er plús.'):v.eq(pr.a.add(pr.b))?'Hér á að margfalda, ekki leggja saman.':`Reiknaðu ${pr.lhs}.`;
+      else if(pr.t==='flip')m=v.eq(pr.q)?`Mínus fyrir framan mínustölu verður plús: −(${nH(pr.q)}) = +${nH(pr.exp)}.`:'Mínus sinnum mínus er plús.';
+      else m=E.tries>=1?`Reiknaðu ${pr.lhs} á talnalínu: byrjaðu í ${nH(d.P)} og farðu ${d.op==='+'?'upp':'niður'} um ${nH(d.fac[0].v.abs())}.`:`Ekki rétt. Reiknaðu ${pr.lhs}.`;
+    }
+    inp.classList.toggle('ok',!m);inp.classList.toggle('no',!!m);
+    if(m){E.tries++;dMsg(m);if(E.tries>=2){const sh=list.querySelector('[data-dshow]');if(sh)sh.hidden=false}return}
+    const done=pr.t==='fin';
+    dApply(d,pr);
+    if(done){E.dlines=d.lines;E.i++;render();return}
+    const ln=list.querySelector('.dc-lines');ln.innerHTML=d.lines.slice(0,-1).map((l,j)=>`<div>${j?'= ':'<i>D</i> = '}${l}</div>`).join('');
+    dRedraw();list.querySelector('.dc-prompt').innerHTML='';
+    const ok={pow:'Veldið komið. Næst: margföldunin 4 · A · C.',mul:d.fac.length>1?'Gott. Margfaldaðu áfram þar til 4 · A · C er ein tala.':'4 · A · C er orðin ein tala. Nú má reikna plús eða mínus.',flip:'Mínus mínus varð plús. Nú er bara samlagning eftir.'}[pr.t];
+    dMsg(ok,'ok');const sh=list.querySelector('[data-dshow]');if(sh)sh.hidden=true;
+    const ex=list.querySelector('.dc-expr');if(ex&&!RM.matches)ex.animate([{background:'var(--ok-tint)'},{background:'transparent'}],{duration:700});
+  }
+  let DD=null;
+  list.addEventListener('pointerdown',e=>{
+    const t=e.target.closest('.dtk,.dop');if(!t||!E.dc||e.button>0||!list.contains(t)||!t.closest('.dc-expr'))return;
+    DD={t,x:e.clientX,y:e.clientY,drag:false};
+    const mv=ev=>{
+      if(!DD.drag){if(Math.hypot(ev.clientX-DD.x,ev.clientY-DD.y)<6)return;DD.drag=true;
+        const g=t.cloneNode(true);g.className='dragghost';g.style.fontSize=getComputedStyle(t).fontSize;document.body.appendChild(g);DD.g=g;
+        const r=t.getBoundingClientRect();DD.ox=ev.clientX-r.left;DD.oy=ev.clientY-r.top;t.classList.add('lifted');list.classList.add('dragging-d')}
+      ev.preventDefault();DD.g.style.transform=`translate(${ev.clientX-DD.ox}px,${ev.clientY-DD.oy}px) scale(1.06)`;
+      const el=document.elementFromPoint(ev.clientX,ev.clientY),o=el&&el.closest('.dc-expr .dtk,.dc-expr .dop');
+      const tgt=o&&o!==t?o:null;if(DD.over&&DD.over!==tgt)DD.over.classList.remove('over');DD.over=tgt;if(tgt)tgt.classList.add('over');
+    };
+    const up=()=>{window.removeEventListener('pointermove',mv);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
+      const d=DD;DD=null;list.classList.remove('dragging-d');if(d.g)d.g.remove();d.t.classList.remove('lifted');if(d.over)d.over.classList.remove('over');
+      const k=d.t.dataset.k;
+      if(!d.drag){const sel=E.dc.sel;if(sel&&sel!==k&&k!=='op'){E.dc.sel=null;dAct(sel,k)}else if(k==='op')dAct('op');else dAct(k);return}
+      if(d.over){const k2=d.over.dataset.k;dAct(k==='op'?k2:k,k==='op'?'P':k2==='op'?'P':k2)}};
+    window.addEventListener('pointermove',mv,{passive:false});window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+  });
+  list.addEventListener('keydown',e=>{
+    if(e.target.id==='dcin'+n&&e.key==='Enter'){e.preventDefault();dCheck();return}
+    const t=e.target.closest('.dc-expr .dtk,.dc-expr .dop');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();const k=t.dataset.k,sel=E.dc.sel;if(sel&&sel!==k&&k!=='op'){E.dc.sel=null;dAct(sel,k)}else dAct(k==='op'?'op':k)}
+  });
+  list.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b||!E.dc)return;
+    if(b.hasAttribute('data-dchk'))dCheck();
+    else if(b.hasAttribute('data-dsign')){const x=list.querySelector('#dcin'+n);const v=x.value.trim().replace(/[−–]/g,'-');x.value=v.startsWith('-')?v.slice(1):MINUS+v.replace(/^\+/,'');x.focus()}
+    else if(b.hasAttribute('data-dhint')){const nx=dNext();dMsg({pow:`Byrjaðu á veldinu: smelltu á (${nH(B)})².`,mul:'Margfaldaðu 4 · A · C: dragðu einn þáttinn ofan á annan.',flip:`Mínus fyrir framan (${nH(E.dc.fac[0].v)}): smelltu á mínusinn. Mínus mínus verður plús.`,fin:'Nú er bara eitt eftir: smelltu á plúsinn eða mínusinn á milli talnanna.'}[nx],'why')}
+    else if(b.hasAttribute('data-dshow')){const x=list.querySelector('#dcin'+n);if(x&&E.dc.pr){x.value=fT(E.dc.pr.exp);dCheck()}}
+  });
   const WHAT={A:'stuðullinn við x²',B:'stuðullinn við x',C:'talan án x',D:'aðgreinirinn'};
   function chipsFor(s){
     if(s.drag.src==='eq')return[...st.L.map(t=>({key:LAB[t.p],val:t.c,lab:`<span class="m">${esc(firstT(t))}</span>`,txt:firstT(t)})),{key:'0',val:F0,lab:'<span class="m">0</span>',txt:'0'}];
