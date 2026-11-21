@@ -376,6 +376,47 @@ input[type=range]{width:100%;accent-color:var(--k7);height:30px}
 @media (max-width:980px){.hf-parts{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sv-mini{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:center;font-size:1.05rem;padding-bottom:8px;border-bottom:1px dashed var(--line)}
   .sv-mini sup{font-size:.62em;vertical-align:.7em;line-height:1}}
+.solver.one{grid-template-columns:minmax(0,1fr)}
+.pairs{display:flex;flex-wrap:wrap;gap:8px}
+.pair{flex-direction:column;gap:2px;min-width:5.5em}
+.pair .m{font-size:1.15rem}
+.pair .ps{font-size:.8rem;font-weight:400}
+.pair.miss{opacity:.55}
+.short-t{border-collapse:collapse;width:100%;min-width:620px;font-size:.92rem}
+.short-t th{text-align:left;font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-bottom:2px solid var(--line)}
+.short-t td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.short-t .eqline{font-size:1.2rem}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.tsheet{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px}
+.tsh-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:2px solid var(--line);padding-bottom:10px;margin-bottom:6px}
+.tsh-head h3{font-size:1.25rem}
+.tq{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tqi{padding:14px 4px;border-bottom:1px dashed var(--line);display:flex;flex-direction:column;gap:8px}
+.tqi:last-child{border-bottom:0}
+.tq-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tq-n{width:2em;height:2em;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--grid);flex:none}
+.tqi.y .tq-n{background:var(--ok);color:var(--surface)}
+.tqi.n .tq-n{background:var(--bad);color:var(--surface)}
+.tq-eq{overflow-x:auto;min-width:0}
+.tq-eq .eqline{font-size:clamp(1.4rem,4vw,1.9rem)}
+.tq-badge{font-weight:700;font-size:.85rem;margin-left:auto}
+.tqi.y .tq-badge{color:var(--ok)} .tqi.n .tq-badge{color:var(--bad)}
+.tsol{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.tlines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.tlines li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 10px;align-items:center;padding:4px 8px;border-radius:10px}
+.tlines li.w{background:var(--bad-tint)}
+.tl-lab{grid-column:1/-1;font-size:.78rem;color:var(--muted);font-weight:700}
+.tlines .sv-math{font-size:1.2rem}
+.tl-w{font-size:.78rem!important}
+.tans{font-size:1.1rem;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;background:var(--ok-tint);border-radius:10px;padding:8px 12px}
+.tans .m{font-size:1.25rem;font-weight:600}
+.trep{margin-top:18px}
+.trep h3{font-size:1.25rem}
+.tscore{font-size:1.2rem;font-weight:700;color:var(--k7-ink)}
+.weak{display:flex;flex-direction:column;gap:8px}
+.wk{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.wk.top{border:2px solid var(--k7);background:var(--k7-tint)}
+.wk p{font-size:.88rem;color:var(--muted);margin-top:2px}
 /* ---------- Sími ---------- */
 @media (max-width:980px){
   .engine{grid-template-columns:minmax(0,1fr)}
@@ -648,6 +689,11 @@ function analyze(st){
 }
 function likePair(s){const seen={};for(const t of s){if(t.t!=='m')continue;if(seen[t.p])return[seen[t.p],t];seen[t.p]=t}return null}
 function hintFor(st,goal){
+  if(goal==='factor'){
+    if(st.R.length){const t=st.R[0];return{h:`Færðu <b>${signedT(t)}</b> yfir = fyrst, svo 0 verði hægra megin.`,ids:[t.id]}}
+    if(st.L.some(t=>t.t==='g'))return{h:'Ef x er ekki fyrir framan svigann: ýttu á „Til baka“ og veldu x (eða t.d. 2x) þegar þú tekur út fyrir sviga.',ids:[]};
+    return{h:'Smelltu á báða liðina svo þeir verði valdir. Ýttu svo á „Taka út fyrir sviga…“ og veldu x.',ids:st.L.map(t=>t.id)};
+  }
   for(const s of ['L','R'])for(const t of st[s])if(t.t==='g'&&t.sq)return{h:'Byrjaðu á sviganum í öðru veldi. Smelltu á litla ² til að skrifa hann sem (…)(…), eða veldu hann og notaðu Þ1/Þ2.',ids:[t.id]};
   for(const s of ['L','R'])for(const t of st[s])if(t.t==='g'&&t.br.length===2){
     if(!kTriv(t.k))return{h:`Dragðu <b>${kText(t.k)}</b> inn í annan svigann fyrst, eða margfaldaðu svigana saman.`,ids:[t.id]};
@@ -738,6 +784,13 @@ function Engine(host,cfg){
   }
   function renderGoal(){
     const a=analyze(cur()),g=cfg.goal||'std';
+    if(g==='factor'){
+      const st=cur(),t0=st.L[0],fac=!st.R.length&&st.L.length===1&&t0.t==='g'&&t0.br.length===1&&!t0.sq&&t0.k.p>=1;
+      goalEl.innerHTML=`<span class="gl">Markmið</span><span class="ge"><i>x</i> · ( … ) = 0</span><ul class="checks"><li class="${a.rZero&&!a.lZero?'ok':''}">0 hægra megin</li><li class="${fac?'ok':''}">x út fyrir sviga</li></ul>`;
+      banEl.innerHTML=fac?'<div class="done-ban"><h4>Þáttað! Nú má nota núllregluna.</h4></div>':'';
+      if(fac&&!E.solvedFired){E.solvedFired=true;cfg.onSolved&&cfg.onSolved(cur(),a)}
+      return;
+    }
     const checks=[['Engir svigar',!a.groups],['0 hægra megin',a.rZero&&!a.lZero],['Líkir liðir sameinaðir',!a.groups&&a.combined],['Röð: x², x, tala',a.std]];
     if(g==='std+')checks.push(['A jákvætt',a.std&&a.A.val()>0]);
     goalEl.innerHTML=`<span class="gl">Markmið</span><span class="ge">${g==='explore'?'margfalda upp úr svigum':'<i>A</i><i>x</i><sup>2</sup> + <i>B</i><i>x</i> + <i>C</i> = 0'}</span>${g==='explore'?'':'<span class="ref">A1</span>'}
@@ -1079,6 +1132,19 @@ const MODS=[
     {id:'4-5',kind:'solve',title:'A ≠ 1 og liður sem vantar',lvl:3,genS:'hard',probs:['2x^2 + 3x - 2 = 0','x^2 - 16 = 0','3x^2 - 12x = 0','1/2x^2 + x - 4 = 0'],
       text:'Formúlan virkar á allar annars stigs jöfnur. Ef lið vantar er stuðullinn 0. Lausnirnar geta verið brot: skrifaðu t.d. <span class="m">1/2</span>.'},
     {id:'4-6',kind:'solvecombo',title:'Allt saman: raða, lesa, leysa',lvl:3,genS:'combo',probs:['x^2 = 3x + 10','(x + 1)^2 = 2x + 10','x(x - 2) = 15','2x(x + 1) = x + 3']}
+  ]},
+  {n:5,title:'Styttri leiðir',items:[
+    {id:'5-1',kind:'shortintro',title:'Hvenær má stytta sér leið?',lvl:1},
+    {id:'5-2',kind:'short',genS:'sNoC',title:'Vantar C: x út fyrir sviga',lvl:2,probs:['x^2 - 5x = 0','3x^2 + 12x = 0','2x^2 = 7x','-x^2 + 6x = 0'],
+      text:'Þegar C vantar hafa allir liðir x. Taktu x út fyrir sviga í algebruvélinni og notaðu svo núllregluna.'},
+    {id:'5-3',kind:'short',genS:'sNoB',title:'Vantar B: x² = tala',lvl:2,probs:['x^2 - 49 = 0','2x^2 - 18 = 0','x^2 + 16 = 0','3x^2 = 75'],
+      text:'Þegar B vantar má fá x² eitt sér og taka rótina. Mundu ±, og að x² getur ekki verið neikvætt.'},
+    {id:'5-4',kind:'short',genS:'sGuess',title:'Ágiskun (Þ4)',lvl:3,probs:['x^2 + 7x + 12 = 0','x^2 - 2x - 15 = 0','x^2 - 9x + 20 = 0','x^2 + 3x - 10 = 0'],
+      text:'Ef A = 1 og tölurnar eru heilar: finndu tvær tölur sem gefa C þegar þær eru margfaldaðar og B þegar þær eru lagðar saman.'},
+    {id:'5-5',kind:'which',title:'Hvaða leið er styst?',lvl:2}
+  ]},
+  {n:6,title:'Prófaðu þig',items:[
+    {id:'6-1',kind:'test',title:'Próf á blaði',lvl:0}
   ]}
 ];
 const ITEMS=MODS.flatMap(m=>m.items.map(it=>({...it,mod:m})));
@@ -1792,6 +1858,7 @@ function genCoef(kind){
   return[NZ(-3,3),R(-9,9),NZ(-9,9)];
 }
 function genS(kind){
+  if(GS5[kind])return GS5[kind]();
   for(let t=0;t<50;t++){
     let k=kind;
     if(kind==='dmix')k=pick(['two','one','none','any']);
@@ -1871,8 +1938,312 @@ VIEWS.solvecombo=(body,it,next)=>probView(body,it,next,'Fyrst á staðalform í 
   Engine(box.querySelector('.e'),{eq,goal:'std',onSolved:st=>{s.innerHTML='<h3 style="font-size:1.2rem;margin-bottom:10px">Leystu nú jöfnuna</h3><div></div>';Solver(s.lastChild,cloneS(st),{onDone:done});s.scrollIntoView({behavior:RM.matches?'auto':'smooth',block:'start'})}});
 });
 
+/* ================= Almennur skrefari (hlutar 5 og 6) ================= */
+let STN=0;
+function Steps(host,o){
+  const n=++STN,E={i:0,tries:0,last:null,fired:false};
+  const steps=o.steps;
+  host.innerHTML=`<div class="solver${o.side?'':' one'}"><div class="sv-paper"><div class="sv-eq">${o.top}</div><ol class="sv-steps"></ol><div class="sv-end"></div></div>${o.side?`<aside class="sv-side">${o.side}</aside>`:''}</div>`;
+  const list=host.querySelector('.sv-steps'),end=host.querySelector('.sv-end');
+  function li(s,k,state){
+    const num=`<span class="sv-n">${k+1}</span>`,ref=s.ref?` <span class="ref">${s.ref}</span>`:'';
+    if(state==='todo')return `<li class="sv-li todo">${num}<div class="sv-body"><div class="sv-t">${s.t}</div></div></li>`;
+    if(state==='done')return `<li class="sv-li done">${num}<div class="sv-body"><div class="sv-t">${s.t}${ref}</div><div class="sv-math">${s.doneH?s.doneH():s.math(i=>nH(s.exp[i]))}</div></div></li>`;
+    let m;
+    if(s.mount)m='<div class="cust"></div>';
+    else if(s.choice)m=`${s.math?`<div class="sv-math">${s.math()}</div>`:''}<div class="row">${s.choice.map(c=>`<button class="btn" data-ch="${c[0]}">${c[1]}</button>`).join('')}</div>`;
+    else m=`<div class="sv-math">${s.math(i=>`<input class="blank" id="st${n}-${k}-${i}" autocomplete="off" spellcheck="false" aria-label="Reitur ${i+1}">`)}</div>
+      <div class="row"><button class="btn pri sm" data-chk>Athuga</button><button class="btn sm" data-sign>± formerki</button>${s.why?'<button class="btn sm" data-why>Vísbending</button>':''}<button class="btn sm ghost" data-show hidden>Sýna svar</button></div>`;
+    return `<li class="sv-li act">${num}<div class="sv-body"><div class="sv-t">${s.t}${ref}</div>${s.intro?`<p class="mut" style="font-size:.92rem">${s.intro}</p>`:''}${m}<div class="sv-msg"></div></div></li>`;
+  }
+  function render(){
+    list.innerHTML=steps.map((s,k)=>li(s,k,k<E.i?'done':k===E.i?'act':'todo')).join('');
+    E.tries=0;
+    if(E.i>=steps.length){end.innerHTML=o.end?o.end():'';if(!E.fired){E.fired=true;o.onDone&&o.onDone()}return}
+    const s=steps[E.i],act=list.querySelector('.sv-li.act');
+    if(s.mount)s.mount(act.querySelector('.cust'),()=>{E.i++;render()},msg);
+    const inp=act.querySelector('input');if(inp&&E.i>0)inp.focus({preventScroll:true});
+    if(E.i>0)act.scrollIntoView({behavior:RM.matches?'auto':'smooth',block:'nearest'});
+  }
+  function msg(h,c='no'){const b=list.querySelector('.sv-li.act .sv-msg');if(b){b.className='sv-msg '+c;b.innerHTML=h}}
+  const ins=()=>[...list.querySelectorAll('.sv-li.act input.blank')];
+  function check(){
+    const s=steps[E.i],I=ins(),v=I.map(x=>parseNum(x.value));let ms;
+    if(s.unordered){
+      const e=s.exp,okAll=(fEq(v[0],e[0])&&fEq(v[1],e[1]))||(fEq(v[0],e[1])&&fEq(v[1],e[0]));
+      ms=okAll?['','']:v.map((x,i)=>{const hit=e.some(q=>fEq(x,q))&&!(i===1&&fEq(v[0],x));return hit?'':(s.fb?s.fb(i,x,E.tries,v):'Ekki rétt.')});
+    }else ms=v.map((x,i)=>x==null?'Skrifaðu tölu.':x.eq(s.exp[i])?'':(s.fb?s.fb(i,x,E.tries,v):'Ekki rétt.'));
+    I.forEach((x,i)=>{x.classList.toggle('ok',!ms[i]);x.classList.toggle('no',!!ms[i])});
+    const bad=[...new Set(ms.filter(Boolean))];
+    if(!bad.length){E.i++;render();return}
+    E.tries++;msg(bad.join('<br>'));if(E.tries>=2)list.querySelector('.sv-li.act [data-show]').hidden=false;
+  }
+  list.addEventListener('focusin',e=>{if(e.target.classList.contains('blank'))E.last=e.target});
+  list.addEventListener('keydown',e=>{if(e.target.classList.contains('blank')&&e.key==='Enter'){e.preventDefault();const I=ins(),k=I.indexOf(e.target);if(k<I.length-1&&!I[k+1].value)I[k+1].focus();else check()}});
+  list.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b||!b.closest('.sv-li.act'))return;const s=steps[E.i];
+    if(b.hasAttribute('data-chk'))check();
+    else if(b.hasAttribute('data-why'))msg(s.why,'why');
+    else if(b.hasAttribute('data-show')){ins().forEach((x,i)=>x.value=fT(s.exp[i]));check()}
+    else if(b.hasAttribute('data-sign')){const x=E.last||ins()[0];if(!x)return;const v=x.value.trim().replace(/[−–]/g,'-');x.value=v.startsWith('-')?v.slice(1):MINUS+v.replace(/^\+/,'');x.focus()}
+    else if(b.dataset.ch!==undefined){if(b.dataset.ch===s.exp){E.i++;render()}else{b.disabled=true;b.classList.add('no');msg(s.wrong)}}
+  });
+  render();
+}
+
+/* ================= 5. Styttri leiðir ================= */
+const stdCoef=st=>{const p=ePoly(st);let A=p[2]||F0,B=p[1]||F0,C=p[0]||F0;if(A.isNeg()){A=A.neg();B=B.neg();C=C.neg()}return{A,B,C}};
+const stdSide=({A,B,C})=>[[A,2],[B,1],[C,0]].filter(x=>!x[0].isZero()).map(x=>M(x[0],x[1]));
+const eqStd=c=>eqH({L:stdSide(c),R:[]});
+const SHORT_SHEET=`<div class="sheet"><div class="k">Núllreglan</div><p class="m" style="font-size:1.15rem">a · b = 0 &nbsp;→&nbsp; a = 0 eða b = 0</p><p class="mut" style="font-size:.88rem">Margfeldi verður bara 0 ef einn þátturinn er 0.</p>
+  <div class="k" style="margin-top:6px">Formúlublaðið</div><div class="fm"><span class="ref">Þ4</span><span class="m"><i>x</i>² + <i>bx</i> + <i>c</i> = (<i>x</i> + <i>r</i>)(<i>x</i> + <i>s</i>)</span></div><p class="mut" style="font-size:.85rem">þar sem r · s = c og r + s = b</p></div>`;
+
+function shortNoC(box,eq,done){
+  const st=parseEq(eq),{A,B}=stdCoef(st),r=B.neg().div(A);
+  const fst={...st};
+  let factored=null;
+  Steps(box,{top:eqH(st),side:SHORT_SHEET,onDone:done,steps:[
+    {t:'Taktu x út fyrir sviga',intro:'Vantar C: bæði x²-liðurinn og x-liðurinn hafa x. Veldu báða liðina (smelltu á þá) og ýttu á „Taka út fyrir sviga…“. Ef eitthvað er hægra megin: færðu það fyrst yfir.',
+      doneH:()=>eqH(factored),
+      mount:(el,ok)=>{Engine(el,{eq:cloneS(st),goal:'factor',help:false,startMsg:'Markmið: x · ( … ) = 0. Veldu liðina og taktu x út fyrir sviga.',onSolved:s=>{factored=cloneS(s);setTimeout(ok,RM.matches?100:900)}})}},
+    {t:'Núllreglan: hvor þáttur getur verið 0',ref:'',intro:'Annaðhvort er x = 0, eða sviginn er 0.',
+      math:b=>`${factored?eqH(factored):''} &nbsp;→&nbsp; <i>x</i> = ${b(0)} &nbsp;eða&nbsp; <i>x</i> = ${b(1)}`,
+      doneH:()=>`<i>x</i> = 0 &nbsp;eða&nbsp; <i>x</i> = ${nH(r)}`,
+      exp:[F0,r],unordered:true,why:`Fyrri þátturinn: x = 0. Seinni: leystu sviginn = 0, þ.e. ${nH(A)}x ${B.isNeg()?'−':'+'} ${nH(B.abs())} = 0.`,
+      fb:(i,v,t,vals)=>{if(v==null)return'Skrifaðu tölu.';if(!vals.some(x=>x&&x.isZero()))return'Ekki gleyma <b>x = 0</b>! Það er lausn. Þess vegna má ekki deila með x.';if(v.eq(r.neg()))return'Formerkið snýst þegar talan fer yfir =.';if(v.eq(B.neg()))return`Deildu líka með ${nH(A)}.`;return`Leystu sviginn = 0.`}}
+  ],end:()=>`<div class="sv-done"><h4><span class="m">x = 0</span> eða <span class="m">x = ${nH(r)}</span></h4><p>Engin lausnarformúla, ekkert D. <b>Gildra:</b> ef þú deilir báðum megin með x týnist lausnin x = 0.</p></div>`});
+}
+function shortNoB(box,eq,done){
+  const st=parseEq(eq),{A,C}=stdCoef(st),k=C.neg().div(A),sk=fsqrt(k);
+  const steps=[
+    {t:'Fáðu x² eitt sér',intro:'Færðu töluna yfir = (formerkið snýst) og deildu með A.',
+      math:b=>`${eqStd({A,B:F0,C})} &nbsp;→&nbsp; <i>x</i><sup>2</sup> = ${b(0)}`,exp:[k],
+      why:`${nH(A)}x² = ${nH(C.neg())}, svo x² = ${nH(C.neg())} : ${nH(A)}.`,
+      fb:(i,v)=>v==null?'Skrifaðu tölu.':v.eq(k.neg())?'Formerkið snýst þegar talan fer yfir =.':v.eq(C.neg())&&!A.isOne()?`Deildu líka með A = ${nH(A)}.`:'Ekki rétt.'}];
+  if(k.isNeg())steps.push({t:'Hvaða tala í öðru veldi gefur '+nH(k)+'?',math:()=>`<i>x</i><sup>2</sup> = ${nH(k)}`,choice:[['n','Engin lausn'],['y','x = ±√'+fT(k.abs())]],exp:'n',
+    wrong:'Engin tala í öðru veldi verður neikvæð: 3² = 9 og (−3)² = 9. Svo er engin lausn.',doneH:()=>`<i>x</i><sup>2</sup> = ${nH(k)} &lt; 0 → engin lausn`});
+  else steps.push({t:'Taktu rótina, með ±',intro:'Tvær tölur í öðru veldi gefa sömu útkomu: ein jákvæð og ein neikvæð.',
+    math:b=>`<i>x</i> = ±${sqrtX(nH(k))} &nbsp;→&nbsp; <i>x</i> = ${b(0)} &nbsp;eða&nbsp; <i>x</i> = ${b(1)}`,exp:[sk,sk.neg()],unordered:true,
+    doneH:()=>`<i>x</i> = ±${sqrtX(nH(k))} = ±${nH(sk)}`,
+    why:`${nH(sk)} · ${nH(sk)} = ${nH(k)} og (${nH(sk.neg())}) · (${nH(sk.neg())}) = ${nH(k)}.`,
+    fb:(i,v,t,vals)=>v==null?'Skrifaðu tölu.':(vals[0]&&vals[1]&&vals[0].eq(vals[1]))?'Mundu ±: bæði plús og mínus.':v.eq(k)?'Taktu rótina: hvaða tala sinnum sjálf sig gefur '+nH(k)+'?':'Ekki rétt.'});
+  Steps(box,{top:eqH(st),side:SHORT_SHEET,onDone:done,steps,end:()=>k.isNeg()?`<div class="sv-done none"><h4>Engin lausn</h4><p>x² getur ekki verið neikvætt.</p></div>`:`<div class="sv-done"><h4><span class="m">x = ±${nH(sk)}</span></h4><p>Ekkert D þurfti. Mundu alltaf <b>±</b>.</p></div>`});
+}
+function shortGuess(box,eq,done){
+  const st=parseEq(eq),{B,C}=stdCoef(st);
+  const b=B.n,c=C.n;
+  const pairs=[];for(let r=-Math.abs(c);r<=Math.abs(c);r++){if(r===0||c%r)continue;const s=c/r;if(r<=s)pairs.push([r,s])}
+  const [r0,s0]=pairs.find(([r,s])=>r+s===b);
+  const pr=(x,y)=>`(<i>x</i> ${x<0?'−':'+'} ${Math.abs(x)})(<i>x</i> ${y<0?'−':'+'} ${Math.abs(y)})`;
+  Steps(box,{top:eqH(st),side:SHORT_SHEET,onDone:done,steps:[
+    {t:`Finndu tvær tölur: margfeldi ${nH(C)}, summa ${nH(B)}`,ref:'Þ4',intro:`Smelltu á pör sem gefa ${nH(C)} þegar þau eru margfölduð. Þá sést summan. Þú leitar að summunni ${nH(B)}.${c<0?' C er mínus, svo önnur talan er mínus.':''}`,
+      doneH:()=>`${nH(new F(r0))} · ${s0<0?'('+nH(new F(s0))+')':nH(new F(s0))} = ${nH(C)} &nbsp; og &nbsp; ${nH(new F(r0))} + ${s0<0?'('+nH(new F(s0))+')':nH(new F(s0))} = ${nH(B)}`,
+      mount:(el,ok,msg)=>{
+        el.innerHTML=`<div class="pairs">${pairs.map(([r,s],j)=>`<button class="btn pair" data-j="${j}"><span class="m">${nH(new F(r))} · ${s<0?'('+nH(new F(s))+')':nH(new F(s))}</span><span class="ps">summa ?</span></button>`).join('')}</div>`;
+        el.addEventListener('click',e=>{const bt=e.target.closest('.pair');if(!bt)return;const[r,s]=pairs[+bt.dataset.j];bt.querySelector('.ps').innerHTML=`summa ${nH(new F(r+s))}`;
+          if(r+s===b){bt.classList.add('pri');msg(`${nH(new F(r))} + ${s<0?'('+nH(new F(s))+')':nH(new F(s))} = ${nH(B)}. Fundið!`,'ok');setTimeout(ok,RM.matches?100:900)}else{bt.classList.add('miss');msg(`${nH(new F(r))} + ${s<0?'('+nH(new F(s))+')':nH(new F(s))} = ${nH(new F(r+s))}, ekki ${nH(B)}. Prófaðu annað par.`,'why')}})}},
+    {t:'Skrifaðu jöfnuna sem tvo þætti',intro:'Tölurnar fara beint inn í svigana, með formerkjunum.',
+      math:bb=>`(<i>x</i> + ${bb(0)})(<i>x</i> + ${bb(1)}) = 0`,doneH:()=>`${pr(r0,s0)} = 0`,exp:[new F(r0),new F(s0)],unordered:true,
+      fb:(i,v)=>v==null?'Skrifaðu tölu.':(v.eq(-r0)||v.eq(-s0))?'Settu tölurnar inn eins og þær eru. Formerkið snýst ekki fyrr en í næsta skrefi.':'Notaðu tölurnar sem þú fannst.'},
+    {t:'Núllreglan',intro:'Hvor svigi getur verið 0. Leystu hvorn fyrir sig.',
+      math:bb=>`${pr(r0,s0)} = 0 &nbsp;→&nbsp; <i>x</i> = ${bb(0)} &nbsp;eða&nbsp; <i>x</i> = ${bb(1)}`,doneH:()=>`<i>x</i> = ${nH(new F(-r0))} &nbsp;eða&nbsp; <i>x</i> = ${nH(new F(-s0))}`,
+      exp:[new F(-r0),new F(-s0)],unordered:true,why:`x ${r0<0?'−':'+'} ${Math.abs(r0)} = 0 gefur x = ${nH(new F(-r0))}.`,
+      fb:(i,v)=>v==null?'Skrifaðu tölu.':(v.eq(r0)||v.eq(s0))?`Formerkið snýst! x ${r0<0?'−':'+'} ${Math.abs(r0)} = 0 → x = ${nH(new F(-r0))}.`:'Ekki rétt.'}
+  ],end:()=>`<div class="sv-done"><h4><span class="m">x = ${nH(new F(-r0))}</span> eða <span class="m">x = ${nH(new F(-s0))}</span></h4><p>Prófaðu: lausnirnar eru tölurnar úr sviganum <b>með öfugu formerki</b>.</p></div>`});
+}
+const GS5={
+  sNoC:()=>{const a=pick([1,1,2,3,-1]),r=NZ(-8,8);return pick([stdStr(a,-a*r,0),`${sstr([[a,2]])}=${sstr([[a*r,1]])}`])},
+  sNoB:()=>{const a=pick([1,1,2,3]),r=R(1,8);return Math.random()<0.2?stdStr(a,0,a*r*r):pick([stdStr(a,0,-a*r*r),`${sstr([[a,2]])}=${a*r*r}`])},
+  sGuess:()=>{let r,s;do{r=NZ(-8,8);s=NZ(-8,8)}while(r+s===0);return stdStr(1,-(r+s),r*s)}
+};
+
+VIEWS.shortintro=(body,it,next)=>{
+  const row=(eq,sig,how,ex,go)=>`<tr><td>${eqStrH(eq)}</td><td>${sig}</td><td>${how}</td><td><button class="btn sm" data-goto="${go}">Æfa →</button></td></tr>`;
+  body.innerHTML=`<div class="prose" style="max-width:none">
+    <div class="card tint"><p style="font-size:1.08rem"><b>Lausnarformúlan virkar alltaf.</b> Ef þú ert í vafa, notaðu hana. En sumar jöfnur er hægt að leysa hraðar, með færri útreikningum og minni hættu á formerkjavillu.</p></div>
+    <h3 style="font-size:1.15rem">Einkenni → styttri leið</h3>
+    <div style="overflow-x:auto"><table class="short-t"><thead><tr><th>Dæmi</th><th>Þú þekkir það á</th><th>Styttri leið</th><th></th></tr></thead><tbody>
+      ${row('x^2 - 5x = 0','Vantar C (enginn tölu-liður)','Taka x út fyrir sviga: x(x − 5) = 0 → x = 0 eða x = 5','','5-2')}
+      ${row('2x^2 - 18 = 0','Vantar B (enginn x-liður)','x² = 9 → x = ±3','','5-3')}
+      ${row('x^2 + 7x + 12 = 0','A = 1 og heilar tölur','Ágiskun (Þ4): 3 · 4 = 12 og 3 + 4 = 7 → (x + 3)(x + 4) = 0','','5-4')}
+      ${row('3x^2 - 7x + 1 = 0','Ekkert af ofantöldu','Lausnarformúlan (A3)','','4-3')}
+    </tbody></table></div>
+    <div class="card"><div class="k" style="margin-bottom:6px">Núllreglan: lykillinn að flýtileiðunum</div>
+      <p class="m" style="font-size:1.35rem">a · b = 0 &nbsp;→&nbsp; a = 0 eða b = 0</p>
+      <p>Ef margfeldi tveggja talna er 0 þá verður önnur þeirra að vera 0. Engar aðrar tölur gefa 0 þegar þær eru margfaldaðar saman. Þess vegna er gott að skrifa jöfnuna sem <b>þætti = 0</b>.</p>
+      <div class="rule" style="margin-top:6px"><span class="mt"><i>x</i>(<i>x</i> − 5) = 0</span><span>→ <span class="good">x = 0 eða x = 5</span> ✓ ekki <span class="bad">bara x = 5</span> ✗</span></div>
+      <div class="rule"><span class="mt">(<i>x</i> + 3)(<i>x</i> − 2) = 0</span><span>→ <span class="good">x = −3 eða x = 2</span> ✓ ekki <span class="bad">x = 3 eða x = −2</span> ✗</span></div>
+      <div class="rule"><span class="mt"><i>x</i>(<i>x</i> − 5) = 6</span><span>→ núllreglan virkar <b>ekki</b>: hægri hliðin verður að vera 0.</span></div></div>
+    <div class="row">${nextBtn(next)}</div></div>`;
+  body.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{go(b.dataset.goto);scrollTo({top:0})});wireNext(body);markDone(it);
+};
+VIEWS.short=(body,it,next)=>probView(body,it,next,it.text,(box,eq,done)=>({sNoC:shortNoC,sNoB:shortNoB,sGuess:shortGuess})[it.genS](box,eq,done));
+
+const WAYS={noC:'x út fyrir sviga',noB:'x² = tala',guess:'Ágiskun (Þ4)',formula:'Lausnarformúlan'};
+const WHICHQ=[['x^2 - 8x = 0','noC','Vantar C. x(x − 8) = 0 → x = 0 eða x = 8.'],['x^2 - 36 = 0','noB','Vantar B. x² = 36 → x = ±6.'],['x^2 + 5x + 6 = 0','guess','2 · 3 = 6 og 2 + 3 = 5 → (x + 2)(x + 3) = 0.'],['2x^2 + 3x - 5 = 0','formula','A = 2 og allir liðir eru með. Lausnarformúlan.'],
+  ['4x^2 + 9 = 0','noB','Vantar B. x² = −9/4 < 0 → engin lausn. Engin þörf á D.'],['x^2 - x - 20 = 0','guess','−5 · 4 = −20 og −5 + 4 = −1 → (x − 5)(x + 4) = 0.'],['3x^2 - 7x + 1 = 0','formula','Engin heil tala passar. Lausnarformúlan.'],['5x^2 + 2x = 0','noC','Vantar C. x(5x + 2) = 0 → x = 0 eða x = −2/5.']];
+VIEWS.which=(body,it,next)=>{
+  let i=0;const res=[];
+  function draw(){
+    if(i>=WHICHQ.length){const ok=res.filter(x=>x===1).length;body.innerHTML=`<div class="quiz"><div class="card tint"><h3 style="font-size:1.4rem">${ok} af ${WHICHQ.length} stystu leiðir</h3><p style="margin-top:6px">Mundu: lausnarformúlan virkar alltaf. Flýtileiðirnar spara bara tíma.</p></div><div class="row"><button class="btn" id="again">Reyna aftur</button>${nextBtn(next)}</div></div>`;body.querySelector('#again').onclick=()=>{i=0;res.length=0;draw()};wireNext(body);if(ok>=5)markDone(it);return}
+    const q=WHICHQ[i];
+    body.innerHTML=`<div class="quiz"><div class="row" style="justify-content:space-between"><div class="qdots">${WHICHQ.map((_,j)=>`<span class="${j<i?(res[j]===1?'y':res[j]===.5?'cur':'n'):j===i?'cur':''}"></span>`).join('')}</div><span class="mut" style="font-size:.9rem">${i+1} / ${WHICHQ.length}</span></div>
+      <div class="qcard">${eqStrH(q[0])}</div><p style="font-size:1.1rem;font-weight:700;text-align:center">Hver er stysta leiðin?</p>
+      <div class="qbtns" style="grid-template-columns:1fr 1fr">${Object.entries(WAYS).map(([k,t])=>`<button class="btn" data-w="${k}">${t}</button>`).join('')}</div><div id="fb"></div></div>`;
+    body.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{
+      const k=b.dataset.w,ok=k===q[1],half=!ok&&k==='formula';res[i]=ok?1:half?.5:0;
+      body.querySelectorAll('[data-w]').forEach(x=>{x.disabled=true;if(x.dataset.w===q[1])x.classList.add('pri')});
+      body.querySelector('#fb').innerHTML=`<div class="fb ${ok?'y':half?'y':'n'}"><h4>${ok?'Rétt!':half?'Virkar, en það er styttri leið.':'Ekki styst.'}</h4><p>${q[2]}</p><div class="row"><button class="btn pri" id="nx">Næsta →</button></div></div>`;
+      body.querySelector('#nx').onclick=()=>{i++;draw()};
+    });
+  }
+  draw();
+};
+
+/* ================= 6. Prófaðu þig ================= */
+const SKILL={
+  raða:{t:'Raða á staðalform',tip:'Færðu alla liði yfir á vinstri hlið. Formerkið snýst þegar liður fer yfir =. Sameinaðu svo líka liði.',go:'2-4'},
+  svigar:{t:'Margfalda inn í sviga',tip:'Talan fyrir framan margfaldast við hvern lið í sviganum. x · x = x².',go:'2-5'},
+  minus:{t:'Mínus fyrir framan sviga',tip:'Mínus fyrir framan sviga snýr öllum formerkjum inni í honum.',go:'2-6'},
+  sq:{t:'Svigi í öðru veldi (Þ1/Þ2)',tip:'(a + b)² er ekki a² + b². Notaðu Þ1/Þ2: miðliðurinn 2ab gleymist oft.',go:'2-7'},
+  prod:{t:'Tveir svigar margfaldaðir',tip:'Hver liður í fyrri sviganum sinnum hver liður í þeim seinni: fjórar margfaldanir.',go:'2-8'},
+  abc:{t:'Lesa A, B og C',tip:'Formerkið fylgir: −5x gefur B = −5. Liður sem vantar er 0.',go:'3-3'},
+  D:{t:'Reikna D',tip:'Settu B í sviga: (−5)² = 25. Reiknaðu 4·A·C sér og passaðu mínus mínus.',go:'4-2'},
+  none:{t:'D < 0: engin lausn',tip:'Ef D er mínus er ekki hægt að taka rótina. Svarið er „engin lausn“.',go:'4-4'},
+  formula:{t:'Lausnarformúlan (−B og 2A)',tip:'−B snýr formerkinu á B. Deilt er með 2A undir öllu strikinu.',go:'4-3'},
+  frac:{t:'Brot í lausnum',tip:'Lausnin getur verið brot: (−3 + 5)/4 = 2/4 = 1/2. Styttu brotið.',go:'4-5'},
+  noC:{t:'Vantar C: x út fyrir sviga',tip:'Ekki deila með x! Þá týnist lausnin x = 0.',go:'5-2'},
+  noB:{t:'Vantar B: x² = tala',tip:'Mundu ±. Ef talan er neikvæð er engin lausn.',go:'5-3'}
+};
+function rootsInt(){let r=R(-7,7),s;do s=R(-7,7);while(s===r);return[r,s]}
+const QG={
+  std:()=>{const[r,s]=rootsInt();return stdStr(1,-(r+s),r*s)},
+  stdA:()=>{const a=pick([2,3]),[r,s]=rootsInt();return stdStr(a,-a*(r+s),a*r*s)},
+  Aneg:()=>{const[r,s]=rootsInt();return stdStr(-1,r+s,-r*s)},
+  noC:()=>GS5.sNoC(),noB:()=>GS5.sNoB(),
+  none:()=>{const[a,b,c]=genCoef('none');return stdStr(a,b,c)},
+  one:()=>{const[a,b,c]=genCoef('one');return stdStr(a,b,c)},
+  frac:()=>{const[a,b,c]=genCoef('frac');return stdStr(a,b,c)},
+  arrange:()=>genS('combo'),
+  bracket:()=>{const[r,s]=rootsInt();const m=-(r+s),n=-r*s;if(!m||!n)return null;return `x(x${sg(m)})=${n}`},
+  minus:()=>{const[r,s]=rootsInt();const p=NZ(-6,6),q=-r*s,rr=r+s-p;if(!q)return null;return `x^2-(${sstr([[p,1],[q,0]])})=${sstr([[rr,1]])}`},
+  square:()=>{const[r,s]=rootsInt();const m=NZ(-5,5),b=2*m+(r+s),c=m*m-r*s;return `(x${sg(m)})^2=${sstr([[b,1],[c,0]])}`},
+  product:()=>{const[r,s]=rootsInt();const m=NZ(-6,6),n=-(r+s)-m,c=m*n-r*s;if(!n||!c)return null;return `(x${sg(m)})(x${sg(n)})=${c}`}
+};
+const LEVELS={1:['std','std','noC','noB','Aneg','stdA'],2:['arrange','bracket','minus','none','one','stdA','noC','noB'],3:['square','product','frac','minus','bracket','none','arrange'],0:Object.keys(QG)};
+function genQ(type){for(let t=0;t<80;t++){const s=QG[type]();if(!s)continue;try{const st=parseEq(s),p=ePoly(st);if(deg(p)!==2)continue;const{A,B,C}=stdCoef(st);const D=B.mul(B).sub(A.mul(C).mul(4));if(!D.isNeg()&&!fsqrt(D))continue;if(type!=='none'&&D.isNeg()&&type!=='noB')continue;return s}catch(_){}}return 'x^2-2x-8=0'}
+function buildTest(n,lvl){
+  let pool=shuffle(LEVELS[lvl]);const out=[];
+  if(lvl===0&&!pool.slice(0,n).includes('none'))pool=['none',...pool.filter(x=>x!=='none')];
+  for(let i=0;i<n;i++){const ty=pool[i%pool.length];out.push({ty,eq:genQ(ty)})}
+  return shuffle(out);
+}
+function expandAll(st){
+  const tags=new Set();let refs=[];let guard=0;
+  while(guard++<30){
+    const all=[...st.L,...st.R],sq=all.find(t=>t.t==='g'&&t.sq),g2=all.find(t=>t.t==='g'&&t.br.length===2),g=all.find(t=>t.t==='g');
+    let r;
+    if(sq){tags.add('sq');r=sq.br[0].length===2?opSquare(st,sq.id):opUnfold(st,sq.id)}
+    else if(g2){tags.add('prod');r=kTriv(g2.k)&&!g2.k.c.isNeg()?opMulBr(st,g2.id):opDistribute(st,g2.id,0)}
+    else if(g){tags.add(g.k.c.isNeg()&&kTriv(g.k)?'minus':g.k.c.isNeg()?'minus':'svigar');r=opDistribute(st,g.id,0)}
+    else break;
+    if(r.lab)refs.push(r.lab);st=r.st;
+  }
+  return{st,tags:[...tags],refs};
+}
+function solveFull(eq,ty){
+  const st0=parseEq(eq),out=[];
+  const a0=analyze(st0);let st=st0;
+  if(a0.groups){const ex=expandAll(st0);st=ex.st;out.push({h:eqH(st),lab:'Margfaldað upp úr svigum'+(ex.refs.length?' ('+[...new Set(ex.refs)].join(', ')+')':''),tag:ex.tags[0]||'svigar'})}
+  const c=stdCoef(st0),{A,B,C}=c;
+  const p=ePoly(st0);const needFlip=(p[2]||F0).isNeg();
+  if(!a0.std||needFlip)out.push({h:eqStd(c),lab:'Allt yfir vinstra megin, sameinað og raðað'+(needFlip?', ·(−1)':''),tag:'raða'});
+  const fin=(xs)=>xs.length?xs.map(x=>`<span class="m">x = ${nH(x)}</span>`).join(' eða '):'Engin lausn';
+  if(ty==='noC'||(C.isZero()&&!B.isZero())){
+    const r=B.neg().div(A);
+    out.push({h:`<i>x</i>(${sideT(stdSide({A,B,C:F0}).map(m=>M(m.c,m.p-1))).replace(/x/g,'<i>x</i>')}) = 0`,lab:'x tekið út fyrir sviga',tag:'noC'});
+    out.push({h:`<i>x</i> = 0 &nbsp;eða&nbsp; <i>x</i> = ${nH(r)}`,lab:'Núllreglan',tag:'noC'});
+    return{lines:out,ans:fin([F0,r]),note:'Lausnarformúlan virkar líka (C = 0).'};
+  }
+  if(ty==='noB'||(B.isZero()&&!C.isZero())){
+    const k=C.neg().div(A);
+    out.push({h:`<i>x</i><sup>2</sup> = ${nH(k)}`,lab:'x² eitt sér',tag:'noB'});
+    if(k.isNeg()){out.push({h:`${nH(k)} &lt; 0 → engin tala í öðru veldi verður neikvæð`,lab:'Engin lausn',tag:'noB'});return{lines:out,ans:fin([])}}
+    const sk=fsqrt(k);out.push({h:`<i>x</i> = ±${sqrtX(nH(k))} = ±${nH(sk)}`,lab:'Rót með ±',tag:'noB'});
+    return{lines:out,ans:fin([sk,sk.neg()])};
+  }
+  out.push({h:`<i>A</i> = ${nH(A)}, &nbsp;<i>B</i> = ${nH(B)}, &nbsp;<i>C</i> = ${nH(C)}`,lab:'Lesa af A, B og C',tag:'abc'});
+  const B2=B.mul(B),AC4=A.mul(C).mul(4),D=B2.sub(AC4);
+  out.push({h:`<i>D</i> = (${nH(B)})<sup>2</sup> − 4 · (${nH(A)}) · (${nH(C)}) = ${nH(B2)} ${AC4.isNeg()?'+ '+nH(AC4.abs()):'− '+nH(AC4)} = ${nH(D)}`,lab:'Reikna D',tag:'D'});
+  if(D.isNeg()){out.push({h:`<i>D</i> = ${nH(D)} &lt; 0`,lab:'D < 0: engin lausn',tag:'none'});return{lines:out,ans:fin([])}}
+  const sD=fsqrt(D),mB=B.neg(),A2=A.mul(2),x1=mB.add(sD).div(A2),x2=mB.sub(sD).div(A2);
+  out.push({h:`<i>x</i> = ${fracX(`−(${nH(B)}) ± ${sqrtX(nH(D))}`,`2 · (${nH(A)})`)} = ${fracX(`${nH(mB)} ± ${nH(sD)}`,nH(A2))}`,lab:'Inn í lausnarformúluna',tag:'formula'});
+  const isFr=x=>x.d!==1;
+  if(D.isZero()){out.push({h:`<i>x</i> = ${fracX(nH(mB),nH(A2))} = ${nH(x1)}`,lab:'D = 0: ein lausn',tag:isFr(x1)?'frac':'formula'});return{lines:out,ans:fin([x1])}}
+  out.push({h:`<i>x</i><sub>1</sub> = ${fracX(`${nH(mB)} + ${nH(sD)}`,nH(A2))} = ${nH(x1)} &nbsp;&nbsp; <i>x</i><sub>2</sub> = ${fracX(`${nH(mB)} − ${nH(sD)}`,nH(A2))} = ${nH(x2)}`,lab:'Reikna lausnirnar',tag:isFr(x1)||isFr(x2)?'frac':'formula'});
+  return{lines:out,ans:fin([x1,x2]),note:ty==='guess'?'':''};
+}
+VIEWS.test=(body,it)=>{
+  const T=()=>STORE.test;
+  function setup(){
+    const lv=[[1,'Létt','●○○'],[2,'Miðlungs','●●○'],[3,'Erfitt','●●●'],[0,'Blandað','●●●']];
+    return `<div class="card tsetup"><div class="row" style="gap:18px;align-items:flex-start">
+      <div><div class="k" style="margin-bottom:6px">Fjöldi dæma</div><div class="seg" id="tn">${[5,8,10].map(x=>`<button class="btn${(T()?T().n:8)===x?' pri':''}" data-n="${x}">${x}</button>`).join('')}</div></div>
+      <div><div class="k" style="margin-bottom:6px">Erfiðleiki</div><div class="seg" id="tl">${lv.map(([k,t,d])=>`<button class="btn${(T()?T().lvl:0)===k?' pri':''}" data-l="${k}">${t} <span class="lvl">${d}</span></button>`).join('')}</div></div>
+      <div style="align-self:flex-end"><button class="btn pri" id="mk">Búa til nýtt próf</button></div></div></div>`;
+  }
+  function draw(){
+    const t=T();
+    let h=`<div class="prose" style="margin-bottom:16px"><p><b>Leystu dæmin á blaði</b>, eins og í prófinu: „Leystu ef hægt er.“ Þegar þú ert búinn opnarðu lausnina við hvert dæmi og merkir hvort þú fékkst rétt. Ef ekki: smelltu á línuna þar sem þú fórst fyrst út af. Þá sér forritið hvað þú þarft að æfa.</p></div>`+setup();
+    if(t){
+      const sol=t.qs.map(q=>solveFull(q.eq,q.ty));
+      h+=`<div class="tsheet"><div class="tsh-head"><h3>Próf · ${esc(t.date)}</h3><span class="mut">${t.qs.length} dæmi · ${({1:'létt',2:'miðlungs',3:'erfitt',0:'blandað'})[t.lvl]}</span></div>
+        <ol class="tq">${t.qs.map((q,i)=>{const mk=t.marks[i]||{};const s=sol[i];return `<li class="tqi${mk.m==='y'?' y':mk.m==='n'?' n':''}" data-q="${i}">
+          <div class="tq-top"><span class="tq-n">${i+1}</span><div class="tq-eq">${eqStrH(q.eq)}</div>${mk.m?`<span class="tq-badge">${mk.m==='y'?'✓ Rétt':'✗ Rangt'}</span>`:''}</div>
+          <div class="row"><button class="btn sm" data-sol="${i}" aria-expanded="${!!mk.open}">${mk.open?'Fela lausn':'Sýna lausn'}</button></div>
+          ${mk.open?`<div class="tsol"><ol class="tlines">${s.lines.map((l,j)=>`<li class="${mk.w===j?'w':''}"><span class="tl-lab">${l.lab}</span><span class="sv-math">${l.h}</span>${mk.m==='n'?`<button class="btn sm ghost tl-w" data-w="${i}:${j}">${mk.w===j?'✓ Hér fór ég út af':'Hér fór ég út af'}</button>`:''}</li>`).join('')}</ol>
+            <div class="tans"><span class="k">Svar</span> ${s.ans}${s.note?`<span class="mut" style="font-size:.85rem"> · ${s.note}</span>`:''}</div>
+            <div class="row"><span class="mut" style="font-size:.88rem">Fékkstu þetta?</span><button class="btn sm${mk.m==='y'?' pri':''}" data-m="${i}:y">✓ Rétt</button><button class="btn sm${mk.m==='n'?' pri':''}" data-m="${i}:n">✗ Rangt</button></div>
+            ${mk.m==='n'&&mk.w==null?'<p class="mut" style="font-size:.88rem">Smelltu á „Hér fór ég út af“ við fyrstu línuna sem var öðruvísi hjá þér (valfrjálst).</p>':''}</div>`:''}
+        </li>`}).join('')}</ol></div><div id="rep"></div>`;
+    }
+    body.innerHTML=h;
+    body.querySelectorAll('#tn [data-n]').forEach(b=>b.onclick=()=>{body.querySelectorAll('#tn .btn').forEach(x=>x.classList.toggle('pri',x===b))});
+    body.querySelectorAll('#tl [data-l]').forEach(b=>b.onclick=()=>{body.querySelectorAll('#tl .btn').forEach(x=>x.classList.toggle('pri',x===b))});
+    body.querySelector('#mk').onclick=()=>{const n=+body.querySelector('#tn .pri').dataset.n,lvl=+body.querySelector('#tl .pri').dataset.l;
+      STORE.test={n,lvl,date:(d=>d.getDate()+'. '+['janúar','febrúar','mars','apríl','maí','júní','júlí','ágúst','september','október','nóvember','desember'][d.getMonth()])(new Date()),qs:buildTest(n,lvl),marks:[]};save();draw()};
+    if(t){
+      body.querySelectorAll('[data-sol]').forEach(b=>b.onclick=()=>{const i=+b.dataset.sol;t.marks[i]=t.marks[i]||{};t.marks[i].open=!t.marks[i].open;save();draw();body.querySelector(`[data-q="${i}"]`).scrollIntoView({block:'nearest'})});
+      body.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const[i,m]=b.dataset.m.split(':');const mk=t.marks[+i];mk.m=m;if(m==='y')mk.w=null;save();draw();body.querySelector(`[data-q="${i}"]`).scrollIntoView({block:'nearest'})});
+      body.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{const[i,j]=b.dataset.w.split(':').map(Number);const mk=t.marks[i];mk.w=mk.w===j?null:j;save();draw();body.querySelector(`[data-q="${i}"]`).scrollIntoView({block:'nearest'})});
+      report(body.querySelector('#rep'),t,t.qs.map(q=>solveFull(q.eq,q.ty)));
+    }
+  }
+  function report(el,t,sol){
+    const marked=t.marks.filter(m=>m&&m.m).length;
+    if(!marked){el.innerHTML=`<div class="card trep"><h3>Niðurstöður</h3><p class="mut">Merktu við dæmin. Þá birtist hér hvað þú átt að æfa.</p></div>`;return}
+    const ok=t.marks.filter(m=>m&&m.m==='y').length;
+    const bad={},good={};
+    t.qs.forEach((q,i)=>{const mk=t.marks[i];if(!mk||!mk.m)return;const tags=[...new Set(sol[i].lines.map(l=>l.tag))];
+      if(mk.m==='y')tags.forEach(g=>good[g]=(good[g]||0)+1);
+      else if(mk.w!=null){const g=sol[i].lines[mk.w].tag;bad[g]=(bad[g]||0)+2}
+      else tags.forEach(g=>bad[g]=(bad[g]||0)+1)});
+    const weak=Object.entries(bad).sort((a,b)=>b[1]-a[1]);
+    const strong=Object.keys(good).filter(g=>!bad[g]);
+    el.innerHTML=`<div class="card trep"><div class="row" style="justify-content:space-between"><h3>Niðurstöður</h3><span class="tscore">${ok} / ${marked} rétt${marked<t.qs.length?` <span class="mut">(${t.qs.length-marked} ómerkt)</span>`:''}</span></div>
+      ${weak.length?`<div class="k" style="margin:10px 0 6px">Þetta þarftu að æfa</div><div class="weak">${weak.map(([g,w],j)=>`<div class="wk${j===0?' top':''}"><div><b>${SKILL[g].t}</b>${j===0?' <span class="ref">mikilvægast</span>':''}<p>Passaðu: ${SKILL[g].tip}</p></div><button class="btn sm${j===0?' pri':''}" data-goto="${SKILL[g].go}">Æfa →</button></div>`).join('')}</div>
+        ${Object.values(t.marks).some(m=>m&&m.m==='n'&&m.w==null)?'<p class="mut" style="font-size:.85rem;margin-top:8px">Ábending: ef þú merkir línuna þar sem þú fórst út af verður greiningin nákvæmari.</p>':''}`:`<p style="margin-top:8px">${ok===marked?'Allt rétt sem þú merktir! ':''}Engin veik atriði fundust.</p>`}
+      ${strong.length?`<div class="k" style="margin:12px 0 6px">Þetta gekk vel</div><div class="badges">${strong.map(g=>`<span class="badge on">✓ ${SKILL[g].t}</span>`).join('')}</div>`:''}
+      <div class="row" style="margin-top:12px"><button class="btn" id="mk2">Nýtt próf</button></div></div>`;
+    el.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{go(b.dataset.goto);scrollTo({top:0})});
+    el.querySelector('#mk2').onclick=()=>{body.querySelector('#mk').click();scrollTo({top:0,behavior:'smooth'})};
+    if(marked===t.qs.length)markDone(it);
+  }
+  draw();
+};
+
 /* ================= Ræsing ================= */
-window.__k7={Solver,genS,fT,parseEq,ePoly,eqT,genEq,genABC,GENS,deg,opMove,opReorder,opCombine,opDistribute,opMulBr,opUnfold,opSquare,opFactor,opScale,opSwap,analyze,hintFor,proportional,cloneS,F};
+window.__k7={solveFull,buildTest,genQ,QG,GS5,stdCoef,Solver,genS,fT,parseEq,ePoly,eqT,genEq,genABC,GENS,deg,opMove,opReorder,opCombine,opDistribute,opMulBr,opUnfold,opSquare,opFactor,opScale,opSwap,analyze,hintFor,proportional,cloneS,F};
 show(curItem().id);
 })();
 </script>

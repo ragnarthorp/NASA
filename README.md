@@ -55,4 +55,7 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 3. **A, B og C:** lesa af með formerkjum, liður sem vantar, og raða fyrst og lesa svo af.
 4. **Lausnarformúlan:** sýnidæmi skref fyrir skref, reikna D (A2) og hvað það segir, lausnarformúlan (A3) í föstum skrefum (A, B, C → D → √D → −B og 2A → x), ein lausn eða engin, brot og liðir sem vantar, og allt saman frá óraðaðri jöfnu. Innsetning í D og formúluna er dregin (draga og sleppa). D er reiknað í röð aðgerða: veldi, svo 4·A·C (þættir dregnir saman), svo mínus mínus og loks plús/mínus, og vélin stöðvar ef röðin er röng. Aðrir útreikningar eru slegnir inn; endurgjöf er sniðna að formerkjavillum, sér lausnirnar á fleygboganum og prófar þær með því að setja inn í jöfnuna.
 
+5. **Styttri leiðir:** lausnarformúlan virkar alltaf, en: vantar C → x út fyrir sviga í algebruvélinni og núllreglan (ekki deila með x); vantar B → x² = tala og ±; ágiskun (Þ4) með því að smella á talnapör; og „Hvaða leið er styst?“.
+6. **Prófaðu þig:** slembipróf (5, 8 eða 10 dæmi; létt, miðlungs, erfitt eða blandað) sem leyst er á blaði. Lausn hvers dæmis er sýnd línu fyrir línu; nemandinn merkir rétt/rangt og getur bent á línuna þar sem hann fór út af. Út frá því birtist hvað þarf að æfa, með ráðum og tengli á æfingu.
+
 Framvinda vistast í vafranum (`localStorage`).
