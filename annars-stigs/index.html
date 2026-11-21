@@ -360,6 +360,22 @@ input[type=range]{width:100%;accent-color:var(--k7);height:30px}
 .sv-math .btn{font-family:var(--font);font-size:.85rem;vertical-align:middle}
 .dc-prompt:empty{display:none}
 .dc-prompt .sv-math{background:var(--k7-tint);border-radius:12px;padding:.3em .6em}
+.hero-f{background:var(--k7-tint);border-radius:20px;padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.hf-top{display:flex;gap:10px;align-items:center}
+.hf-eq{font-family:var(--math);font-size:clamp(2.2rem,7vw,3.6rem);display:flex;justify-content:center;align-items:center;gap:.25em;padding:6px 0;overflow-x:auto}
+.hf-eq .fx>span{line-height:1.25}
+.hf-d{font-family:var(--math);font-size:clamp(1.2rem,3.4vw,1.6rem);display:flex;justify-content:center;align-items:center;gap:.4em;flex-wrap:wrap}
+.hf-d sup,.hero-f .m sup{font-size:.62em;vertical-align:.7em;line-height:1}
+.hp{border-radius:10px;padding:0 .12em;cursor:pointer;transition:background .15s,box-shadow .15s;display:inline-block}
+.hp.on{background:var(--surface);box-shadow:0 0 0 3px var(--k7)}
+.hf-parts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.hf-parts>div{background:var(--surface);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;font-size:.86rem;border:2px solid transparent;transition:border-color .15s}
+.hf-parts>div.on{border-color:var(--k7)}
+.hf-parts b.m{font-family:var(--math);font-size:1.3rem;color:var(--k7-ink)}
+.sv-mini{display:none}
+@media (max-width:980px){.hf-parts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sv-mini{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:center;font-size:1.05rem;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+  .sv-mini sup{font-size:.62em;vertical-align:.7em;line-height:1}}
 /* ---------- Sími ---------- */
 @media (max-width:980px){
   .engine{grid-template-columns:minmax(0,1fr)}
@@ -1477,6 +1493,7 @@ function Solver(host,src,cfg={}){
   const E={i:0,tries:0,last:null,vals:[]};
   host.innerHTML=`<div class="solver"><div class="sv-paper">
       <div class="sv-eq">${eqH(st)}</div>
+      <div class="sv-mini"><span class="ref">A3</span><span class="m"><i>x</i> = ${fracX(`−<i>B</i> ± ${sqrtX('<i>D</i>')}`,'2<i>A</i>')}</span><span class="ref">A2</span><span class="m"><i>D</i> = <i>B</i><sup>2</sup> − 4<i>AC</i></span></div>
       <ol class="sv-steps"></ol><div class="sv-end"></div></div>
     <aside class="sv-side">
       <div class="sheet"><div class="k">Formúlublaðið</div>
@@ -1814,7 +1831,21 @@ function probView(body,it,next,intro,mount){
 }
 
 VIEWS.formintro=(body,it,next)=>{
-  body.innerHTML=`<div class="prose" style="max-width:none">
+  const part=(k,h)=>`<span class="hp" data-p="${k}" tabindex="0" role="button">${h}</span>`;
+  const heroH=`<section class="hero-f" aria-label="Lausnarformúlan">
+    <div class="hf-top"><span class="k">Lausnarformúlan</span><span class="ref">A3</span><span class="mut" style="font-size:.85rem">á formúlublaðinu</span></div>
+    <div class="hf-eq"><i>x</i> = ${fracX(`${part('mB','−<i>B</i>')} ${part('pm','±')} ${part('rD',sqrtX('<i>D</i>'))}`,part('A2','2<i>A</i>'))}</div>
+    <div class="hf-d"><span class="ref">A2</span> þar sem ${part('D','<i>D</i> = <i>B</i><sup>2</sup> − 4<i>AC</i>')}</div>
+    <div class="hf-parts">
+      <div data-p="mB"><b class="m">−<i>B</i></b><span>Snúðu formerkinu á B. B = −6 gefur −B = 6.</span></div>
+      <div data-p="pm"><b class="m">±</b><span>Reiknaðu tvisvar: einu sinni með + og einu sinni með −. Þaðan koma tvær lausnir.</span></div>
+      <div data-p="rD"><b class="m">√<i>D</i></b><span>Rótin af D. Ef D er mínus er engin rót og engin lausn.</span></div>
+      <div data-p="A2"><b class="m">2<i>A</i></b><span>Tvisvar A. Deilt er með 2A undir <b>öllu</b> strikinu, líka −B.</span></div>
+      <div data-p="D"><b class="m"><i>D</i></b><span>Aðgreinirinn. Reiknaður fyrst og sér, í röð aðgerða.</span></div>
+    </div>
+    <p class="mut" style="font-size:.9rem">Í einni línu: <span class="m"><i>x</i> = ${fracX('−<i>B</i> ± '+sqrtX('<i>B</i><sup>2</sup> − 4<i>AC</i>'),'2<i>A</i>')}</span>. Við reiknum D fyrst sér, þá verður formúlan styttri og minna ruglast.</p>
+  </section>`;
+  body.innerHTML=heroH+`<div class="prose" style="max-width:none;margin-top:22px">
     <p style="max-width:68ch">Þegar jafnan er komin á staðalform og þú veist A, B og C eru lausnirnar bara útreikningur. <b>Lausnir</b> jöfnunnar eru <b>núllstöðvar</b> fleygbogans: staðirnir þar sem hann sker x-ásinn.</p>
     <div class="flow" aria-label="Röð skrefanna"><span class="s">Raða <span class="ref">A1</span></span><span class="ar">→</span><span class="s">A, B, C</span><span class="ar">→</span><span class="s">D <span class="ref">A2</span></span><span class="ar">→</span><span class="s">√D</span><span class="ar">→</span><span class="s">x <span class="ref">A3</span></span></div>
     <div class="grid3">
@@ -1824,6 +1855,12 @@ VIEWS.formintro=(body,it,next)=>{
     </div>
     <p style="max-width:68ch"><b>Sýnidæmi.</b> Ýttu á „Næsta skref“ og fylgstu með. Í næstu atriðum fyllir þú sjálfur í reitina.</p>
     <div id="demo"></div><div class="row" id="dn"></div></div>`;
+  const hero=body.querySelector('.hero-f');
+  const hl=k=>hero.querySelectorAll('[data-p]').forEach(x=>x.classList.toggle('on',x.dataset.p===k));
+  hero.addEventListener('mouseover',e=>{const t=e.target.closest('[data-p]');if(t)hl(t.dataset.p)});
+  hero.addEventListener('mouseleave',()=>hl(null));
+  hero.addEventListener('click',e=>{const t=e.target.closest('[data-p]');if(t)hl(t.dataset.p)});
+  hero.addEventListener('focusin',e=>{const t=e.target.closest('[data-p]');if(t)hl(t.dataset.p)});
   Solver(body.querySelector('#demo'),'x^2 - 2x - 8 = 0',{demo:true,noFocus:true,onDone:()=>{markDone(it);body.querySelector('#dn').innerHTML=nextBtn(next);wireNext(body.querySelector('#dn'))}});
   body.querySelector('#demo').addEventListener('click',e=>{if(e.target.closest('[data-ch]'))return});
 };
