@@ -61,3 +61,13 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 Framvinda vistast í vafranum (`localStorage`).
 
 **Vinnubók til útprentunar:** `annars-stigs/vinnubok/vinnubok-annars-stigs.pdf` (26 síður A4, svart/hvítt) fylgir hlutum 1–6: spurningar með rúmum skriflínum, formúlureitir (A1, A2, A3, Þ1–Þ4), hnitakerfi til að teikna fleygboga með 0, 1 og 2 núllstöðvum, matskvarði (auðvelt–erfitt) á spássíu, 10 reitir fyrir sjálfsprófið og drög að glósublaðinu. Búin til með `vinnubok/vinnubok.py` (Python + reportlab; keyrð tvisvar svo efnisyfirlitið fái blaðsíðutöl).
+
+## Veldi og rætur (STÆ2AH, kafli 5)
+
+`veldi-og-raetur/index.html` er sjálfstæður æfingarvefur í sama stíl (grænn, ●). Kjarninn er **veldavél**: þættir með sama stofni eru dregnir saman (vélin skrifar x²⁺³ og nemandinn reiknar veldisvísinn), smellt er á sviga (veldið á alla þætti, V3/V5) og rætur (rót → brotið veldi, R1), tölur undir rót eru þáttaðar (FACT: 27 = □^□), uppi og niðri er spurt „hvar eru fleiri?“ (V2) og mínus-veldi dregið yfir brotastrikið (V6). Skrefin fjögur ① rætur ② svigar ③ sami stofn ④ mínus-veldi eru sýnd og lýst upp.
+
+1. **Hvað er veldi?** Veldi skrifað út (stofn, veldisvísir) og mínus og veldi.
+2. **Reglurnar í vélinni:** V1, V5, V3, V2, mínus og brot í sviga, allt saman.
+3. **Veldið 0 og neikvæð veldi:** helmingunartafla 2⁴ … 2⁻³, V6, n í veldisvísi (SVIGI utan um það sem er dregið frá).
+4. **Rætur og brotin veldi:** R1, FACT, brotin veldi (samnefna), sami rótarvísir, allt saman.
+5. **Prófaðu þig:** slembipróf á blaði, lausn línu fyrir línu, merking og greining.
