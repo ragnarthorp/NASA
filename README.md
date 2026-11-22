@@ -71,3 +71,5 @@ Framvinda vistast í vafranum (`localStorage`).
 3. **Veldið 0 og neikvæð veldi:** helmingunartafla 2⁴ … 2⁻³, V6, n í veldisvísi (SVIGI utan um það sem er dregið frá).
 4. **Rætur og brotin veldi:** R1, FACT, brotin veldi (samnefna), sami rótarvísir, allt saman.
 5. **Prófaðu þig:** slembipróf á blaði, lausn línu fyrir línu, merking og greining.
+
+**Æfingadæmi til útprentunar:** `veldi-og-raetur/aefing/aefingadaemi-veldi-og-raetur.pdf` (10 síður A4, svart/hvítt): 26 dæmi í níu flokkum (A–I) sem fylgja vefnum, hvert með erfiðleikapunktum, skriflínum og reit fyrir rétt/rangt, og svarasíða sem vísar á æfingu á vefnum. Öll svör eru staðfest með veldavélinni. Búið til með `aefing/aefingadaemi.py`.
