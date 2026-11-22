@@ -738,8 +738,8 @@ function opStrike(st,top,bot){
 }
 function opGather(st,A){
   const f=A.f,same=A.list.filter(g=>sameSingle(f,g));
-  const where=A.where==='num'?'uppi':'niðri';
-  return{prompt:{kind:'num',ask:true,lhs:`Hve mörg <i>${f.b}</i> eru eftir ${where}?`,exp:new F(same.length),tag:'tekið saman',lab:'V1',
+  const where=A.parent&&A.parent.t==='r'?'undir rótinni':A.where==='num'?(st.den.length?'uppi':''):'niðri';
+  return{prompt:{kind:'num',ask:true,lhs:`Hve mörg <i>${f.b}</i> eru ${where?'eftir '+where:'hér'}?`,exp:new F(same.length),tag:'tekið saman',lab:'V1',
     fb:v=>'Teldu bara þau sem eru ekki yfirstrikuð.',
     apply:()=>{const i0=A.list.indexOf(same[0]);same.forEach(g=>A.list.splice(A.list.indexOf(g),1));A.list.splice(i0,0,Pw(f.b,E(same.length)));return st},
     msg:`${same.map(()=>'<i>'+f.b+'</i>').join('·')} = <i>${f.b}</i><sup>${same.length}</sup>`}};
@@ -751,6 +751,7 @@ function opCombine(st0,ida,idb){
   const st=cloneS(st0),A=find(st,ida),B=find(st,idb);
   if(A.f.struck||B.f.struck)return{err:'Þetta er þegar strikað út.'};
   if(A.list!==B.list){
+    if(A.parent&&A.parent.t==='r'&&B.f.id!==A.parent.id&&!(B.parent&&B.parent.id===A.parent.id))return opTap(st0,ida);
     if(A.parent||B.parent)return{err:'Þessir þættir eru ekki á sama stað. Opnaðu svigann eða rótina fyrst.'};
     return opCross(st,A,B);
   }
@@ -771,6 +772,11 @@ function opCombine(st0,ida,idb){
   }
   if(a.t==='p'&&b.t==='p'){
     if(baseKey(a.b)!==baseKey(b.b))return{err:`Ólíkir stofnar: ${BL(a.b)} og ${BL(b.b)}. Aðeins sami stofn sameinast.`};
+    if(!isP(a.e)&&!isP(b.e)&&(eOne(a.e)||eOne(b.e))){
+      const ne=eAdd(a.e,b.e),nf=Pw(a.b,ne);B.list.splice(B.idx,1,nf);B.list.splice(B.list.indexOf(a),1);
+      const sh=f=>BL(f.b)+(eOne(f.e)?'':`<sup>${eH(f.e)}</sup>`);
+      return{st,tag:'margfaldað saman',lab:'V1',msg:`${sh(a)} · ${sh(b)} = ${BL(a.b)}<sup>${eH(ne)}</sup>. Eitt stykki í viðbót.`,fresh:[nf.id]};
+    }
     const nf=Pw(a.b,{op:'+',a:a.e,b:b.e});B.list.splice(B.idx,1,nf);B.list.splice(B.list.indexOf(a),1);
     return{st,tag:'sami stofn',lab:'V1',msg:`Sami stofn margfaldaður: veldisvísarnir lagðir saman. Smelltu á veldisvísinn til að reikna.`,fresh:[nf.id]};
   }
@@ -855,9 +861,35 @@ function opTap(st0,id,pendHit){
     return{st,tag:single?'veldi af veldi':'veldið á alla þætti',lab:single?'V5':'V3',
       msg:single?'Veldi af veldi: veldisvísarnir margfaldaðir.':'Veldið fer á <b>hvern</b> þátt í sviganum, líka töluna.',fresh:items.map(x=>x.id)};
   }
-  // tala undir rót -> FACT
-  if(f.t==='n'&&A.parent&&A.parent.t==='r'){const pp=isPerfectPow(f.v);if(pp)return factPrompt(st,A,f);return{err:'Þessa tölu er ekki hægt að skrifa sem veldi.'}}
-  if(A.parent&&A.parent.t==='r'){A={...find(st,A.parent.id)};f=A.f}
+  // undir rót: þátta, draga út, taka saman
+  if(A.parent&&A.parent.t==='r'){
+    const R0=A.parent,k=R0.k,L=R0.f,rn=k===2?'ferningsrót':k===3?'þriðju rót':k+'. rót';
+    if(f.t==='p'&&isLetter(f.b)&&!isP(f.e)&&eNum(f.e)&&f.e.k.isInt()&&f.e.k.n>=2&&f.e.k.n<=12){
+      const m=f.e.k.n,items=Array.from({length:m},()=>Pw(f.b,E(1)));L.splice(A.idx,1,...items);
+      return{st,tag:'skrifað út undir rót',lab:'',msg:`<i>${f.b}</i><sup>${m}</sup> skrifað út: ${items.map(()=>'<i>'+f.b+'</i>').join('·')}. Undir ${rn} þarf ${k} eins í hóp. Smelltu á þátt til að draga hópinn út.`,fresh:items.map(x=>x.id)};
+    }
+    if(f.t==='n'&&f.v.isInt()&&f.v.n>3&&!isPrime(f.v.n)){
+      const nn=f.v.n;
+      return{prompt:{kind:'fac',lhs:`${nn} = `,exp:primeF(nn).join('·'),tag:'tala þáttuð undir rót',lab:'FACT',
+        check:raw=>{const t=String(raw).split(/[^0-9]+/).filter(Boolean).map(Number);if(t.length<2)return'Skrifaðu töluna sem margfeldi, t.d. 3·3·3.';if(t.some(x=>x<2))return'Notaðu tölur sem eru 2 eða stærri.';const pr=t.reduce((a,b)=>a*b,1);if(pr!==nn)return`${t.join('·')} = ${pr}, ekki ${nn}.`;return''},
+        applyRaw:raw=>{const t=String(raw).split(/[^0-9]+/).filter(Boolean).map(Number);L.splice(A.idx,1,...t.map(x=>N(x)));return st},
+        msg:`${nn} fullþáttuð undir rótinni. Finndu hópa af ${k} eins.`}};
+    }
+    if(isSingle(f)){
+      const same=L.filter(g=>sameSingle(f,g));
+      if(same.length>=k){
+        same.slice(0,k).forEach(g=>L.splice(L.indexOf(g),1));
+        const RA=find(st,R0.id),out=f.t==='n'?N(f.v):Pw(f.b,E(1));
+        RA.list.splice(RA.idx,0,out);if(!L.length)RA.list.splice(RA.list.indexOf(R0),1);
+        const h=sglH(f);
+        return{st,tag:'dregið út úr rót',lab:'R1',msg:`${k} eins undir ${rn}: ${Array(k).fill(h).join('·')} → eitt ${h} fer út fyrir rótina.${L.length?'':' Ekkert eftir inni, rótin hverfur.'}`,fresh:[out.id]};
+      }
+      if(f.t==='p'&&same.length>=2)return opGather(st,A);
+      return{err:`Það þarf ${k} eins til að ${sglH(f)} fari út úr ${rn}. Hér ${same.length===1?'er bara eitt':'eru bara '+same.length}: það verður eftir inni.`};
+    }
+    A={...find(st,R0.id)};f=A.f;
+  }
+  if(!A.parent&&isSingle(f)&&f.t==='p'&&A.list.filter(g=>sameSingle(f,g)).length>1)return opGather(st,A);
   if(f.t==='r'){
     const k=f.k;
     const items=f.f.map(g=>{
@@ -939,7 +971,10 @@ function nextAction(st){
   for(const x of A)if(x.f.t==='p'&&eNum(x.f.e)&&eZero(x.f.e))return{kind:'tap',id:x.f.id,h:'Veldið 0: smelltu á þáttinn. Mundu: a⁰ = 1.',step:3};
   // rætur
   for(const L of [st.num,st.den]){const rs=L.filter(f=>f.t==='r');for(let i=0;i<rs.length;i++)for(let j=i+1;j<rs.length;j++)if(rs[i].k===rs[j].k)return{kind:'drag',a:rs[i].id,b:rs[j].id,h:'Sami rótarvísir: dragðu aðra rótina ofan á hina svo allt fari undir eina rót.',step:1}}
-  for(const x of A)if(x.f.t==='n'&&x.par&&x.par.t==='r'&&isPerfectPow(x.f.v))return{kind:'tap',id:x.f.id,h:`FACT: smelltu á ${fT(x.f.v)} og skrifaðu hana sem veldi.`,step:1};
+  for(const x of A)if(x.f.t==='r'){const L=x.f.f,k=x.f.k;
+    for(const g of L)if(isSingle(g)&&L.filter(h=>sameSingle(g,h)).length>=k)return{kind:'tap',id:g.id,h:`Hópur af ${k}: smelltu á ${sglH(g)} undir rótinni (eða dragðu það út). Eitt ${sglH(g)} fer út.`,step:1};
+    for(const g of L)if(g.t==='p'&&isSingle(g)&&L.filter(h=>sameSingle(g,h)).length>=2)return{kind:'gather',id:g.id,h:`Of fá ${sglH(g)} í hóp. Taktu þau saman: smelltu á ${sglH(g)}.`,step:1};}
+  for(const x of A)if(x.f.t==='n'&&x.par&&x.par.t==='r'&&x.f.v.isInt()&&x.f.v.n>3&&!isPrime(x.f.v.n))return{kind:'tap',id:x.f.id,h:`Þáttaðu ${fT(x.f.v)}: smelltu á hana og skrifaðu sem margfeldi, t.d. 2·2·3.`,step:1};
   for(const x of A)if(x.f.t==='r')return{kind:'tap',id:x.f.id,h:'① Rót → brotið veldi: smelltu á rótarmerkið.',step:1};
   for(const x of A)if(x.f.t==='g')return{kind:'tap',id:x.f.id,h:'② Sviginn: smelltu á veldið við svigann. Það fer á alla þættina.',step:2};
   for(const x of A)if(x.f.t==='p'&&!isLetter(x.f.b)&&eNum(x.f.e)&&!x.f.e.k.isInt()&&isPerfectPow(x.f.b))return{kind:'tap',id:x.f.id,h:`FACT: smelltu á ${fT(x.f.b)} og skrifaðu hana sem veldi.`,step:1};
@@ -964,7 +999,7 @@ function autoSolve(st,max=80){
     if(!r||r.err||r.info)return{lines,final:st,fail:(r&&r.err||'stopp')+' ['+a.kind+']'};
     let tagOverride=null;
     if(r.prompt){const p=r.prompt;let s2;
-      if(p.kind==='choice')s2=p.apply(p.ok);else if(p.kind==='fact'){const x=p.exp;s2=p.applyFE(new F(x.b),new F(x.e))}else s2=p.apply();
+      if(p.kind==='choice')s2=p.apply(p.ok);else if(p.kind==='fac')s2=p.applyRaw(p.exp);else if(p.kind==='fact'){const x=p.exp;s2=p.applyFE(new F(x.b),new F(x.e))}else s2=p.apply();
       // flokka villutegund fyrir próf
       let tg=TAGMAP[p.lab]||'num';
       if(p.kind==='exp'){const pp=find(st,a.id).f.e;if(pp.op==='+'&&(pp.a.k.d>1||pp.b.k.d>1))tg='frac';else if(pp.op==='−'&&!eNum(pp.b))tg='nexp';else if(pp.op==='+'&&!eNum(pp.b))tg='nexp'}
@@ -990,7 +1025,7 @@ function VEngine(host,cfg){
       <div class="glob"></div>
       ${cfg.help===false?'':`<div class="help">
         <div><b>Sami stofn</b>Dragðu þátt ofan á annan með sama stofni (líka uppi á niðri).</div>
-        <div><b>Svigi eða rót</b>Smelltu á veldið við svigann eða á rótarmerkið.</div>
+        <div><b>Svigi eða rót</b>Smelltu á veldið við svigann eða á rótarmerkið. Undir rót: smelltu á þátt til að þátta hann eða draga hóp út.</div>
         <div><b>Reikna</b>Smelltu á litaðan veldisvísi eða tölu í veldi og skrifaðu útkomuna.</div>
         <div><b>Brotastrik</b>Smelltu á veldi til að skrifa það út. Dragðu staf uppi á sama staf niðri: parið strikast út. Mínus-veldi dragast yfir strikið.</div></div>`}
     </div>
@@ -1115,7 +1150,7 @@ function VEngine(host,cfg){
       E2.sel=null;handle(opTap(st,id));return}
     if(!p.t){if(wasNeg)render(null);return}
     if(p.t.kind==='f')handle(opCombine(st,id,p.t.id));
-    else{const A=find(st,id);if(A&&(p.t.lvl==='bar'||p.t.lvl!==A.where))handle(opMove(st,id));else render(null)}
+    else{const A=find(st,id);if(A&&A.parent&&A.parent.t==='r')handle(opTap(st,id));else if(A&&(p.t.lvl==='bar'||p.t.lvl!==A.where))handle(opMove(st,id));else render(null)}
   }
   stage.addEventListener('keydown',e=>{const fc=e.target.closest('.fc[data-id]');if(fc&&(e.key==='Enter'||e.key===' ')){e.preventDefault();handle(opTap(cur(),fc.dataset.id))}});
   load(cfg.eq);
@@ -1181,7 +1216,7 @@ const MODS=[
   {n:4,title:'Rætur og brotin veldi',items:[
     {id:'4-1',kind:'rootintro',title:'Rót → brotið veldi',lvl:1},
     {id:'4-2',kind:'eng',title:'FACT og rætur',lvl:2,ref:'R1',gen:'root',probs:['R(25x^4)','R3(8x^6)','R3(8)//R(25)','R(9x^8)//R(16x^2)'],
-      why:'<b>FACT:</b> skrifaðu töluna undir rótinni sem veldi: 27 = 3 · 3 · 3 = 3<sup>3</sup>. Breyttu svo rótinni í brotið veldi: <span class="m"><sup class="ri">3</sup>√<span class="rb">3<sup>3</sup></span> = 3<sup>3/3</sup> = 3</span>. Ekkert merki á rótinni = ferningsrót (2).'},
+      why:'<b>Fullþáttaðu undir rótinni</b> (smelltu á tölu eða veldi): 4<i>x</i><sup>6</sup> = 2·2·<i>x·x·x·x·x·x</i>. <b>Rótarvísirinn segir hve marga eins þarf í hóp:</b> √ = 2 (par), ∛ = 3. Hver hópur sendir <b>eitt</b> stykki út fyrir rótina; stakir verða eftir inni. Líka má nota R1: <span class="m"><sup class="ri">3</sup>√<span class="rb">3<sup>3</sup></span> = 3<sup>3/3</sup> = 3</span> (smelltu á rótarmerkið).'},
     {id:'4-3',kind:'eng',title:'Brotin veldi',lvl:3,ref:'V1',gen:'frac',probs:['(16x^2)^{1/4}','x^{1/2}x^{1/3}','x^{2/3}x^{1/3}//x^{1/2}x^{1/2}','a^{1/3}a^{1/2}a^{1/6}'],
       why:`Sömu reglur með brotum. Þegar brot eru lögð saman: <b>samnefna</b>. <span class="m">${mfr(1,2)} + ${mfr(1,3)} = ${mfr(3,6)} + ${mfr(2,6)} = ${mfr(5,6)}</span>. <span class="good">5/6</span> ✓ ekki <span class="bad">2/5</span> ✗`},
     {id:'4-4',kind:'eng',title:'Sami rótarvísir',lvl:3,ref:'R1',gen:'rootmerge',probs:['R3(a^4b)R3(a^2b^2)','R(2x^3)R(8x)'],

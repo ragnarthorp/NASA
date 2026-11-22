@@ -64,7 +64,7 @@ Framvinda vistast í vafranum (`localStorage`).
 
 ## Veldi og rætur (STÆ2AH, kafli 5)
 
-`veldi-og-raetur/index.html` er sjálfstæður æfingarvefur í sama stíl (grænn, ●). Kjarninn er **veldavél**: þættir með sama stofni eru dregnir saman (vélin skrifar x²⁺³ og nemandinn reiknar veldisvísinn), smellt er á sviga (veldið á alla þætti, V3/V5) og rætur (rót → brotið veldi, R1), tölur undir rót eru þáttaðar (FACT: 27 = □^□), á brotastriki má skrifa veldi út (a³ → a·a·a), þátta tölur (12 = 2·2·3), strika yfir pör uppi og niðri og taka svo saman það sem eftir er, eða spyrja „hvar eru fleiri?“ (V2) og mínus-veldi dregið yfir brotastrikið (V6). Skrefin fjögur ① rætur ② svigar ③ sami stofn ④ mínus-veldi eru sýnd og lýst upp.
+`veldi-og-raetur/index.html` er sjálfstæður æfingarvefur í sama stíl (grænn, ●). Kjarninn er **veldavél**: þættir með sama stofni eru dregnir saman (vélin skrifar x²⁺³ og nemandinn reiknar veldisvísinn), smellt er á sviga (veldið á alla þætti, V3/V5) og rætur (rót → brotið veldi, R1), undir rót má fullþátta (25 = 5·5, x⁴ = x·x·x·x) og draga hópa út (√: par sendir eitt út, ∛: þrennd), eða nota R1, á brotastriki má skrifa veldi út (a³ → a·a·a), þátta tölur (12 = 2·2·3), strika yfir pör uppi og niðri og draga svo staka þætti saman (x·x → x²), eða spyrja „hvar eru fleiri?“ (V2) og mínus-veldi dregið yfir brotastrikið (V6). Skrefin fjögur ① rætur ② svigar ③ sami stofn ④ mínus-veldi eru sýnd og lýst upp.
 
 1. **Hvað er veldi?** Veldi skrifað út (stofn, veldisvísir) og mínus og veldi.
 2. **Reglurnar í vélinni:** V1, V5, V3, V2, mínus og brot í sviga, allt saman.
