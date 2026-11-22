@@ -460,6 +460,10 @@ input[type=range]{width:100%;accent-color:var(--k7);height:30px}
 .ph{color:var(--muted);font-family:var(--font);font-size:.4em}
 .fc{display:inline-flex;align-items:flex-start;border-radius:9px;position:relative}
 .fc.one{display:none}
+.fc.struck{opacity:.5;position:relative}
+.fc.struck::after{content:"";position:absolute;left:-6%;right:-6%;top:50%;height:.09em;min-height:2px;background:var(--bad);transform:rotate(-28deg);border-radius:2px;pointer-events:none}
+.fc.sel{background:var(--k7-tint);box-shadow:0 0 0 2px var(--k7)}
+.blank.wide{width:8em}
 .stage .fc{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;padding:.04em .08em;transition:background .15s}
 .stage .fc:hover{background:var(--hover)}
 .stage .fc .fc{padding:0 .04em}
@@ -671,7 +675,7 @@ function supH(f,I){
 function baseH(b){if(isLetter(b))return `<i>${b}</i>`;const s=(b.isNeg()?MINUS:'')+numH(b);return b.isNeg()||b.d!==1?'('+s+')':s}
 function facH(f,I,o,lead){
   const sel=o.sel===f.id?' sel':'',hi=o.hi&&o.hi.includes(f.id)?' hint':'';
-  const at=`class="fc k-${f.t}${sel}${hi}" data-id="${f.id}"`;
+  const at=`class="fc k-${f.t}${sel}${hi}${f.struck?' struck':''}" data-id="${f.id}"`;
   if(f.t==='n'){
     const s=(f.v.isNeg()?MINUS:'')+numH(f.v);
     return `<span ${at}>${s}</span>`;
@@ -688,7 +692,7 @@ function listH(list,I,o={}){
       h+=f.v.isNeg()?`<span class="fc k-n" data-id="${f.id}">${MINUS}</span>`:`<span class="fc k-n one" data-id="${f.id}"></span>`;return;
     }
     if(i>0){const pv=list[i-1];
-      const needDot=f.t==='n'||(f.t==='p'&&!isLetter(f.b))||(pv.t==='r'&&f.t==='r')||(pv.t==='g'&&f.t==='g')||(pv.t==='p'&&!isLetter(pv.b)&&f.t==='p'&&!isLetter(f.b));
+      const needDot=f.t==='n'||(f.t==='p'&&!isLetter(f.b))||(pv.t==='r'&&f.t==='r')||(pv.t==='g'&&f.t==='g')||(pv.t==='p'&&!isLetter(pv.b)&&f.t==='p'&&!isLetter(f.b))||(pv.t==='p'&&f.t==='p'&&pv.b===f.b&&isLetter(f.b))||(pv.t==='n'&&f.t==='n');
       if(needDot)h+='<span class="dot">·</span>';}
     h+=facH(f,I,o);
   });
@@ -717,19 +721,41 @@ function analyze(st){
   const negE=top.some(({f})=>f.t==='p'&&!isP(f.e)&&eNegLook(f.e));
   const zeroE=top.some(({f})=>f.t==='p'&&!isP(f.e)&&eZero(f.e));
   const s1=!roots,s2=!groups,s3=!dup&&numsOk&&!pend&&!numPow&&!zeroE,s4=!negE;
-  return{pend,roots,groups,dup,numsOk,numPow,negE,zeroE,s1,s2,s3,s4,done:s1&&s2&&s3&&s4&&!pend};
+  const struck=A.some(x=>x.f.struck);
+  return{pend,roots,groups,dup,numsOk,numPow,negE,zeroE,s1,s2,s3:s3&&!struck,s4,struck,done:s1&&s2&&s3&&s4&&!pend&&!struck};
 }
 
+/* ================= Þáttun á brotastriki ================= */
+const isPrime=n=>{if(n<2)return false;for(let i=2;i*i<=n;i++)if(n%i===0)return false;return true};
+const primeF=n=>{const o=[];let m=n;for(let p=2;p*p<=m;p++)while(m%p===0){o.push(p);m/=p}if(m>1)o.push(m);return o};
+const isSingle=f=>!f.struck&&((f.t==='p'&&isLetter(f.b)&&!isP(f.e)&&eOne(f.e))||(f.t==='n'&&f.v.isInt()&&f.v.n>1));
+const sameSingle=(a,b)=>isSingle(a)&&isSingle(b)&&(a.t==='n'?b.t==='n'&&a.v.eq(b.v):b.t==='p'&&a.b===b.b);
+const sglH=f=>f.t==='n'?fT(f.v):`<i>${f.b}</i>`;
+function removeStruck(st){st.num=st.num.filter(f=>!f.struck);st.den=st.den.filter(f=>!f.struck);return st}
+function opStrike(st,top,bot){
+  top.f.struck=true;bot.f.struck=true;const h=sglH(top.f);
+  return{st,tag:'par strikað út',lab:'V2',msg:`Eitt ${h} uppi og eitt ${h} niðri: ${mfr(h,h)} = 1. Parið styttist út.`};
+}
+function opGather(st,A){
+  const f=A.f,same=A.list.filter(g=>sameSingle(f,g));
+  const where=A.where==='num'?'uppi':'niðri';
+  return{prompt:{kind:'num',ask:true,lhs:`Hve mörg <i>${f.b}</i> eru eftir ${where}?`,exp:new F(same.length),tag:'tekið saman',lab:'V1',
+    fb:v=>'Teldu bara þau sem eru ekki yfirstrikuð.',
+    apply:()=>{const i0=A.list.indexOf(same[0]);same.forEach(g=>A.list.splice(A.list.indexOf(g),1));A.list.splice(i0,0,Pw(f.b,E(same.length)));return st},
+    msg:`${same.map(()=>'<i>'+f.b+'</i>').join('·')} = <i>${f.b}</i><sup>${same.length}</sup>`}};
+}
 /* ================= Aðgerðir ================= */
 // Hver aðgerð skilar {st,tag,lab,msg} eða {prompt} eða {err}
 const BL=b=>isLetter(b)?`<i>${b}</i>`:baseH(b);
 function opCombine(st0,ida,idb){
   const st=cloneS(st0),A=find(st,ida),B=find(st,idb);
+  if(A.f.struck||B.f.struck)return{err:'Þetta er þegar strikað út.'};
   if(A.list!==B.list){
     if(A.parent||B.parent)return{err:'Þessir þættir eru ekki á sama stað. Opnaðu svigann eða rótina fyrst.'};
     return opCross(st,A,B);
   }
   const a=A.f,b=B.f;
+  if(a.struck||b.struck)return{err:'Þetta er þegar strikað út.'};
   if([a,b].some(f=>(f.t==='p'||f.t==='g')&&isP(f.e)))return{err:'Reiknaðu fyrst veldisvísinn sem er merktur (smelltu á hann).'};
   if(a.t==='n'&&b.t==='n'){
     const r=a.v.mul(b.v);
@@ -755,6 +781,7 @@ function opCombine(st0,ida,idb){
 function opCross(st,A,B){
   const top=A.where==='num'?A:B,bot=A.where==='num'?B:A,a=top.f,b=bot.f;
   if([a,b].some(f=>(f.t==='p'||f.t==='g')&&isP(f.e)))return{err:'Reiknaðu fyrst veldisvísinn sem er merktur.'};
+  if(sameSingle(a,b))return opStrike(st,top,bot);
   if(a.t==='n'&&b.t==='n'){
     const r=a.v.div(b.v);
     return{prompt:{kind:'num',lhs:`${fv(a.v)} : ${fv(b.v)}`,exp:r,tag:'tölur deilt',lab:'',
@@ -793,6 +820,19 @@ function opMove(st0,id){
 }
 function opTap(st0,id,pendHit){
   const st=cloneS(st0);let A=find(st,id);if(!A)return null;let f=A.f;
+  if(f.struck)return{err:'Þetta par er þegar strikað út. Ýttu á „Næsta lína“ til að hreinsa það burt.'};
+  const inFrac=st.den.length&&!A.parent;
+  if(inFrac&&f.t==='p'&&isLetter(f.b)&&!isP(f.e)&&eNum(f.e)&&f.e.k.isInt()&&f.e.k.n>=2&&f.e.k.n<=9){
+    const k=f.e.k.n,items=Array.from({length:k},()=>Pw(f.b,E(1)));A.list.splice(A.idx,1,...items);
+    return{st,tag:'skrifað út',lab:'',msg:`<i>${f.b}</i><sup>${k}</sup> skrifað út: ${items.map(()=>'<i>'+f.b+'</i>').join('·')}. Strikaðu nú yfir pör: eitt uppi og eitt niðri.`,fresh:items.map(x=>x.id)};
+  }
+  if(inFrac&&f.t==='n'&&f.v.isInt()&&f.v.n>3&&!isPrime(f.v.n)){
+    const n=f.v.n;
+    return{prompt:{kind:'fac',lhs:`${n} = `,exp:primeF(n).join('·'),tag:'tala þáttuð',lab:'FACT',
+      check:raw=>{const t=String(raw).split(/[^0-9]+/).filter(Boolean).map(Number);if(t.length<2)return'Skrifaðu töluna sem margfeldi, t.d. 2·2·3.';if(t.some(x=>x<2))return'Notaðu tölur sem eru 2 eða stærri.';const pr=t.reduce((a,b)=>a*b,1);if(pr!==n)return`${t.join('·')} = ${pr}, ekki ${n}.`;return''},
+      applyRaw:raw=>{const t=String(raw).split(/[^0-9]+/).filter(Boolean).map(Number);A.list.splice(A.idx,1,...t.map(x=>N(x)));return st},
+      msg:`${n} þáttuð. Strikaðu nú yfir eins tölur uppi og niðri.`}};
+  }
   // pending veldisvísir
   if((f.t==='p'||f.t==='g')&&isP(f.e)){
     const p=f.e,r=pVal(p);
@@ -888,6 +928,13 @@ function normalize(st){
 function nextAction(st){
   const A=allF(st);
   for(const x of A)if((x.f.t==='p'||x.f.t==='g')&&isP(x.f.e))return{kind:'tap',id:x.f.id,h:'Smelltu á merkta veldisvísinn og reiknaðu hann.',step:0};
+  if(st.den.length){
+    for(const a of st.num){const b=st.den.find(g=>sameSingle(a,g));if(b)return{kind:'drag',a:a.id,b:b.id,h:`Strikaðu yfir par: dragðu ${sglH(a)} uppi á ${sglH(a)} niðri.`,step:3}}
+    if(A.some(x=>x.f.struck)){
+      for(const L of [st.num,st.den])for(const f of L)if(f.t==='p'&&isSingle(f)&&L.filter(g=>sameSingle(f,g)).length>1)return{kind:'gather',id:f.id,h:`Taktu saman: smelltu á <i>${f.b}</i> og teldu hve mörg eru eftir.`,step:3};
+      return{kind:'clear',h:'Öll pör eru strikuð út. Ýttu á „Næsta lína“ til að hreinsa þau burt.',step:3};
+    }
+  }
   for(const x of A)if(x.f.t==='p'&&!isLetter(x.f.b)&&eNum(x.f.e)&&x.f.e.k.isInt()&&!x.f.e.k.isNeg()&&!(x.par&&x.par.t==='r'))return{kind:'tap',id:x.f.id,h:`Reiknaðu ${baseH(x.f.b)}<sup>${eH(x.f.e)}</sup>: smelltu á það.`,step:3};
   for(const x of A)if(x.f.t==='p'&&eNum(x.f.e)&&eZero(x.f.e))return{kind:'tap',id:x.f.id,h:'Veldið 0: smelltu á þáttinn. Mundu: a⁰ = 1.',step:3};
   // rætur
@@ -910,9 +957,11 @@ function autoSolve(st,max=80){
   const lines=[{st,lab:'',tag:'',name:'Dæmið'}];
   for(let g=0;g<max;g++){
     const a=nextAction(st);if(!a||a.kind==='none')break;
+    if(a.kind==='clear'){st=normalize(removeStruck(cloneS(st)));lines.push({st,lab:'',tag:'pör fjarlægð',tg:'v2'});continue}
     let r;
-    if(a.kind==='tap')r=opTap(st,a.id);else if(a.kind==='drag')r=opCombine(st,a.a,a.b);else r=opMove(st,a.id);
-    if(!r||r.err||r.info)return{lines,fail:r&&r.err||'stopp'};
+    if(a.kind==='gather'){const c=cloneS(st);r=opGather(c,find(c,a.id))}
+    else if(a.kind==='tap')r=opTap(st,a.id);else if(a.kind==='drag')r=opCombine(st,a.a,a.b);else r=opMove(st,a.id);
+    if(!r||r.err||r.info)return{lines,final:st,fail:(r&&r.err||'stopp')+' ['+a.kind+']'};
     let tagOverride=null;
     if(r.prompt){const p=r.prompt;let s2;
       if(p.kind==='choice')s2=p.apply(p.ok);else if(p.kind==='fact'){const x=p.exp;s2=p.applyFE(new F(x.b),new F(x.e))}else s2=p.apply();
@@ -943,7 +992,7 @@ function VEngine(host,cfg){
         <div><b>Sami stofn</b>Dragðu þátt ofan á annan með sama stofni (líka uppi á niðri).</div>
         <div><b>Svigi eða rót</b>Smelltu á veldið við svigann eða á rótarmerkið.</div>
         <div><b>Reikna</b>Smelltu á litaðan veldisvísi eða tölu í veldi og skrifaðu útkomuna.</div>
-        <div><b>Mínus-veldi</b>Dragðu þáttinn yfir brotastrikið.</div></div>`}
+        <div><b>Brotastrik</b>Smelltu á veldi til að skrifa það út. Dragðu staf uppi á sama staf niðri: parið strikast út. Mínus-veldi dragast yfir strikið.</div></div>`}
     </div>
     <aside class="eng-side">
       <div class="sheet"><div class="k">Formúlublaðið</div>
@@ -963,7 +1012,7 @@ function VEngine(host,cfg){
   function msg(t,h){E2.msg={t,h}}
   function push(r){
     const v=valS(r.st,E2.env);if(Math.abs(v-E2.base)>1e-6*Math.max(1,Math.abs(E2.base)))console.error('Vélin breytti gildinu!',v,E2.base);
-    normalize(r.st);E2.hist.push({st:r.st,tag:r.tag,lab:r.lab||''});E2.pr=null;E2.sel=null;E2.hi=[];msg('step',r.msg||'');render(r);
+    if(!['par strikað út','tekið saman','skrifað út','tala þáttuð'].includes(r.tag))removeStruck(r.st);normalize(r.st);E2.hist.push({st:r.st,tag:r.tag,lab:r.lab||''});E2.pr=null;E2.sel=null;E2.hi=[];msg('step',r.msg||'');render(r);
   }
   function handle(r){
     if(!r)return;
@@ -985,18 +1034,20 @@ function VEngine(host,cfg){
     // prompt
     if(E2.pr){const p=E2.pr;
       if(p.kind==='choice')pe.innerHTML=`<div class="pr-in"><span>${p.lhs}</span><div class="row">${p.choices.map(c=>`<button class="btn" data-ch="${c[0]}">${c[1]}</button>`).join('')}</div></div>`;
+      else if(p.kind==='fac')pe.innerHTML=`<div class="pr-in"><span class="m pr-l">${p.lhs}</span><input class="blank wide" id="vf${n}" placeholder="t.d. 2·2·3" aria-label="Þættir" autocomplete="off"><button class="btn pri sm" data-pchk>Athuga</button><button class="btn sm ghost" data-pshow hidden>Sýna svar</button></div>`;
       else if(p.kind==='fact')pe.innerHTML=`<div class="pr-in"><span class="m pr-l">${p.lhs}</span><input class="blank" id="vb${n}" aria-label="Stofn" autocomplete="off"><sup><input class="blank sm" id="ve${n}" aria-label="Veldisvísir" autocomplete="off"></sup><button class="btn pri sm" data-pchk>Athuga</button><button class="btn sm ghost" data-pshow hidden>Sýna svar</button></div>`;
-      else pe.innerHTML=`<div class="pr-in"><span class="m pr-l">${p.kind==='exp'?'Veldisvísirinn: ':''}${p.lhs} = </span><input class="blank" id="vi${n}" aria-label="Útkoma" autocomplete="off"><button class="btn pri sm" data-pchk>Athuga</button><button class="btn sm" data-psign>± formerki</button><button class="btn sm ghost" data-pshow hidden>Sýna svar</button></div>`;
+      else pe.innerHTML=`<div class="pr-in"><span class="${p.ask?'':'m '}pr-l">${p.kind==='exp'?'Veldisvísirinn: ':''}${p.lhs}${p.ask?'':' = '}</span><input class="blank" id="vi${n}" aria-label="Útkoma" autocomplete="off"><button class="btn pri sm" data-pchk>Athuga</button><button class="btn sm" data-psign>± formerki</button><button class="btn sm ghost" data-pshow hidden>Sýna svar</button></div>`;
     }else pe.innerHTML='';
     msgEl.className='eng-msg '+E2.msg.t;msgEl.innerHTML=`<span class="ic">${{step:'✓',err:'!',hint:'?',info:'i'}[E2.msg.t]}</span><span>${E2.msg.h}</span>`;
     if(a.done){banEl.innerHTML=`<div class="done-ban"><h4><span aria-hidden="true">●</span> Einfaldað!</h4><span class="m">${exprH(cur())}</span>${cfg.nextLabel?`<button class="btn pri" data-act="next" style="margin-left:auto">${cfg.nextLabel()}</button>`:''}</div>`;if(!E2.fired){E2.fired=true;cfg.onSolved&&cfg.onSolved(cur())}}else banEl.innerHTML='';
-    glob.innerHTML=`<button class="btn sm" data-act="undo" ${E2.hist.length<2?'disabled':''}>↶ Til baka</button><button class="btn sm" data-act="hint">Vísbending</button><button class="btn sm ghost" data-act="reset" ${E2.hist.length<2?'disabled':''}>Byrja aftur</button>`;
+    glob.innerHTML=(analyze(cur()).struck?'<button class="btn sm pri" data-act="clear">Næsta lína (fjarlægja pörin)</button>':'')+`<button class="btn sm" data-act="undo" ${E2.hist.length<2?'disabled':''}>↶ Til baka</button><button class="btn sm" data-act="hint">Vísbending</button><button class="btn sm ghost" data-act="reset" ${E2.hist.length<2?'disabled':''}>Byrja aftur</button>`;
     logEl.innerHTML=E2.hist.map((h,i)=>`<li class="${i===E2.hist.length-1?'cur':''}" data-h="${i}"><span class="ln">${i?'= ':''}${exprH(h.st)}</span><span class="tg">${i?esc(h.tag):'dæmið'}${h.lab?` <span class="ref">${h.lab==='0'?'a⁰':h.lab}</span>`:''}</span></li>`).join('');
     logEl.scrollTop=logEl.scrollHeight;
   }
   function checkPrompt(){
     const p=E2.pr;if(!p)return;let m='';
-    if(p.kind==='fact'){const b=parseLin(pe.querySelector('#vb'+n).value),e=parseLin(pe.querySelector('#ve'+n).value);
+    if(p.kind==='fac'){const raw=pe.querySelector('#vf'+n).value;m=p.check(raw);if(!m){push({st:p.applyRaw(raw),tag:p.tag,lab:p.lab,msg:p.msg});return}}
+    else if(p.kind==='fact'){const b=parseLin(pe.querySelector('#vb'+n).value),e=parseLin(pe.querySelector('#ve'+n).value);
       m=p.check(b&&eNum(b)?b.k:null,e&&eNum(e)?e.k:null);
       if(!m){const s2=p.applyFE(b.k,e.k);push({st:s2,tag:p.tag,lab:p.lab,msg:p.msg});return}}
     else{const inp=pe.querySelector('#vi'+n),raw=inp.value;
@@ -1015,9 +1066,10 @@ function VEngine(host,cfg){
     else if(a==='reset'){E2.hist=E2.hist.slice(0,1);E2.pr=null;E2.fired=false;msg('info','Byrjað aftur.');render(null)}
     else if(a==='hint'){const na=nextAction(cur());E2.pr=null;if(na&&na.h){msg('hint',na.h);E2.hi=na.kind==='drag'?[na.a,na.b]:[na.id]}else msg('hint','Það er ekkert eftir að einfalda.');render(null)}
     else if(a==='next')cfg.onNext&&cfg.onNext();
+    else if(a==='clear'){const s2=normalize(removeStruck(cloneS(cur())));E2.hist.push({st:s2,tag:'pör fjarlægð',lab:''});E2.pr=null;E2.sel=null;msg('step','Pörin sem styttust út eru farin. Taktu nú saman það sem eftir er.');render({})}
     else if(b.hasAttribute('data-pchk'))checkPrompt();
     else if(b.hasAttribute('data-psign')){const x=pe.querySelector('input');const v=x.value.trim().replace(/[−–]/g,'-');x.value=v.startsWith('-')?v.slice(1):MINUS+v.replace(/^\+/,'');x.focus()}
-    else if(b.hasAttribute('data-pshow')){const p=E2.pr;if(p.kind==='fact'){pe.querySelector('#vb'+n).value=p.exp.b;pe.querySelector('#ve'+n).value=p.exp.e}else pe.querySelector('#vi'+n).value=p.kind==='exp'?eT(p.exp).replace(/−/g,'-'):fT(p.exp);checkPrompt()}
+    else if(b.hasAttribute('data-pshow')){const p=E2.pr;if(p.kind==='fac'){pe.querySelector('#vf'+n).value=p.exp;checkPrompt();return}if(p.kind==='fact'){pe.querySelector('#vb'+n).value=p.exp.b;pe.querySelector('#ve'+n).value=p.exp.e}else pe.querySelector('#vi'+n).value=p.kind==='exp'?eT(p.exp).replace(/−/g,'-'):fT(p.exp);checkPrompt()}
     else if(b.dataset.ch!==undefined){const p=E2.pr;if(b.dataset.ch===p.ok){const s2=p.apply(p.ok);push({st:s2,tag:p.tag,lab:p.lab,msg:p.msg})}else{b.disabled=true;b.classList.add('no');msg('err',p.wrong);msgEl.className='eng-msg err';msgEl.innerHTML=`<span class="ic">!</span><span>${p.wrong}</span>`}}
   });
   root.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('blank')){e.preventDefault();const ins=[...pe.querySelectorAll('input')],k=ins.indexOf(e.target);if(k<ins.length-1&&!ins[k+1].value)ins[k+1].focus();else checkPrompt()}});
@@ -1052,7 +1104,15 @@ function VEngine(host,cfg){
   function up(){
     const p=P;clean();P=null;const wasNeg=E2.dragNeg;E2.dragNeg=false;if(!p)return;
     const st=cur(),id=p.fc.dataset.id;
-    if(!p.drag){E2.pr=null;handle(opTap(st,id));return}
+    if(!p.drag){E2.pr=null;
+      const A=find(st,id);
+      if(A&&st.den.length&&!A.parent&&isSingle(A.f)){
+        const other=A.where==='num'?st.den:st.num;
+        if(E2.sel&&E2.sel!==id){const S=find(st,E2.sel);E2.sel=null;if(S&&S.where!==A.where&&!S.parent){handle(opCombine(st,S.f.id,id));return}}
+        if(other.some(g=>sameSingle(A.f,g))){E2.sel=id;msg('info',`Valið: ${sglH(A.f)} ${A.where==='num'?'uppi':'niðri'}. Smelltu nú á ${sglH(A.f)} hinum megin við strikið til að strika yfir parið.`);render(null);return}
+        if(A.f.t==='p'&&A.list.filter(g=>sameSingle(A.f,g)).length>1){const c=cloneS(st);handle(opGather(c,find(c,id)));return}
+      }
+      E2.sel=null;handle(opTap(st,id));return}
     if(!p.t){if(wasNeg)render(null);return}
     if(p.t.kind==='f')handle(opCombine(st,id,p.t.id));
     else{const A=find(st,id);if(A&&(p.t.lvl==='bar'||p.t.lvl!==A.where))handle(opMove(st,id));else render(null)}
@@ -1105,7 +1165,7 @@ const MODS=[
     {id:'2-3',kind:'eng',title:'Veldið á alla þættina',lvl:2,ref:'V3',gen:'v3',probs:['(3x^2)^3','a^3(2a^2b^3)^3','(5xy^4)^2'],
       why:`<span class="m">(2<i>x</i>)<sup>3</sup> = 2<i>x</i>·2<i>x</i>·2<i>x</i> = 2<sup>3</sup><i>x</i><sup>3</sup> = 8<i>x</i><sup>3</sup></span> &nbsp;Veldið fer á <b>hvern</b> þátt í sviganum, líka töluna. <span class="good">8x³</span> ✓ ekki <span class="bad">2x³</span> ✗`},
     {id:'2-4',kind:'eng',title:'Deiling: uppi og niðri',lvl:2,ref:'V2',gen:'v2',probs:['x^7//x^3','a^3b^6//a^5b^2','12x^5//4x^2','a^3b^2a//ba^2b^5'],
-      why:`<span class="m">${mfr('<i>a·a·a·a·a</i>','<i>a·a</i>')} = <i>a</i><sup>3</sup></span> &nbsp;Tveir pör styttast út. <b>Fleiri uppi → afgangurinn uppi. Fleiri niðri → afgangurinn niðri.</b> Stærra veldið mínus það minna.`},
+      why:`<span class="m">${mfr('<i>a·a·a·a·a</i>','<i>a·a</i>')} = <i>a</i><sup>3</sup></span> &nbsp;Tvö pör styttast út. <b>Prófaðu:</b> smelltu á veldi til að skrifa það út (og á tölu til að þátta hana), og dragðu svo staf uppi á sama staf niðri til að strika yfir par. <b>Fleiri uppi → afgangurinn uppi. Fleiri niðri → afgangurinn niðri.</b> Stærra veldið mínus það minna.`},
     {id:'2-5',kind:'eng',title:'Mínus og brot í sviga',lvl:2,ref:'V3',gen:'minus',probs:['18x^3(-1/3x)^2','(-x^2)^3','(-2a)^4//8a^3'],
       why:`<span class="m">(−3)<sup>2</sup> = (−3)(−3) = 9</span> en <span class="m">(−3)<sup>3</sup> = −27</span>. <b>Mínus í sléttu veldi → plús.</b> Brot í veldi: bæði teljari og nefnari fá veldið: <span class="m">(${mfr(1,3)})<sup>2</sup> = ${mfr(1,9)}</span>.`},
     {id:'2-6',kind:'eng',title:'Allt saman',lvl:2,gen:'mix1',probs:['x^2(3x^3y)^2','(2a^3)^2//4a^4','x^3y^5x//y^2x^6'],
