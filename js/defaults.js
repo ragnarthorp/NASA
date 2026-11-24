@@ -28,18 +28,25 @@ const CATS=[
 
 const DEFAULT_INFO=[
   {title:'Samkennsla náttúru- og samfélagsgreina',body:
-'NASA er samkennsla á **náttúrugreinum** og **samfélagsgreinum** í 8.–10. bekk. Greinasviðin eru kennd saman í þemum þannig að nemendur sjái hvernig þekking úr ólíkum greinum fléttast saman.\n\nHlutföll greinasviðanna taka mið af viðmiðunarstundaskrá aðalnámskrár: um **60% samfélagsgreinar** og **40% náttúrugreinar**. Kennslan og námsmatið er aldursblandað.'},
-  {title:'Þemu og val nemenda',body:
-'Kennslan fer fram í **þemum**. Þau geta tengst stuttum verkefnum, til dæmis í smiðjum eða á uppbrotsdögum, eða staðið í lengri tíma, jafnvel margar vikur.\n\nÞemun geta breyst milli tímabila til að tengjast því sem efst er á baugi í heiminum og til að leyfa nemendum að taka þátt í vali á viðfangsefnum. Undir þemunum liggja hæfniviðmið aðalnámskrár sem búið er að flokka, bæði í yfirflokka aðalnámskrár og í sérstaka hæfniflokka NASA.'},
+'NASA er samkennsla á **náttúrugreinum** og **samfélagsgreinum** í 8.–10. bekk. Greinasviðin eru kennd saman í þemum þannig að nemendur sjái hvernig þekking úr ólíkum greinum fléttast saman.\n\nHlutföll greinasviðanna taka mið af viðmiðunarstundaskrá aðalnámskrár, sem ætlar náttúrugreinum og samfélagsgreinum jafnan tíma í 8.–10. bekk (360 mínútur á viku hvoru sviði). Námið skiptist því jafnt, **50% / 50%**. Kennslan og námsmatið er aldursblandað.'},
+  {title:'Aldursblöndun',body:
+'Nemendur í 8., 9. og 10. bekk læra saman í sömu þemum, með sömu viðfangsefnum og sömu prófum. Hver nemandi fer í gegnum þau þemu sem kennd eru á þeim þremur árum sem hann er í unglingadeild.\n\nNámsmat er aldursblandað, og forgjöf á B-prófum jafnar stöðu yngri nemenda: 4 prósentustig í 8. bekk, 2 í 9. bekk og 0 í 10. bekk.\n\nHlutföll hæfniflokka eru þau sömu fyrir alla árganga. Þau eiga við tímabilið í heild en ekki einstakan árgang.'},
+  {title:'Þematengt nám og val nemenda',body:
+'Kennslan fer fram í **þemum** sem flétta saman náttúrugreinar og samfélagsgreinar. Þemalotur standa í nokkrar vikur og lýkur hverri með B-prófi. Smiðjur og uppbrotsdagar eru styttri.\n\nÞemun geta breyst milli tímabila til að tengjast því sem efst er á baugi í heiminum og til að leyfa nemendum að taka þátt í vali á viðfangsefnum. Undir þemunum liggja hæfniviðmið aðalnámskrár sem búið er að flokka, bæði í yfirflokka aðalnámskrár og í sérstaka hæfniflokka NASA.\n\nEitt þema þarf ekki að ná hlutföllunum sjálft: sum halla að náttúrugreinum og önnur að samfélagsgreinum, og jafnvægið næst yfir tímabilið.'},
+  {title:'Rúllandi þriggja ára kerfi',body:
+'Hlutföllin eru metin yfir þrjú síðustu skólaár, ekki innan hvers árs. Tímabilið færist fram um eitt ár í senn (2025–2028, 2026–2029, 2027–2030 o.s.frv.). Við skipulag nýs skólaárs er litið til tveggja ára á undan. Ef flokkur hefur fengið of lítið vægi er þemaval næsta árs notað til að bæta það upp.'},
+  {title:'Eftirfylgni',body:
+'1. Skrá vikufjölda og áherslulínur hvers þema um leið og það er kennt.\n2. Reikna raunvægi hæfniflokka og skiptingu milli náttúrugreina og samfélagsgreina yfir rúllandi þriggja ára glugga.\n3. Merkja flokka sem víkja meira en 2 prósentustig frá markmiði.\n4. Velja þemu næsta árs þannig að frávikin minnki.\n5. Halda skrá yfir hæfniviðmið aðalnámskrár sem enn eru ótengd þema og forgangsraða þeim.'},
   {title:'Hæfniflokkar NASA',body:
 'Hæfniviðmið aðalnámskrár eru flokkuð í níu hæfniflokka. Flokkunin skiptist í **sameiginlegan kjarna** og flokka sem **dýpka sérstök svið**:\n\n- Sameiginlegur kjarni: Vinnulag og rannsóknir; Umhverfi, sjálfbærni og samfélag; Lífið, heilsa og sjálfsmynd.\n- Náttúrufræði: Orkan, Efnin, Alheimurinn.\n- Samfélagsfræði: Saga, Borgaravitund, Siðferði og trú.\n\nLífvísindin (frumur, erfðir, þróun, lífverur og líffærakerfi) tilheyra flokknum *Lífið, heilsa og sjálfsmynd* en vistfræðin flokknum *Umhverfi, sjálfbærni og samfélag*.\n\nSamtals skulu hlutföll hæfniflokka vera 100%. Þegar hæfnisvið eru vegin yfir hvert þriggja ára tímabil skulu þau vera sem næst því hlutfalli sem skólanámskrá kveður á um. Að hluta eru hæfnisvið greinanna sameiginleg, til dæmis þegar kemur að vinnulagi, sjálfbærni og öðrum nátengdum þáttum.'},
   {title:'Hækkunar- og rannsóknarverkefni',body:
-'Nemendur taka að auki þátt í vali á viðfangsefnum í gegnum hækkunar- og rannsóknarverkefni.\n\n- **Hækkunarverkefni** eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um. Þau byggja á hæfniflokkum NASA og eru unnin samhliða þemanu. Fyrir hækkunarverkefni má fá 1 til 3 stig. Stigin safnast saman og nota má þau til að hækka einkunn á B-prófi.\n- **Rannsóknarverkefni** eru stærri verkefni sem nemendur geta unnið þegar þeir hafa ítrekað sýnt fram á afbragðshæfni. Þau styðjast við sama matskvarða og A-próf (A, B+, B).'},
+'Nemendur taka að auki þátt í vali á viðfangsefnum í gegnum hækkunar- og rannsóknarverkefni.\n\n- **Hækkunarverkefni** eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um. Þau byggja á hæfniflokkum NASA og eru unnin samhliða þemanu. Fyrir hækkunarverkefni má fá 1 til 3 stig. Stigin safnast saman og nota má þau til að hækka einkunn á B-prófi.\n- **Rannsóknarverkefni** eru stærri verkefni sem nemendur geta unnið þegar þeir hafa ítrekað sýnt fram á afburðahæfni. Þau styðjast við sama matskvarða og A-próf (A, B+, B).'},
   {title:'Vinnulag og agað bóklegt nám',body:
 'Í kennslunni er lögð áhersla á að nemendur öðlist **úthald til agaðs bóklegs náms**. Þeir læra glósutækni og sitja fyrirlestra auk þess að vinna margvísleg verkefni.\n\nNotaðir eru hæfniflokkar með bein tengsl við lokaeinkunn. Því er lýst nánar í kaflanum um námsmat.'}
 ];
 
-const DEFAULT_TARGETS={work:12,environment:12,life:12,energy:8,chem:7,space:7,history:14,civic:14,ethics:14};
+const DEFAULT_TARGETS={work:16,environment:16,life:16,energy:9,chem:7,space:7,history:11,civic:9,ethics:9};
+const DEFAULT_RATIONALE='- Námið skiptist jafnt, 50% / 50%, milli náttúrugreina og samfélagsgreina. Viðmiðunarstundaskrá aðalnámskrár ætlar hvoru sviði 360 mínútur á viku í 8.–10. bekk.\n- Vægi náttúrugreina fylgir nokkurn veginn fjölda hæfniviðmiða í aðalnámskrá. Þar eru 50 viðmið í sex yfirflokkum.\n- Innan samfélagsgreina fær Saga meira vægi en fjöldi viðmiða gefur til kynna, því hún ber uppi mörg þemu. Kjarnahlutarnir (Vinnulag samfélagsgreina, Jörðin okkar og Sjálfsmynd) fá 14% hver, svo enginn yfirflokkur verði afskiptur.';
 
 const DEFAULT_ASSESSMENT={
   bIntro:'B-próf er próf úr efni þemalotunnar. Það mælir hæfni sem er sambærileg við fyrsta hæfniþrep framhaldsskóla.',
@@ -49,7 +56,7 @@ const DEFAULT_ASSESSMENT={
     {grade:'C',min:50,label:'á réttri leið'},
     {grade:'D',min:0,label:'ófullnægjandi árangur'}
   ],
-  handicap:{'8':10,'9':5,'10':0},
+  handicap:{'8':4,'9':2,'10':0},
   pointValue:2,
   maxPoints:0,
   aIntro:'A-próf eru þung próf án hjálpargagna. Nemandi sem nær B á B-prófi (með eða án hækkunarstiga) öðlast rétt til töku A-prófs.',

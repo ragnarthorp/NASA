@@ -210,10 +210,15 @@ async function buildPDF(opt={themes:true,balance:true,crit:true}){
   /* 2. Hæfniflokkar */
   chapter();
   w.rich('Hæfniviðmið aðalnámskrár eru flokkuð í níu hæfniflokka NASA: þrjá í **sameiginlegum kjarna** og sex sem **dýpka sérstök svið**. Samtals skulu hlutföll hæfniflokka vera 100%. Þegar hæfnisvið eru vegin yfir hvert þriggja ára tímabil skulu þau vera sem næst því hlutfalli sem hér er sett fram.',M,CW,10.5);w.y+=2;
-  w.table([{h:'Hæfniflokkur',w:.34},{h:'Svið',w:.17},{h:'Yfirflokkar aðalnámskrár',w:.37},{h:'Vægi',w:.12,right:true}],
-    [...CATS.map(c=>[{t:c.name,bold:true,dot:catColor(c.id)},GROUPS[c.group].short,areasOf(c.id).map(a=>a.name).join(', '),fmt(+D.targets[c.id]||0)+'%']),[{t:'Samtals',bold:true},'','',{t:fmt(targetSum())+'%',bold:true}]]);
-  const tn=Math.round(targetNatt()*100);
-  w.plain(`Samkvæmt markmiðunum skiptist námið um það bil ${tn}% á náttúrugreinar og ${100-tn}% á samfélagsgreinar (markmið aðalnámskrár: ${D.ratio.natt}% / ${100-D.ratio.natt}%). Í kjarnanum er gert ráð fyrir að ${D.ratio.coreNatt}% tilheyri náttúrugreinum nema áherslur séu tengdar hæfniviðmiðum.`,M,CW,10);w.y+=3;
+  const part=(id,s)=>{const v=catSubjectPart(id,s);return v?fmt(v,2):'–';};
+  const pn=CATS.reduce((a,c)=>a+catSubjectPart(c.id,'natt'),0),ps=CATS.reduce((a,c)=>a+catSubjectPart(c.id,'sam'),0);
+  w.table([{h:'Hæfniflokkur',w:.25},{h:'Svið',w:.17},{h:'Yfirflokkar aðalnámskrár',w:.28},{h:'Vægi',w:.1,right:true},{h:'Þar af Nátt',w:.1,right:true},{h:'Þar af Sam',w:.1,right:true}],
+    [...CATS.map(c=>[{t:c.name,bold:true,dot:catColor(c.id)},GROUPS[c.group].short,areasOf(c.id).map(a=>a.name).join(', '),fmt(+D.targets[c.id]||0)+'%',part(c.id,'natt'),part(c.id,'sam')]),[{t:'Samtals',bold:true},'','',{t:fmt(targetSum())+'%',bold:true},{t:fmt(pn,2),bold:true},{t:fmt(ps,2),bold:true}]]);
+  const tn=targetNatt()*100,cores=CATS.filter(c=>c.group==='core'),cv=cores.map(c=>+D.targets[c.id]||0),same=cv.every(v=>v===cv[0]);
+  w.plain(`Samkvæmt markmiðunum skiptist námið ${Math.abs(tn-50)<0.05?'jafnt á náttúrugreinar og samfélagsgreinar, 50% / 50%':`um það bil ${fmt(tn)}% á náttúrugreinar og ${fmt(100-tn)}% á samfélagsgreinar`}${Math.abs(D.ratio.natt-50)<0.05?', í samræmi við viðmiðunarstundaskrá aðalnámskrár fyrir 8.–10. bekk (360 mínútur á viku hvort svið)':` (markmið ${fmt(D.ratio.natt)}% / ${fmt(100-D.ratio.natt)}%)`}.${same?` Hver kjarnaflokkur vegur ${fmt(cv[0])}%; þar af tilheyra ${fmt(catSubjectPart(cores[0].id,'natt'),2)} prósentustig náttúrugreinum og ${fmt(catSubjectPart(cores[0].id,'sam'),2)} samfélagsgreinum.`:''}`,M,CW,10);w.y+=3;
+  const at=areaTargets();
+  for(const [subj,label] of [['natt','Vægi innan náttúrugreina'],['sam','Vægi innan samfélagsgreina']]){w.h3(label);w.table([{h:'Yfirflokkur aðalnámskrár',w:.4},{h:'Hæfniflokkur NASA',w:.4},{h:'Vægi innan sviðs',w:.2,right:true}],subjAreas(subj).map(a=>[a.name,{t:CAT[a.nasa].name,dot:catColor(a.nasa)},pct(at[a.id])]));}
+  if(D.ratio.rationale.trim()){w.h3('Rök fyrir vægi');w.rich(D.ratio.rationale,M,CW,10);w.y+=2;}
   for(const c of CATS){
     w.need(30);w.band(c.name,GROUPS[c.group].name+' · markmið '+fmt(+D.targets[c.id]||0)+'%',catColor(c.id));
     w.plain(c.desc,M,CW,10);
@@ -248,7 +253,7 @@ async function buildPDF(opt={themes:true,balance:true,crit:true}){
 
   /* 4. Verkefni */
   chapter();
-  w.rich('**Hækkunarverkefni** eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um og byggja á hæfniflokkum NASA. **Rannsóknarverkefni** eru stærri verkefni sem nemendur geta unnið þegar þeir hafa ítrekað sýnt fram á afbragðshæfni. Þau styðjast við sama matskvarða og A-próf: A, B+ og B.',M,CW,10.5);
+  w.rich('**Hækkunarverkefni** eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um og byggja á hæfniflokkum NASA. **Rannsóknarverkefni** eru stærri verkefni sem nemendur geta unnið þegar þeir hafa ítrekað sýnt fram á afburðahæfni. Þau styðjast við sama matskvarða og A-próf: A, B+ og B.',M,CW,10.5);
   for(const [kind,label] of [['hækkun','Hækkunarverkefni'],['rannsókn','Rannsóknarverkefni']]){
     const ps=D.projects.filter(p=>p.kind===kind);w.h2(label+' ('+ps.length+')');
     if(!ps.length){w.plain('Engin verkefni skráð.',M,CW,10,'italic',MUTED);continue;}
@@ -277,8 +282,11 @@ async function buildPDF(opt={themes:true,balance:true,crit:true}){
     w.plain(`Tímavegið vægi þema á skólaárunum ${cycleYears().join(', ')}: ${a.included.length} þemu, samtals ${fmt(a.weeks)} vikur. Vægi hvers flokks er summa (vikur þema × hlutfall flokks í þemanu) deilt með heildarvikum.`,M,CW,10.5);w.y+=2;
     if(a.weeks){
       await w.wheel(a.weights,{label:'Tímavegið vægi',sub:Object.fromEntries(CATS.map(c=>[c.id,'markmið '+pct(tw[c.id])]))},110);
-      w.table([{h:'Hæfniflokkur',w:.46},{h:'Markmið',w:.18,right:true},{h:'Raun',w:.18,right:true},{h:'Frávik',w:.18,right:true}],CATS.map(c=>{const d=(a.weights[c.id]-tw[c.id])*100;return [{t:c.name,dot:catColor(c.id)},pct(tw[c.id]),pct(a.weights[c.id]),{t:(d>0?'+':'')+fmt(d),color:Math.abs(d)>3?'#a3402a':INK}];}));
-      const n=Math.round(a.natt*100);w.plain(`Hlutfall greinasviða: ${n}% náttúrugreinar og ${100-n}% samfélagsgreinar (markmið ${D.ratio.natt}% / ${100-D.ratio.natt}%).`,M,CW,10.5,'bold');
+      w.table([{h:'Hæfniflokkur',w:.46},{h:'Markmið',w:.18,right:true},{h:'Raun',w:.18,right:true},{h:'Frávik',w:.18,right:true}],CATS.map(c=>{const d=(a.weights[c.id]-tw[c.id])*100;return [{t:c.name,dot:catColor(c.id)},pct(tw[c.id]),pct(a.weights[c.id]),{t:(d>0?'+':'')+fmt(d),color:Math.abs(d)>tol()?'#a3402a':INK}];}));
+      const n=Math.round(a.natt*100);w.plain(`Hlutfall greinasviða: ${n}% náttúrugreinar og ${100-n}% samfélagsgreinar (markmið ${fmt(D.ratio.natt)}% / ${fmt(100-D.ratio.natt)}%).`,M,CW,10.5,'bold');
+      w.plain(`Frávik yfir ${fmt(tol())} prósentustig eru rauðmerkt.`,M,CW,9,'italic',MUTED);
+      const aa=areaActual(list).weights,at2=areaTargets();
+      for(const [subj,label] of [['natt','Raunvægi innan náttúrugreina'],['sam','Raunvægi innan samfélagsgreina']]){w.h3(label);w.table([{h:'Yfirflokkur aðalnámskrár',w:.46},{h:'Markmið',w:.18,right:true},{h:'Raun',w:.18,right:true},{h:'Frávik',w:.18,right:true}],subjAreas(subj).map(x=>{const d=(aa[x.id]-at2[x.id])*100;return [{t:x.name,dot:catColor(x.nasa)},pct(at2[x.id]),pct(aa[x.id]),{t:(d>0?'+':'')+fmt(d),color:Math.abs(d)>tol()?'#a3402a':INK}];}));}
       const cov=coverage(list),covered=CRITERIA.filter(c=>cov[c.id].size).length,miss=CRITERIA.filter(c=>!cov[c.id].size);
       w.y+=2;w.plain(`${covered} af ${CRITERIA.length} hæfniviðmiðum aðalnámskrár eru tengd a.m.k. einu þema á tímabilinu.`,M,CW,10.5);
       if(miss.length){w.h3('Hæfniviðmið sem enn eru ótengd');CATS.forEach(c=>{const m=miss.filter(x=>AREA[x.g].nasa===c.id);if(m.length)w.rich('**'+c.name+':** '+m.map(x=>x.s+' ('+AREA[x.g].name+')').join(', '),M,CW,9.5);});}

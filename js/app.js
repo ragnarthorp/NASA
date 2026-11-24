@@ -23,7 +23,7 @@ const ui={step:'start',theme:null,cat:'work',year:'',search:'',allCrit:false,bal
 function fresh(){
   return {format:'nasa-skolanamskra',version:2,
     meta:{title:'Skólanámskrá NASA',school:'Norðlingaskóli',grades:'8.–10. bekkur',cycleStart:new Date().getMonth()>6?new Date().getFullYear():new Date().getFullYear()-1,authors:'',updated:null},
-    ratio:{natt:40,coreNatt:50},
+    ratio:{natt:50,coreNatt:56.25,tol:2,rationale:DEFAULT_RATIONALE},
     targets:{...DEFAULT_TARGETS},
     info:clone(DEFAULT_INFO),
     catNotes:Object.fromEntries(CATS.map(c=>[c.id,''])),
@@ -47,7 +47,7 @@ function normalize(o){
   if(!o||o.format!=='nasa-skolanamskra')throw Error('Þetta er ekki námskrárskrá NASA.');
   const d=fresh();
   for(const k of Object.keys(d.meta))if(k in (o.meta||{}))d.meta[k]=k==='cycleStart'?numIn(o.meta[k],2000,2100,d.meta[k]):str(o.meta[k],300)||(k==='updated'?null:'');
-  d.ratio.natt=numIn(o.ratio?.natt,0,100,40);d.ratio.coreNatt=numIn(o.ratio?.coreNatt,0,100,50);
+  d.ratio.natt=numIn(o.ratio?.natt,0,100,50);d.ratio.coreNatt=numIn(o.ratio?.coreNatt,0,100,56.25);d.ratio.tol=numIn(o.ratio?.tol,0,50,2);d.ratio.rationale=typeof o.ratio?.rationale==='string'?o.ratio.rationale:DEFAULT_RATIONALE;
   for(const c of CATS)d.targets[c.id]=numIn(o.targets?.[c.id]??o.targets?.[c.id==='life'?'human':c.id],0,100,d.targets[c.id]);
   if(Array.isArray(o.info))d.info=o.info.slice(0,60).map(s=>({title:str(s?.title,200),body:str(s?.body)}));
   for(const c of CATS)d.catNotes[c.id]=str(o.catNotes?.[c.id]);
@@ -105,6 +105,23 @@ function aggregate(list){
 function themeNatt(t){const sum=t.entries.reduce((a,e)=>a+ew(e),0);return sum?t.entries.reduce((a,e)=>a+ew(e)*entryNatt(e),0)/sum:null;}
 const targetSum=()=>CATS.reduce((a,c)=>a+(+D.targets[c.id]||0),0);
 function targetNatt(){const s=targetSum()||1;return CATS.reduce((a,c)=>{const g=c.group,v=+D.targets[c.id]||0;return a+(g==='natt'?v:g==='core'?v*D.ratio.coreNatt/100:0);},0)/s;}
+/* Yfirflokkar aðalnámskrár: markmið og raun innan hvors greinasviðs */
+function catSubjectPart(catId,subj){const g=CAT[catId].group,v=+D.targets[catId]||0;if(g==='core')return subj==='natt'?v*D.ratio.coreNatt/100:v*(1-D.ratio.coreNatt/100);return g===subj?v:0;}
+function areaTargets(){const out={},tot={natt:0,sam:0};AREAS.forEach(a=>{out[a.id]=catSubjectPart(a.nasa,a.subject);tot[a.subject]+=out[a.id];});AREAS.forEach(a=>out[a.id]=tot[a.subject]?out[a.id]/tot[a.subject]:0);return out;}
+function entryAreas(e){
+  const nf=entryNatt(e),out={};
+  const add=(subj,f)=>{if(f<=0)return;const a=areasOf(e.category).find(x=>x.subject===subj);if(a){out[a.id]=(out[a.id]||0)+f;return;}
+    const cs=e.criteria.filter(id=>AREA[CRIT[id].g].subject===subj);cs.forEach(id=>{const g=CRIT[id].g;out[g]=(out[g]||0)+f/cs.length;});};
+  add('natt',nf);add('sam',1-nf);return out;
+}
+function areaActual(list){
+  const w=Object.fromEntries(AREAS.map(a=>[a.id,0])),tot={natt:0,sam:0};
+  for(const t of list){if(!t.weeks||!t.entries.length)continue;const sum=t.entries.reduce((s,e)=>s+ew(e),0);
+    t.entries.forEach(e=>{for(const [g,f] of Object.entries(entryAreas(e))){const v=t.weeks*ew(e)/sum*f;w[g]+=v;tot[AREA[g].subject]+=v;}});}
+  AREAS.forEach(a=>w[a.id]=tot[a.subject]?w[a.id]/tot[a.subject]:0);return {weights:w,any:tot.natt+tot.sam>0};
+}
+const tol=()=>+D.ratio.tol||0;
+const subjAreas=subj=>AREAS.filter(a=>a.subject===subj).sort((x,y)=>CATS.findIndex(c=>c.id===x.nasa)-CATS.findIndex(c=>c.id===y.nasa));
 const targetWeights=()=>{const s=targetSum()||1;return Object.fromEntries(CATS.map(c=>[c.id,(+D.targets[c.id]||0)/s]));};
 function coverage(list){const m=Object.fromEntries(CRITERIA.map(c=>[c.id,new Set()]));list.forEach(t=>t.entries.forEach(e=>e.criteria.forEach(id=>m[id]?.add(t.title||'Ónefnt þema'))));return m;}
 
@@ -232,13 +249,23 @@ VIEWS.cats={render(){
 wheel(){$('catWheel').innerHTML=wheelSVG(targetWeights(),{interactive:true,selected:ui.cat,label:'Markmið um vægi'});},
 targets(){
   const ts=targetSum(),tn=targetNatt();
-  $('targets').innerHTML=`<table class="maptable"><thead><tr><th>Hæfniflokkur</th><th>Svið</th><th class="num">Vægi %</th></tr></thead><tbody>${CATS.map(c=>`<tr><td><span class="swatch" style="background:${catColor(c.id)}"></span>${esc(c.name)}</td><td>${badge(c)}</td><td class="num"><input type="number" min="0" max="100" step="1" data-path="targets.${c.id}" data-type="number" value="${D.targets[c.id]}" aria-label="Vægi ${esc(c.name)}"></td></tr>`).join('')}
-  <tr><td colspan="2"><b>Samtals</b></td><td class="num"><span class="sum ${Math.abs(ts-100)<0.01?'good':'bad'}" id="tsum">${fmt(ts)}%</span></td></tr></tbody></table>
+  $('targets').innerHTML=`<table class="maptable"><thead><tr><th>Hæfniflokkur</th><th>Svið</th><th class="num">Vægi %</th><th class="num">Þar af Nátt</th><th class="num">Þar af Sam</th></tr></thead><tbody>${CATS.map(c=>`<tr><td><span class="swatch" style="background:${catColor(c.id)}"></span>${esc(c.name)}</td><td>${badge(c)}</td><td class="num"><input type="number" min="0" max="100" step="1" data-path="targets.${c.id}" data-type="number" value="${D.targets[c.id]}" aria-label="Vægi ${esc(c.name)}"></td><td class="num" data-part="natt.${c.id}"></td><td class="num" data-part="sam.${c.id}"></td></tr>`).join('')}
+  <tr><td colspan="2"><b>Samtals</b></td><td class="num"><span class="sum ${Math.abs(ts-100)<0.01?'good':'bad'}" id="tsum">${fmt(ts)}%</span></td><td class="num" data-part="natt.all"></td><td class="num" data-part="sam.all"></td></tr></tbody></table>
   <div id="targetSplit">${this.split(tn)}</div>
-  <div class="row" style="margin-top:12px">${field('Markmið: hlutur náttúrugreina (%)','ratio.natt','min="0" max="100"','number')}${field('Hlutur náttúrugreina í kjarna (%)','ratio.coreNatt','min="0" max="100"','number')}</div>
-  <p class="hint">Kjarnaflokkarnir eru sameiginlegir. Þegar áhersla í þema er tengd hæfniviðmiðum er hlutur greinasviðanna reiknaður út frá þeim; annars er notað hlutfallið hér að ofan.</p>`;
+  <div class="row" style="margin-top:12px">${field('Markmið: hlutur náttúrugreina (%)','ratio.natt','min="0" max="100" step="0.5"','number')}${field('Hlutur náttúrugreina í hverjum kjarnaflokki (%)','ratio.coreNatt','min="0" max="100" step="0.25"','number')}${field('Mörk frávika (prósentustig)','ratio.tol','min="0" max="20" step="0.5"','number')}</div>
+  <p class="hint">Kjarnaflokkarnir sameina einn yfirflokk úr hvoru sviði. Með 56,25% skiptast 16% í kjarnaflokki í 9 prósentustig náttúrugreina og 7 samfélagsgreina. Þegar áhersla í þema er tengd hæfniviðmiðum er hlutur greinasviðanna reiknaður út frá þeim; annars er notað þetta hlutfall.</p>
+  <button class="small" data-act="std5050">Nota viðmið um 50/50 (16/16/16 · 9/7/7 · 11/9/9)</button>
+  <h3 style="margin-top:20px">Vægi innan hvors sviðs</h3><div id="areaTargets"></div>
+  ${area('Rök fyrir vægi','ratio.rationale','style="min-height:110px"')}`;
+  this.parts();
 },
-split(tn){const n=Math.round(tn*100),goal=D.ratio.natt;return `<div class="ratio" aria-label="Hlutfall greinasviða í markmiðum"><div style="width:${n}%;background:#177d88">Náttúrugreinar ${n}%</div><div style="width:${100-n}%;background:#b86140">Samfélagsgreinar ${100-n}%</div></div><p class="hint">Markmið aðalnámskrár: um ${goal}% náttúrugreinar og ${100-goal}% samfélagsgreinar.${Math.abs(n-goal)>3?' <span class="notice">Hlutföllin víkja meira en 3 prósentustig frá markmiði.</span>':''}</p>`;},
+parts(){
+  let tn=0,tsm=0;CATS.forEach(c=>{const n=catSubjectPart(c.id,'natt'),s=catSubjectPart(c.id,'sam');tn+=n;tsm+=s;
+    document.querySelector(`[data-part="natt.${c.id}"]`).textContent=n?fmt(n,2):'–';document.querySelector(`[data-part="sam.${c.id}"]`).textContent=s?fmt(s,2):'–';});
+  document.querySelector('[data-part="natt.all"]').innerHTML='<b>'+fmt(tn,2)+'</b>';document.querySelector('[data-part="sam.all"]').innerHTML='<b>'+fmt(tsm,2)+'</b>';
+  $('areaTargets').innerHTML=areaTables(areaTargets());
+},
+split(tn){const n=+fmt(tn*100).replace(',','.'),goal=D.ratio.natt;return `<div class="ratio" aria-label="Hlutfall greinasviða í markmiðum"><div style="width:${n}%;background:#177d88">Náttúrugreinar ${fmt(n)}%</div><div style="width:${100-n}%;background:#b86140">Samfélagsgreinar ${fmt(100-n)}%</div></div><p class="hint">Markmið: ${fmt(goal)}% náttúrugreinar og ${fmt(100-goal)}% samfélagsgreinar, í samræmi við viðmiðunarstundaskrá aðalnámskrár fyrir 8.–10. bekk (360 mínútur á viku hvort svið).${Math.abs(n-goal)>tol()?` <span class="notice">Hlutföllin víkja meira en ${fmt(tol())} prósentustig frá markmiði.</span>`:''}</p>`;},
 info(){
   const c=CAT[ui.cat],cov=coverage(D.themes),uses=D.themes.flatMap(t=>t.entries.filter(e=>e.category===c.id).map(e=>({t,e})));
   $('catInfo').innerHTML=`<div class="eyebrow">${esc(GROUPS[c.group].name)}</div><h2><svg viewBox="0 0 48 48" width="30" height="30" aria-hidden="true"><g fill="none" stroke="${catColor(c.id)}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.icon]}</g></svg>${esc(c.name)}</h2>
@@ -255,7 +282,11 @@ info(){
 mapping(){
   return `<table class="maptable"><thead><tr><th>Hæfniflokkur NASA</th><th>Náttúrugreinar (22. kafli)</th><th>Samfélagsgreinar (24. kafli)</th><th class="num">Hæfniviðmið</th></tr></thead><tbody>${CATS.map(c=>{const as=areasOf(c.id);return `<tr><td><span class="swatch" style="background:${catColor(c.id)}"></span><b>${esc(c.name)}</b>${c.tag?` <span class="badge life">${esc(c.tag)}</span>`:''}</td><td>${as.filter(a=>a.subject==='natt').map(a=>`<span class="chip natt">${esc(a.name)}</span>`).join('')||'–'}</td><td>${as.filter(a=>a.subject==='sam').map(a=>`<span class="chip sam">${esc(a.name)}</span>`).join('')||'–'}</td><td class="num">${CRITERIA.filter(x=>as.some(a=>a.id===x.g)).length}</td></tr>`;}).join('')}</tbody></table>`;
 },
-update(p){if(p.startsWith('targets.')||p.startsWith('ratio.')){this.wheel();$('tsum').textContent=fmt(targetSum())+'%';$('tsum').className='sum '+(Math.abs(targetSum()-100)<0.01?'good':'bad');$('targetSplit').innerHTML=this.split(targetNatt());}}};
+update(p){if(p.startsWith('targets.')||(p.startsWith('ratio.')&&p!=='ratio.rationale')){this.parts();this.wheel();$('tsum').textContent=fmt(targetSum())+'%';$('tsum').className='sum '+(Math.abs(targetSum()-100)<0.01?'good':'bad');$('targetSplit').innerHTML=this.split(targetNatt());}}};
+
+function areaTables(tgt,act){
+  return ['natt','sam'].map(subj=>`<h4 style="margin:10px 0 4px">Innan ${subj==='natt'?'náttúrugreina':'samfélagsgreina'}</h4><table class="maptable"><thead><tr><th>Yfirflokkur aðalnámskrár</th><th>Hæfniflokkur NASA</th><th class="num">Markmið</th>${act?'<th class="num">Raun</th><th class="num">Frávik</th>':''}</tr></thead><tbody>${subjAreas(subj).map(a=>{const d=act?(act[a.id]-tgt[a.id])*100:0;return `<tr><td>${esc(a.name)}</td><td><span class="swatch" style="background:${catColor(a.nasa)}"></span>${esc(CAT[a.nasa].name)}</td><td class="num">${pct(tgt[a.id])}</td>${act?`<td class="num">${pct(act[a.id])}</td><td class="num" style="color:${Math.abs(d)>tol()?'#a3402a':'inherit'}">${(d>0?'+':'')+fmt(d)}</td>`:''}</tr>`;}).join('')}</tbody></table>`).join('');
+}
 
 /* 4. Þemu */
 function newTheme(extra={}){const t=normTheme({title:'',summary:'',year:cycleYears()[0],period:'',weeks:null,kind:'Þemalota',entries:[],...extra});D.themes.push(t);ui.theme=t.id;changed();return t;}
@@ -318,7 +349,7 @@ update(p,el){
 
 /* 5. Verkefni */
 VIEWS.projects={render(){
-  return intro('Skref 5 · Verkefni','Hækkunar- og rannsóknarverkefni','Hækkunarverkefni eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um og byggja á hæfniflokkum NASA. Fyrir þau fást 1–3 stig sem nýta má til hækkunar á B-prófi. Rannsóknarverkefni eru stærri verkefni fyrir nemendur sem hafa ítrekað sýnt afbragðshæfni og styðjast við sama matskvarða og A-próf (A, B+, B). Hér má byggja upp banka hugmynda.',
+  return intro('Skref 5 · Verkefni','Hækkunar- og rannsóknarverkefni','Hækkunarverkefni eru nemendastýrð verkefni sem nemendur og kennarar koma sér saman um og byggja á hæfniflokkum NASA. Fyrir þau fást 1–3 stig sem nýta má til hækkunar á B-prófi. Rannsóknarverkefni eru stærri verkefni fyrir nemendur sem hafa ítrekað sýnt afburðahæfni og styðjast við sama matskvarða og A-próf (A, B+, B). Hér má byggja upp banka hugmynda.',
   '<button class="primary" data-act="addProj" data-kind="hækkun">+ Hækkunarverkefni</button><button data-act="addProj" data-kind="rannsókn">+ Rannsóknarverkefni</button>')+
   `<div class="split"><section class="panel"><h2>Dreifing á hæfniflokka</h2><div class="wheel" id="projWheel"></div><p class="hint">Fjöldi verkefna í hverjum hæfniflokki.</p></section><section class="panel" id="projList"></section></div>`;
 },after(){this.list();this.wheel();},
@@ -427,20 +458,27 @@ update(p){this.out();this.finalOut();if(/^assessment\.scale\./.test(p))$('scaleR
 VIEWS.balance={render(){
   const ys=allYears();if(!ui.balYears)ui.balYears=new Set([...cycleYears(),'']);
   return intro('Skref 7 · Jafnvægi','Jafnvægi yfir þriggja ára tímabil','Vægi hvers þema er vegið með vikufjölda þess. Hér sérðu hvernig valin skólaár standast markmið um hlutföll hæfniflokka og greinasviða og hvaða hæfniviðmið aðalnámskrár hafa ekki enn verið tengd þema.')+
-  `<section class="panel"><h2>Skólaár í útreikningi</h2><div class="toolbar">${ys.map(y=>`<label class="check" style="font-weight:400;margin-right:12px"><input type="checkbox" data-year="${esc(y)}" ${ui.balYears.has(y)?'checked':''}> ${esc(y)}${cycleYears().includes(y)?'':' (utan tímabils)'}</label>`).join('')}<label class="check" style="font-weight:400"><input type="checkbox" data-year="" ${ui.balYears.has('')?'checked':''}> Óskilgreint skólaár</label></div><div id="balInfo" class="hint"></div></section>
+  `<section class="panel"><h2>Skólaár í útreikningi</h2>${this.windows()}<div class="toolbar">${ys.map(y=>`<label class="check" style="font-weight:400;margin-right:12px"><input type="checkbox" data-year="${esc(y)}" ${ui.balYears.has(y)?'checked':''}> ${esc(y)}${cycleYears().includes(y)?'':' (utan tímabils)'}</label>`).join('')}<label class="check" style="font-weight:400"><input type="checkbox" data-year="" ${ui.balYears.has('')?'checked':''}> Óskilgreint skólaár</label></div><div id="balInfo" class="hint"></div></section>
   <div class="grid2"><section class="panel"><h2>Tímavegið vægi</h2><div class="wheel" id="balWheel"></div>${legend()}</section><section class="panel"><h2>Markmið og raun</h2><div id="balTable"></div></section></div>
   <section class="panel"><h2>Skólaár og þemu</h2><div id="balYears"></div></section>
   <section class="panel"><div class="toolbar" style="justify-content:space-between"><h2 style="margin:0">Þekja hæfniviðmiða</h2><label class="check" style="font-weight:400"><input type="checkbox" id="uncov" ${ui.uncoveredOnly?'checked':''}> Sýna aðeins ótengd hæfniviðmið</label></div><div id="balCov"></div></section>`;
 },
 sel(){return D.themes.filter(t=>ui.balYears.has(t.year||''));},
+windows(){
+  const starts=[...new Set(allYears().map(y=>parseInt(y,10)).filter(n=>n>1900))].sort();if(!starts.length)return '';
+  const lo=starts[0]-2,hi=starts.at(-1);const opts=[];for(let s=lo;s<=hi;s++)opts.push(s);
+  const win=s=>[0,1,2].map(i=>(s+i)+'–'+(s+i+1));
+  return `<p class="hint">Hlutföllin eru metin yfir rúllandi þriggja ára glugga sem færist fram um eitt ár í senn. Við skipulag nýs skólaárs er litið til tveggja ára á undan.</p><div class="toolbar" style="margin-bottom:10px">${opts.map(s=>{const w=win(s),on=w.every(y=>ui.balYears.has(y))&&ui.balYears.size===3;return `<button class="small" data-win="${s}" ${on?'aria-pressed="true" style="background:var(--ink);color:#fff"':''}>${s}–${s+3}</button>`;}).join('')}</div>`;
+},
 after(){
   const list=this.sel(),a=aggregate(list),tw=targetWeights(),cov=coverage(list);
   $('balInfo').textContent=`${list.length} þemu valin · ${a.included.length} í útreikningi · ${fmt(a.weeks)} vikur.`+(a.excluded.length?' Ekki talið með (vantar vikur eða áherslur): '+a.excluded.map(t=>t.title||'Ónefnt þema').join('; ')+'.':'');
   $('balWheel').innerHTML=wheelSVG(a.weights,{label:'Tímavegið vægi',sub:Object.fromEntries(CATS.map(c=>[c.id,'markmið '+pct(tw[c.id])]))});
   const n=a.natt==null?null:Math.round(a.natt*100);
-  $('balTable').innerHTML=`<table class="maptable"><thead><tr><th>Hæfniflokkur</th><th class="num">Markmið</th><th class="num">Raun</th><th class="num">Frávik</th><th></th></tr></thead><tbody>${CATS.map(c=>{const d=(a.weights[c.id]-tw[c.id])*100;return `<tr><td><span class="swatch" style="background:${catColor(c.id)}"></span>${esc(c.name)}</td><td class="num">${pct(tw[c.id])}</td><td class="num">${a.weeks?pct(a.weights[c.id]):'–'}</td><td class="num" style="color:${Math.abs(d)>3?'#a3402a':'inherit'}">${a.weeks?(d>0?'+':'')+fmt(d):'–'}</td><td><div class="bar" aria-hidden="true"><span style="width:${Math.min(100,a.weights[c.id]*250)}%;background:${catColor(c.id)}"></span><em style="left:${Math.min(100,tw[c.id]*250)}%"></em></div></td></tr>`;}).join('')}</tbody></table>
-  <p class="hint">Strikið á súlunni sýnir markmið. Frávik yfir 3 prósentustig eru rauðmerkt.</p>
-  <h3>Greinasvið</h3>${n==null?'<p class="hint">Engin þemu með vikufjölda og áherslum.</p>':`<div class="ratio"><div style="width:${n}%;background:#177d88">Náttúrugreinar ${n}%</div><div style="width:${100-n}%;background:#b86140">Samfélagsgreinar ${100-n}%</div></div><p class="hint">Markmið: ${D.ratio.natt}% / ${100-D.ratio.natt}%.${Math.abs(n-D.ratio.natt)>3?' <span class="notice">Víkur meira en 3 prósentustig frá markmiði.</span>':''}</p>`}`;
+  $('balTable').innerHTML=`<table class="maptable"><thead><tr><th>Hæfniflokkur</th><th class="num">Markmið</th><th class="num">Raun</th><th class="num">Frávik</th><th></th></tr></thead><tbody>${CATS.map(c=>{const d=(a.weights[c.id]-tw[c.id])*100;return `<tr><td><span class="swatch" style="background:${catColor(c.id)}"></span>${esc(c.name)}</td><td class="num">${pct(tw[c.id])}</td><td class="num">${a.weeks?pct(a.weights[c.id]):'–'}</td><td class="num" style="color:${Math.abs(d)>tol()?'#a3402a':'inherit'}">${a.weeks?(d>0?'+':'')+fmt(d):'–'}</td><td><div class="bar" aria-hidden="true"><span style="width:${Math.min(100,a.weights[c.id]*250)}%;background:${catColor(c.id)}"></span><em style="left:${Math.min(100,tw[c.id]*250)}%"></em></div></td></tr>`;}).join('')}</tbody></table>
+  <p class="hint">Strikið á súlunni sýnir markmið. Frávik yfir ${fmt(tol())} prósentustig eru rauðmerkt.</p>
+  <h3>Greinasvið</h3>${n==null?'<p class="hint">Engin þemu með vikufjölda og áherslum.</p>':`<div class="ratio"><div style="width:${n}%;background:#177d88">Náttúrugreinar ${n}%</div><div style="width:${100-n}%;background:#b86140">Samfélagsgreinar ${100-n}%</div></div><p class="hint">Hlutfall greinasviða: ${n}% náttúrugreinar og ${100-n}% samfélagsgreinar (markmið ${fmt(D.ratio.natt)}% / ${fmt(100-D.ratio.natt)}%).${Math.abs(n-D.ratio.natt)>tol()?` <span class="notice">Víkur meira en ${fmt(tol())} prósentustig frá markmiði.</span>`:''}</p>`}
+  <h3>Vægi innan hvors sviðs</h3>${a.weeks?areaTables(areaTargets(),areaActual(list).weights):'<p class="hint">Engin gögn.</p>'}`;
   const yrs=[...new Set(list.map(t=>t.year||''))].sort();
   $('balYears').innerHTML=list.length?`<table class="maptable"><thead><tr><th>Skólaár</th><th>Þemu</th><th class="num">Vikur</th><th class="num">Náttúrugr.</th></tr></thead><tbody>${yrs.map(y=>{const ts=list.filter(t=>(t.year||'')===y),ag=aggregate(ts);return `<tr><td>${esc(y||'Óskilgreint')}</td><td>${ts.map(t=>`<span class="chip">${esc(t.title||'Ónefnt þema')}${t.weeks?' · '+fmt(t.weeks)+' v.':''}</span>`).join('')}</td><td class="num">${fmt(ag.weeks)}</td><td class="num">${ag.natt==null?'–':Math.round(ag.natt*100)+'%'}</td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">Engin þemu á völdum skólaárum.</div>';
   const covered=CRITERIA.filter(c=>cov[c.id].size).length;
@@ -457,7 +495,7 @@ VIEWS.export={render(){
     [D.themes.length,`Þemu eru skráð (${D.themes.length}).`],
     [D.themes.length&&D.themes.every(t=>t.weeks),'Öll þemu hafa vikufjölda.'],
     [D.themes.length&&D.themes.every(t=>t.entries.length),'Öll þemu hafa áherslulínur.'],
-    [tn!=null&&Math.abs(tn*100-D.ratio.natt)<=3,`Hlutfall greinasviða er innan 3 prósentustiga frá markmiði${tn!=null?' (nú '+Math.round(tn*100)+'% náttúrugreinar)':''}.`],
+    [tn!=null&&Math.abs(tn*100-D.ratio.natt)<=tol(),`Hlutfall greinasviða er innan ${fmt(tol())} prósentustiga frá markmiði${tn!=null?' (nú '+Math.round(tn*100)+'% náttúrugreinar)':''}.`],
     [st._covered===CRITERIA.length,`Öll hæfniviðmið eru tengd þema (${st._covered} af ${CRITERIA.length}).`],
     [D.projects.some(p=>p.kind==='hækkun'),'Dæmi um hækkunarverkefni eru í verkefnabanka.']
   ];
@@ -506,6 +544,7 @@ document.addEventListener('change',e=>{
 });
 document.addEventListener('click',e=>{
   const step=e.target.closest('[data-step]');if(step){go(step.dataset.step);return;}
+  const wb=e.target.closest('[data-win]');if(wb){const s=+wb.dataset.win;ui.balYears=new Set([0,1,2].map(i=>(s+i)+'–'+(s+i+1)));render();return;}
   const card=e.target.closest('[data-theme]');if(card){ui.theme=card.dataset.theme;VIEWS.themes.list();VIEWS.themes.editor();return;}
   const sector=e.target.closest('[data-category]');if(sector){sectorClick(sector.dataset.category);return;}
   const b=e.target.closest('[data-act]');if(!b)return;act(b.dataset.act,b);
@@ -539,6 +578,7 @@ function act(a,b){
     case 'catAdd':ui.theme=$('addTheme').value;go('themes');VIEWS.themes.addEntry(ui.cat);break;
     case 'catAddNew':newTheme({entries:[]});go('themes');VIEWS.themes.addEntry(ui.cat);break;
     case 'addProj':D.projects.push(normProject({kind:b.dataset.kind,category:'work',points:1}));changed();VIEWS.projects.list();VIEWS.projects.wheel();$('pt'+(D.projects.length-1))?.focus();break;
+    case 'std5050':if(confirm('Setja inn vægi samkvæmt 50/50: kjarnaflokkar 16% hver (9 Nátt / 7 Sam), Orkan 9, Efnin 7, Alheimurinn 7, Saga 11, Borgaravitund 9, Siðferði og trú 9?')){D.targets={...DEFAULT_TARGETS};D.ratio.natt=50;D.ratio.coreNatt=56.25;changed();VIEWS.cats.targets();VIEWS.cats.wheel();toast('Vægi uppfært: 50/50.');}break;
     case 'finalAdd':finalRows().push({theme:'',weight:1,grade:'B'});VIEWS.assess.finalRows();break;
     case 'finalDel':finalRows().splice(+b.dataset.i,1);VIEWS.assess.finalRows();break;
     case 'delProj':D.projects.splice(+b.dataset.i,1);changed();VIEWS.projects.list();VIEWS.projects.wheel();break;
