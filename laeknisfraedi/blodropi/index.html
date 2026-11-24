@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d0b1a">
+<title>Ferð blóðdropans · Læknisfræði</title>
+<link rel="stylesheet" href="../laekn.css?v=20261124">
+<style>
+.band .wrap{padding-block:22px 24px}
+.layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;padding-block:22px 70px;align-items:start}
+.mapcol{position:sticky;top:12px}
+.map{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px}
+.map svg{display:block;width:100%;height:auto;max-height:calc(100vh - 90px)}
+.note{font-size:13px;color:var(--muted);text-align:center;margin:6px 0 0}
+
+/* Mynd */
+svg text{font:600 11px var(--f-body);fill:var(--muted)}
+svg .big{font:700 13px var(--f-body);fill:var(--ink)}
+svg .vlab{font:600 10.5px var(--f-body)}
+.halo{fill:none;stroke:var(--card);stroke-width:16;stroke-linecap:round;stroke-linejoin:round}
+.ves{fill:none;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.ves.a{stroke:var(--art)} .ves.v{stroke:var(--ven)}
+.cap{fill:none;stroke-width:3;stroke-linecap:round}
+.ch{stroke:var(--line);stroke-width:2}
+.ch.r{fill:var(--ven-soft)} .ch.l{fill:var(--art-soft)}
+.ch.lv{stroke:var(--art);stroke-width:5;stroke-opacity:.35}
+.heart{fill:var(--soft);stroke:var(--line);stroke-width:2}
+.valve{stroke:var(--ink);stroke-width:2.5;stroke-linecap:round;fill:none}
+.box{fill:var(--soft);stroke:var(--line);stroke-width:2}
+.alv{fill:var(--card);stroke:var(--line)}
+.liver{fill:#c98a2b;opacity:.75}
+.halo-l{paint-order:stroke;stroke:var(--art-soft);stroke-width:5px;stroke-linejoin:round}
+.halo-b{paint-order:stroke;stroke:var(--soft);stroke-width:5px;stroke-linejoin:round}
+.here{fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:4 3;animation:spin 6s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidelabels .xl{display:none}
+.drop{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+
+/* Spjald */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.top2{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.modes{display:flex;gap:6px;flex-wrap:wrap}
+.modes button{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 12px;font-weight:600;font-size:14px;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.stat{display:flex;gap:14px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.stat b{font:600 16px var(--f-mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.where .eyebrow2{font:600 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.where h2{margin:2px 0 0;font:600 28px/1.15 var(--f-display)}
+.where .lat{color:var(--muted);font-style:italic;margin:2px 0 10px}
+.where p{margin:0;max-width:62ch}
+.sat{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;margin:14px 0 4px;font-size:14px}
+.sat .bar{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--ven),var(--art));position:relative;opacity:.9}
+.sat .bar i{position:absolute;top:-4px;width:4px;height:20px;border-radius:2px;background:var(--ink);transform:translateX(-2px);transition:left .4s}
+.sat b{font:600 16px var(--f-mono);font-variant-numeric:tabular-nums}
+.q{font-weight:700;margin:18px 0 8px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:600;font-size:16px}
+.opt:hover:not(:disabled){border-color:var(--art)}
+.opt:disabled{cursor:default}
+.opt.wrong{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+.opt .os{display:block;font-weight:500;font-size:13px;color:var(--muted)}
+.why{margin-top:10px;background:var(--badbg);border-radius:10px;padding:10px 12px;font-size:15px}
+.trail{margin-top:18px;display:flex;flex-wrap:wrap;gap:4px;font-size:12px;align-items:center}
+.trail span{background:var(--soft);border-radius:99px;padding:2px 8px}
+.trail .o{background:var(--art-soft);color:var(--art)} .trail .d{background:var(--ven-soft);color:var(--ven)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.done h2{margin:0;font:600 28px var(--f-display)}
+.done .big{font:600 44px var(--f-display);color:var(--art)}
+.visited{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.visited span{border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:13px;font-weight:600}
+.visited span.y{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}.mapcol{position:static}.map svg{max-height:68vh}}
+@media (prefers-reduced-motion:reduce){.here{animation:none}}
+</style>
+</head>
+<body>
+<header class="band">
+  <svg class="ecg" viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 45 H200 l10 -6 10 6 H260 l6 6 10 -48 10 58 8 -16 H360 q14 -14 28 0 H700 l10 -6 10 6 H760 l6 6 10 -48 10 58 8 -16 H860 q14 -14 28 0 H1200"/></svg>
+  <div class="wrap">
+    <div class="top"><a class="crumb" href="../index.html">← Læknisfræði</a></div>
+    <p class="eyebrow">Circulatio sanguinis · hringrás blóðsins</p>
+    <h1>Ferð blóðdropans</h1>
+    <p class="lead">Þú ert blóðdropi í hægri gátt, þreyttur og súrefnissnauður. Rataðu um hjartað og lungun, út í líkamann og heim aftur. William Harvey sýndi fyrstur árið 1628 að blóðið fer í hring.</p>
+  </div>
+</header>
+
+<main class="wrap layout">
+  <div class="mapcol">
+    <div class="map">
+      <svg id="map" viewBox="20 30 560 625" role="img" aria-label="Skýringarmynd af hjartanu, lungunum og líkamanum með æðum á milli"></svg>
+    </div>
+    <p class="note">Horft framan á: hægri hlið hjartans er vinstra megin á myndinni. Blátt er súrefnissnautt blóð og rautt súrefnisríkt.</p>
+  </div>
+  <section class="panel" id="panel" aria-live="polite"></section>
+</main>
+
+<script src="leid.js?v=20261124"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function sv(tag,attrs,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;return e;}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const poly=pts=>'M'+pts.map(p=>p.join(' ')).join(' L');
+
+/* ---------- Myndin ---------- */
+const map=$('map');
+function add(tag,attrs,text,parent=map){const e=sv(tag,attrs,text);parent.append(e);return e;}
+const defs=add('defs',{});
+function grad(id,c1,c2){const g=sv('linearGradient',{id,x1:'0',x2:'1',y1:'0',y2:'0'});g.append(sv('stop',{offset:'0','stop-color':c1}),sv('stop',{offset:'1','stop-color':c2}));defs.append(g);}
+let C={};function readC(){const cs=getComputedStyle(document.documentElement);C.art=cs.getPropertyValue('--art').trim();C.ven=cs.getPropertyValue('--ven').trim();}readC();
+grad('gLung',C.ven,C.art);grad('gBody',C.ven,C.art); // líkami: rautt til hægri, blátt til vinstri
+
+// Lungu
+add('rect',{x:150,y:42,width:300,height:110,rx:40,class:'box',fill:'var(--art-soft)'});
+for(let i=0;i<18;i++){const x=175+(i%9)*31,y=i<9?64:126;if(i<9&&x>255&&x<345)continue;if(i>=9&&x>215&&x<385)continue;add('circle',{cx:x,cy:y,r:9,class:'alv'});}
+add('path',{d:'M200 95 C215 80 225 110 240 95 S265 80 280 95 S305 110 320 95 S345 80 360 95 S385 110 400 95',class:'cap',stroke:'url(#gLung)'});
+add('text',{x:300,y:62,'text-anchor':'middle',class:'big halo-l'},'Lungu');
+add('text',{x:300,y:134,'text-anchor':'middle',class:'xl halo-l'},'lungnablöðrur og háræðar');
+
+// Líkaminn
+add('rect',{x:150,y:470,width:330,height:168,rx:18,class:'box'});
+add('text',{x:472,y:484,'text-anchor':'end',class:'big halo-b'},'Líkaminn');
+Object.entries(ORGANS).forEach(([k,o])=>{
+  const A=8;add('path',{d:`M480 ${o.row} C465 ${o.row-A} 455 ${o.row+A} 440 ${o.row} S415 ${o.row-A} 400 ${o.row} S375 ${o.row+A} 360 ${o.row} S335 ${o.row-A} 320 ${o.row} S295 ${o.row+A} 280 ${o.row} S255 ${o.row-A} 240 ${o.row} S215 ${o.row+A} 200 ${o.row} S175 ${o.row-A} 150 ${o.row}`,class:'cap',stroke:'url(#gBody)'});
+  add('text',{x:315,y:o.row-7,'text-anchor':'middle',class:'big halo-b',style:'font-size:12px'},o.name);
+});
+
+// Æðar (geislabaugur fyrst svo krossanir líti út eins og brýr)
+const VES=[
+  ['v','M100 615 L100 315 L175 315'],                 // neðri holæð
+  ['v','M150 535 L100 535 M150 575 L100 575'],        // bláæðar frá nýrum og vöðvum
+  ['v','M150 615 L118 615'],                          // portæð
+  ['v','M150 495 L60 495 L60 230 L215 230 L215 262'], // efri holæð
+  ['v','M272 352 L272 170 L200 170 L200 108'],        // lungnaslagæð
+  ['a','M400 108 L400 170 L380 170 L380 262'],        // lungnabláæðar
+  ['a','M425 410 L510 410 L510 615'],                 // ósæð
+  ['a','M510 495 L480 495 M510 535 L480 535 M510 575 L480 575 M510 615 L480 615'],
+];
+VES.forEach(([c,d])=>{add('path',{d,class:'halo'});add('path',{d,class:'ves '+c});});
+add('ellipse',{cx:96,cy:615,rx:22,ry:13,class:'liver'});
+add('text',{x:96,y:640,'text-anchor':'middle',class:'big',style:'font-size:12px'},'Lifur');
+
+// Hjartað
+add('path',{d:'M168 262 Q168 246 186 246 L414 246 Q432 246 432 262 L432 430 Q420 470 330 470 L270 470 Q180 470 168 430 Z',class:'heart'});
+add('rect',{x:176,y:262,width:90,height:66,rx:14,class:'ch r'});
+add('rect',{x:176,y:362,width:108,height:92,rx:18,class:'ch r'});
+add('rect',{x:334,y:262,width:90,height:66,rx:14,class:'ch l'});
+add('rect',{x:316,y:362,width:108,height:98,rx:20,class:'ch l lv'});
+add('line',{x1:300,y1:252,x2:300,y2:464,stroke:'var(--line)','stroke-width':6});
+[['Hægri gátt',221,279],['Hægri slegill',230,442],['Vinstri gátt',379,279],['Vinstri slegill',370,446]].forEach(([t,x,y])=>add('text',{x,y,'text-anchor':'middle',class:'big'},t));
+// Lokur
+function valve(x,y,horiz){const d=horiz?`M${x-12} ${y-6} L${x} ${y+4} L${x+12} ${y-6}`:`M${x-6} ${y-12} L${x+4} ${y} L${x-6} ${y+12}`;add('path',{d,class:'valve'});}
+valve(220,345,true);valve(380,345,true);valve(272,358,true);valve(425,410,false);
+[['Þríblöðkuloka',214,349,'end'],['Tvíblöðkuloka',394,349,'start'],['Lungnaloka',266,372,'end'],['Ósæðarloka',432,398,'start']].forEach(([t,x,y,a])=>add('text',{x:a==='end'?x-16:x+2,y,'text-anchor':a,class:'xl'},t));
+// Heiti æða
+[['Lungnaslagæð',286,215,-90],['Lungnabláæðar',414,215,-90],['Ósæð',524,470,-90],['Efri holæð',52,370,-90],['Neðri holæð',92,460,-90],['Portæð',134,606,0]].forEach(([t,x,y,r])=>add('text',{x,y,class:'vlab xl','text-anchor':'middle',transform:`rotate(${r} ${x} ${y})`},t));
+
+// Dropinn og merkið um staðsetningu
+const here=add('circle',{cx:220,cy:295,r:17,class:'here'});
+const drop=add('circle',{cx:220,cy:295,r:9,class:'drop'});
+
+/* ---------- Litur dropans ---------- */
+function mix(a,b,t){const pa=a.match(/\w\w/g).map(x=>parseInt(x,16)),pb=b.match(/\w\w/g).map(x=>parseInt(x,16));return '#'+pa.map((v,i)=>Math.round(v+(pb[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+const satColor=s=>mix('2d4a8a','c4162f',Math.min(1,Math.max(0,(s-0.6)/0.38)));
+
+/* ---------- Leikurinn ---------- */
+const KEY='nasa-blodropi-v1';
+let store={best:null,visited:[]};try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s)store={best:s.best??null,visited:s.visited||[]};}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+
+let G=null, mode='aefing', auto=false, moving=false, timer=null;
+function newGame(){
+  G={at:'ra',sat:0.75,organ:null,steps:0,mistakes:0,trail:[{n:'Hægri gátt',o:false}],t0:performance.now(),wrong:new Set(),done:false};
+  drop.setAttribute('cx',220);drop.setAttribute('cy',295);drop.setAttribute('fill',satColor(G.sat));
+  here.setAttribute('cx',220);here.setAttribute('cy',295);
+  render();
+  clearInterval(timer);timer=setInterval(()=>{if(mode==='keppni'&&!G.done){const s=$('clock');if(s)s.textContent=fmtTime(elapsed());}},200);
+  if(auto)setTimeout(autoStep,900);
+}
+const elapsed=()=>((G.done?G.tEnd:performance.now())-G.t0)/1000+G.mistakes*5;
+const fmtTime=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+
+function stateInfo(){
+  const id=G.at;
+  if(id==='cap'){const o=ORGANS[G.organ];return {name:`Háræðar í ${o.gen}`,lat:'capillares',info:`${o.info} Súrefni fer úr blóðinu inn í frumurnar og koltvísýringur út í blóðið.`,opts:G.organ==='tharmar'
+      ?[{to:'portaed',label:'Portæð'},{label:'Neðri holæð',why:'Blóð frá þörmunum fer fyrst í lifrina um portæðina, svo lifrin geti unnið úr næringarefnunum.'},{label:'Slagæðar',why:NOT_BACK}]
+      :[{to:'blaaed',label:'Bláæðar'},{label:'Slagæðar',why:NOT_BACK},{label:'Beint í hjartað',why:'Blóðið safnast fyrst í bláæðar sem flytja það til hjartans.'}]};}
+  if(id==='blaaed'){const s=STATES.blaaed;const head=G.organ==='heili';return {name:s.name,lat:s.lat,info:s.info,opts:head
+      ?[{to:'svc',label:'Efri holæð'},{label:'Neðri holæð',why:'Neðri holæð safnar blóði úr neðri hluta líkamans. Blóð frá höfðinu fer í efri holæð.'},{label:'Ósæð',why:ART_OUT}]
+      :[{to:'ivc',label:'Neðri holæð'},{label:'Efri holæð',why:'Efri holæð safnar blóði frá höfði og handleggjum.'},{label:'Ósæð',why:ART_OUT}]};}
+  return STATES[id];
+}
+
+function render(){
+  const pan=$('panel');pan.replaceChildren();
+  const top=el('div','top2');
+  const modes=el('div','modes');
+  [['aefing','Æfing'],['keppni','Keppni']].forEach(([k,t])=>{const b=el('button',null,t);b.type='button';b.setAttribute('aria-pressed',String(mode===k&&!auto));b.addEventListener('click',()=>{mode=k;auto=false;map.classList.toggle('hidelabels',k==='keppni');newGame();});modes.append(b);});
+  const ab=el('button',null,auto?'Stöðva':'Sjálfvirk ferð');ab.type='button';ab.setAttribute('aria-pressed',String(auto));ab.addEventListener('click',()=>{auto=!auto;if(auto){mode='aefing';map.classList.remove('hidelabels');newGame();}else render();});modes.append(ab);
+  const st=el('div','stat');
+  st.append(el('span',null,'Skref '),el('b',null,String(G.steps)),el('span',null,' · Villur '),el('b',null,String(G.mistakes)));
+  if(mode==='keppni'){const c=el('b',null,fmtTime(elapsed()));c.id='clock';st.append(el('span',null,' · Tími '),c);}
+  top.append(modes,st);pan.append(top);
+
+  if(G.done){renderDone(pan);return;}
+  const s=stateInfo();
+  const w=el('div','where');
+  w.append(el('p','eyebrow2','Þú ert hér'),el('h2',null,s.name),el('p','lat',s.lat),el('p',null,s.info));
+  pan.append(w);
+  const sat=el('div','sat');const bar=el('div','bar');const mk=el('i');mk.style.left=`${Math.min(100,Math.max(0,(G.sat-0.5)/0.5*100))}%`;bar.append(mk);
+  sat.append(el('span',null,'Súrefnismettun'),bar,el('b',null,`${Math.round(G.sat*100)}%`));pan.append(sat);
+
+  if(G.at==='ao'){
+    pan.append(el('p','q','Veldu líffæri til að heimsækja:'));
+    const opts=el('div','opts');
+    Object.entries(ORGANS).forEach(([k,o])=>{const b=el('button','opt');b.type='button';b.append(document.createTextNode(o.name),el('span','os',store.visited.includes(k)?'Heimsótt áður':''));b.addEventListener('click',()=>go({to:'cap'},k));opts.append(b);});
+    pan.append(opts);
+  }else{
+    pan.append(el('p','q','Hvert ferðu næst?'));
+    const opts=el('div','opts');const why=el('div','why');why.hidden=true;
+    (G.shuffled&&G.shuffled.at===G.at?G.shuffled.list:(G.shuffled={at:G.at,list:shuffle(s.opts)}).list).forEach(o=>{
+      const b=el('button','opt',o.label);b.type='button';
+      if(G.wrong.has(o.label)){b.disabled=true;b.classList.add('wrong');}
+      b.addEventListener('click',()=>{
+        if(moving)return;
+        if(o.to){go(o);return;}
+        G.mistakes++;G.wrong.add(o.label);b.disabled=true;b.classList.add('wrong');
+        why.hidden=false;why.textContent=o.why;
+        pan.querySelector('.stat').replaceWith(render.stat());
+      });
+      opts.append(b);
+    });
+    pan.append(opts,why);
+  }
+  const tr=el('div','trail');tr.append(el('span',null,'Leiðin:'));
+  G.trail.forEach(t=>tr.append(el('span',t.o?'o':'d',t.n)));pan.append(tr);
+}
+render.stat=()=>{const st=el('div','stat');st.append(el('span',null,'Skref '),el('b',null,String(G.steps)),el('span',null,' · Villur '),el('b',null,String(G.mistakes)));if(mode==='keppni'){const c=el('b',null,fmtTime(elapsed()));c.id='clock';st.append(el('span',null,' · Tími '),c);}return st;};
+
+function go(o,organ){
+  if(moving)return;
+  const from=G.at;if(organ)G.organ=organ;
+  const path=arrivePath(o.to,{organ:G.organ,from});
+  let target=G.sat;
+  if(o.to==='lcap')target=0.98;
+  if(o.to==='cap')target=ORGANS[G.organ].sat;
+  if(o.to==='lifur')target=Math.min(G.sat,0.72);
+  animate(path,G.sat,target,()=>{
+    G.sat=target;G.steps++;G.wrong=new Set();
+    if(o.to==='end'){G.at='ra';G.done=true;G.tEnd=performance.now();G.trail.push({n:'Hægri gátt',o:false});finish();return;}
+    G.at=o.to;const info=stateInfo();
+    G.trail.push({n:info.name,o:G.sat>0.93});
+    const p=o.to==='cap'?[315,ORGANS[G.organ].row]:o.to==='blaaed'?[125,ORGANS[G.organ].row]:STATES[o.to].pt;
+    here.setAttribute('cx',p[0]);here.setAttribute('cy',p[1]);
+    render();
+    if(auto)setTimeout(autoStep,1400);
+  });
+}
+
+function animate(path,s0,s1,done){
+  moving=true;here.style.display='none';
+  const pts=path.pts,seg=[];let L=0;
+  for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);seg.push(d);L+=d;}
+  const oxStart=path.ox!=null?seg.slice(0,path.ox).reduce((a,b)=>a+b,0):0;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dur=reduce?1:Math.max(500,L/(auto?140:200)*1000);
+  const t0=performance.now();
+  function frame(now){
+    const f=Math.min(1,(now-t0)/dur), d=f*L;
+    let acc=0,i=0;while(i<seg.length-1&&acc+seg[i]<d){acc+=seg[i];i++;}
+    const u=seg[i]?(d-acc)/seg[i]:1, x=pts[i][0]+(pts[i+1][0]-pts[i][0])*Math.min(1,u), y=pts[i][1]+(pts[i+1][1]-pts[i][1])*Math.min(1,u);
+    drop.setAttribute('cx',x.toFixed(1));drop.setAttribute('cy',y.toFixed(1));
+    const of=d<=oxStart?0:Math.min(1,(d-oxStart)/Math.max(1,L-oxStart));
+    drop.setAttribute('fill',satColor(s0+(s1-s0)*of));
+    if(f<1)requestAnimationFrame(frame);else{moving=false;here.style.display='';done();}
+  }
+  requestAnimationFrame(frame);
+}
+
+function autoStep(){
+  if(!auto||G.done||moving)return;
+  if(G.at==='ao'){const ks=Object.keys(ORGANS);go({to:'cap'},ks[Math.floor(Math.random()*ks.length)]);return;}
+  const ok=stateInfo().opts.find(o=>o.to);go(ok);
+}
+
+function finish(){
+  here.setAttribute('cx',220);here.setAttribute('cy',295);
+  if(G.organ&&!store.visited.includes(G.organ))store.visited.push(G.organ);
+  let rec=false;
+  if(mode==='keppni'){const t=elapsed();if(store.best==null||t<store.best){store.best=t;rec=true;}}
+  save();render();
+  if(rec){const p=el('p',null,'Nýtt met!');p.style.fontWeight='700';p.style.color='var(--ok)';$('panel').querySelector('.done').append(p);}
+  if(auto)setTimeout(()=>{if(auto)newGame();},2500);
+}
+function renderDone(pan){
+  const d=el('div','done');
+  d.append(el('h2',null,'Komin heim í hægri gátt!'));
+  d.append(el('p',null,`Þú heimsóttir ${ORGANS[G.organ].acc}, fórst ${G.steps} skref og gerðir ${G.mistakes} ${G.mistakes===1?'villu':'villur'}. Í raun tekur svona hringur innan við mínútu: hjartað dælir um 5 lítrum á mínútu í hvíld.`));
+  if(mode==='keppni'){d.append(el('div','big',fmtTime(elapsed())));d.append(el('p',null,`Tími með 5 sekúndna refsingu fyrir hverja villu.${store.best!=null?` Besti tími: ${fmtTime(store.best)}.`:''}`));}
+  d.append(el('p','q','Líffæri sem þú hefur heimsótt:'));
+  const v=el('div','visited');Object.entries(ORGANS).forEach(([k,o])=>v.append(el('span',store.visited.includes(k)?'y':'',o.name)));d.append(v);
+  if(Object.keys(ORGANS).every(k=>store.visited.includes(k)))d.append(el('p',null,'Þú hefur farið um öll líffærin. Prófaðu keppnina: þar eru heitin á lokum og æðum falin.'));
+  const a=el('div','actions');const b=el('button','btn primary','Ný ferð');b.type='button';b.addEventListener('click',newGame);a.append(b);d.append(a);
+  pan.append(d);
+  const tr=el('div','trail');tr.append(el('span',null,'Leiðin:'));G.trail.forEach(t=>tr.append(el('span',t.o?'o':'d',t.n)));pan.append(tr);
+  if(!auto)b.focus({preventScroll:true});
+}
+
+newGame();
+</script>
+</body>
+</html>
