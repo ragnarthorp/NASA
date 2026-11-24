@@ -43,13 +43,22 @@ function normProject(p){
   return {id:uid(),kind:p?.kind==='rannsókn'?'rannsókn':'hækkun',title:str(p?.title,200),category:CAT[mapCat(p?.category)]?mapCat(p.category):'work',
     points:numIn(p?.points,0,3,1),theme:str(p?.theme,80),description:str(p?.description)};
 }
+const OLD_TARGETS={work:12,environment:12,life:12,energy:8,chem:7,space:7,history:14,civic:14,ethics:14};
+const NEW_RATIO_SENTENCE='Hlutföll greinasviðanna taka mið af viðmiðunarstundaskrá aðalnámskrár, sem ætlar náttúrugreinum og samfélagsgreinum jafnan tíma í 8.–10. bekk (360 mínútur á viku hvoru sviði). Námið skiptist því jafnt, **50% / 50%**.';
+function migrateInfo(b){
+  return b.replace(/Hlutföll greinasviðanna taka mið af viðmiðunarstundaskrá aðalnámskrár:\s*(?:um \*\*60% samfélagsgreinar\*\* og \*\*40% náttúrugreinar\*\*\.)?\s*(?=Kennslan)/,NEW_RATIO_SENTENCE+' ')
+          .replace(/um \*\*60% samfélagsgreinar\*\* og \*\*40% náttúrugreinar\*\*/g,'jafnt, **50% náttúrugreinar** og **50% samfélagsgreinar**');
+}
 function normalize(o){
   if(!o||o.format!=='nasa-skolanamskra')throw Error('Þetta er ekki námskrárskrá NASA.');
   const d=fresh();
   for(const k of Object.keys(d.meta))if(k in (o.meta||{}))d.meta[k]=k==='cycleStart'?numIn(o.meta[k],2000,2100,d.meta[k]):str(o.meta[k],300)||(k==='updated'?null:'');
   d.ratio.natt=numIn(o.ratio?.natt,0,100,50);d.ratio.coreNatt=numIn(o.ratio?.coreNatt,0,100,56.25);d.ratio.tol=numIn(o.ratio?.tol,0,50,2);d.ratio.rationale=typeof o.ratio?.rationale==='string'?o.ratio.rationale:DEFAULT_RATIONALE;
   for(const c of CATS)d.targets[c.id]=numIn(o.targets?.[c.id]??o.targets?.[c.id==='life'?'human':c.id],0,100,d.targets[c.id]);
-  if(Array.isArray(o.info))d.info=o.info.slice(0,60).map(s=>({title:str(s?.title,200),body:str(s?.body)}));
+  if(Array.isArray(o.info))d.info=o.info.slice(0,60).map(s=>({title:str(s?.title,200),body:migrateInfo(str(s?.body))}));
+  /* Eldri sjálfgefin gildi (40/60) víkja fyrir 50/50 */
+  if(o.ratio?.natt===40&&(o.ratio?.coreNatt??50)===50){d.ratio.natt=50;d.ratio.coreNatt=56.25;
+    if(CATS.every(c=>+o.targets?.[c.id]===OLD_TARGETS[c.id]))d.targets={...DEFAULT_TARGETS};}
   for(const c of CATS)d.catNotes[c.id]=str(o.catNotes?.[c.id]);
   const a=o.assessment||{},A=d.assessment;
   A.bIntro=str(a.bIntro)||A.bIntro;A.aIntro=str(a.aIntro)||A.aIntro;A.research=str(a.research)||A.research;A.notes=str(a.notes);
@@ -491,6 +500,8 @@ VIEWS.export={render(){
   const st=stepStatus(),a=st._agg,tn=a.natt,checks=[
     [D.meta.title.trim(),'Námskráin hefur heiti.'],
     [D.info.length&&D.info.every(s=>s.title.trim()&&s.body.trim()),'Allir kaflar um kennsluna hafa fyrirsögn og texta.'],
+    [!D.info.some(s=>/\b(60|40|46|47|53|54)\s?%/.test(s.body)),'Textinn í Um kennsluna nefnir ekki eldri hlutföll (t.d. 60/40 eða 46/54).'],
+    [Math.abs(D.ratio.natt-50)<0.01,`Markmið um hlutfall greinasviða er 50/50 (nú ${fmt(D.ratio.natt)}/${fmt(100-D.ratio.natt)}).`],
     [Math.abs(st._ts-100)<0.01,`Hlutföll hæfniflokka eru samtals 100% (nú ${fmt(st._ts)}%).`],
     [D.themes.length,`Þemu eru skráð (${D.themes.length}).`],
     [D.themes.length&&D.themes.every(t=>t.weeks),'Öll þemu hafa vikufjölda.'],
