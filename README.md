@@ -49,3 +49,11 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 - Myndir af hópnum, skissum og smíðinni fara á rétta staði. Þar sem mynd vantar stendur t.d. „[Setjið mynd af hópnum hér]“.
 - **Ekki er hægt að prenta skýrsluna fyrr en mynd af lokaafurðinni og mynd af stöðinni eftir frágang eru komnar inn.**
 - Vinnan vistast í vafranum (IndexedDB). „Vista afrit“ sækir allt, líka myndir, í eina skrá sem má opna á annarri tölvu.
+
+## Læknisfræði
+
+`laeknisfraedi/index.html` er forsíða sex vikna þemalotu um læknisfræði (rautt útlit). Þar eru flísar fyrir verkfæri lotunnar og hnappur fyrir kennara sem opnar, með sama kóða og kennarasvæði námskrárvefsins, hlekk á hugmyndaskjal og kennaramat lotunnar.
+
+- **Orðsmiðjan** (`laeknisfraedi/ordsmidjan/`): 68 grískir og latneskir orðhlutar og 52 læknisfræðiorð (gögnin eru í `ord.js`). Fjórar æfingar: orðabanki með leit, upprifjunarspjöld með fimm hólfum, *Smíða orð* (íslensk merking → orðhlutar í réttri röð) og *Ráða í orð* (orð → merking). Framvinda og bestu umferðir vistast í vafranum (`localStorage`).
+- Í vinnslu: Líffærakort, Ferð blóðdropans, Hjartalínurit, Lungnahermir, Glósustofa og Prófvél.
+- `laeknisfraedi/laekn.css` er sameiginlegt útlit allra síðna lotunnar.

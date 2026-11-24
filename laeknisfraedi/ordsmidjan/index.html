@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d0b1a">
+<title>Orðsmiðjan · Læknisfræði</title>
+<link rel="stylesheet" href="../laekn.css?v=20261124">
+<style>
+.band .wrap{padding-block:22px 24px}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:14px;color:#f6dfe2}
+.stats b{font:600 20px var(--f-display);color:#fff;margin-right:4px}
+
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-top:20px;scrollbar-width:none}
+.tabs button{border:0;background:none;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{color:var(--art);border-bottom-color:var(--art)}
+.view{padding-block:22px 70px}
+.intro{color:var(--muted);margin:0 0 16px;max-width:70ch}
+
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:14px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.k-forskeyti{--k:var(--ven);--kb:var(--ven-soft)}
+.k-rót{--k:var(--art);--kb:var(--art-soft)}
+.k-viðskeyti{--k:var(--ink);--kb:var(--soft)}
+.legend i.k-forskeyti,.legend i.k-rót,.legend i.k-viðskeyti{background:var(--k)}
+
+/* Orðabanki */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filters input{flex:1 1 220px;min-width:0;border:1px solid var(--line);border-radius:9px;padding:9px 12px;background:var(--card)}
+.chipbtn{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:6px 12px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted)}
+.chipbtn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bank{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.pc{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--k);border-radius:10px;padding:12px 14px;min-width:0;cursor:pointer;text-align:left}
+.pc:hover{border-color:var(--k)}
+.pc .f{font:600 18px var(--f-mono);color:var(--k);overflow-wrap:anywhere}
+.pc .m{font-weight:600;margin-top:2px}
+.pc .o{font-size:13px;color:var(--muted);font-style:italic}
+.pc .box{float:right;font:600 11px var(--f-mono);color:var(--muted)}
+.pc .ex{display:none;margin-top:8px;font-size:13px;border-top:1px solid var(--line);padding-top:8px}
+.pc.open .ex{display:block}
+.pc .ex div{display:flex;justify-content:space-between;gap:8px}
+.pc .ex code{font-family:var(--f-mono)}
+.pc .ex span{color:var(--muted);text-align:right}
+
+/* Sameiginlegt fyrir æfingar */
+.stage{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:760px}
+.progress{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--muted);margin-bottom:14px}
+.pips{display:flex;gap:4px}
+.pips i{width:16px;height:6px;border-radius:3px;background:var(--soft)}
+.pips i.ok{background:var(--ok)} .pips i.no{background:var(--bad)} .pips i.cur{background:var(--ven)}
+.prompt{font:600 clamp(22px,4vw,30px)/1.2 var(--f-display);margin:4px 0 6px;overflow-wrap:anywhere}
+.prompt.word{font-family:var(--f-mono);letter-spacing:.02em}
+.sub{color:var(--muted);margin:0 0 16px;font-size:14px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.feedback{margin-top:16px;border-radius:12px;padding:12px 14px}
+.feedback.ok{background:var(--okbg)} .feedback.no{background:var(--badbg)}
+.feedback h3{margin:0 0 8px;font-size:16px}
+.feedback.ok h3{color:var(--ok)} .feedback.no h3{color:var(--bad)}
+
+.breakdown{display:flex;flex-wrap:wrap;gap:4px;align-items:stretch}
+.seg{display:flex;flex-direction:column;align-items:center;background:var(--kb);border-bottom:3px solid var(--k);border-radius:8px 8px 4px 4px;padding:6px 10px;min-width:0}
+.seg b{font:600 17px var(--f-mono);color:var(--k)}
+.seg span{font-size:12px;color:var(--ink);text-align:center}
+.seg small{font-size:11px;color:var(--muted);font-style:italic}
+
+/* Smíða orð */
+.slots{display:flex;flex-wrap:wrap;gap:6px;min-height:52px;padding:8px;border:2px dashed var(--line);border-radius:12px;background:var(--bg);align-items:center}
+.slots .ph{color:var(--muted);font-size:14px;padding-left:4px}
+.tilebank{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tl{font:600 16px var(--f-mono);border:1px solid var(--line);border-bottom:3px solid var(--k);background:var(--card);color:var(--k);border-radius:9px;padding:8px 12px;cursor:pointer}
+.tl:hover{background:var(--kb)}
+.tl:disabled{opacity:.3;cursor:default}
+.hint{font-size:14px;color:var(--ven);margin-top:8px}
+
+/* Ráða í orð */
+.opts{display:grid;gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:500}
+.opt:hover:not(:disabled){border-color:var(--art)}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--okbg);border-color:var(--ok);color:var(--ok);font-weight:700}
+.opt.wrong{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+
+/* Spjöld */
+.deck{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:18px;align-items:start;max-width:900px}
+.card{background:var(--card);border:1px solid var(--line);border-top:6px solid var(--k);border-radius:16px;padding:28px 22px;min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
+.card .kind{font:600 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--k)}
+.card .front{font:600 clamp(28px,6vw,42px)/1.15 var(--f-mono);color:var(--k);overflow-wrap:anywhere}
+.card .front.text{font-family:var(--f-display)}
+.card .back{border-top:1px solid var(--line);padding-top:10px;margin-top:6px;width:100%}
+.card .back .m{font:600 22px var(--f-display)}
+.card .back .o{color:var(--muted);font-style:italic;font-size:14px}
+.card .back .e{font-size:14px;margin-top:6px}
+.card .back .e code{font-family:var(--f-mono)}
+.boxes{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.boxes h3{margin:0 0 8px;font-size:14px}
+.boxrow{display:grid;grid-template-columns:64px minmax(0,1fr) 28px;gap:8px;align-items:center;font-size:13px;margin:4px 0}
+.boxrow .bar{height:10px;border-radius:5px;background:var(--soft);overflow:hidden}
+.boxrow .bar i{display:block;height:100%;background:var(--ven)}
+.boxrow:last-of-type .bar i{background:var(--ok)}
+.boxrow .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.boxes p{font-size:13px;color:var(--muted);margin:10px 0 0}
+.toggle{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:12px}
+.done{font-size:18px}
+.done .big{font:600 48px var(--f-display);color:var(--art)}
+
+@media (max-width:720px){.deck{grid-template-columns:minmax(0,1fr)}.stage{padding:16px}}
+</style>
+</head>
+<body>
+<header class="band">
+  <svg class="ecg" viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 45 H200 l10 -6 10 6 H260 l6 6 10 -48 10 58 8 -16 H360 q14 -14 28 0 H700 l10 -6 10 6 H760 l6 6 10 -48 10 58 8 -16 H860 q14 -14 28 0 H1200"/></svg>
+  <div class="wrap">
+    <div class="top"><a class="crumb" href="../">← Læknisfræði</a></div>
+    <p class="eyebrow">Gríska og latína læknisfræðinnar</p>
+    <h1>Orðsmiðjan</h1>
+    <p class="lead">Lærðu orðhlutana og þá geturðu ráðið í hundruð læknisfræðiorða. <span style="font-family:var(--f-mono)">peri · card · itis</span> = bólga umhverfis hjartað.</p>
+    <div class="stats" aria-live="polite">
+      <span><b id="sKnown">0</b>af <span id="sTotal">0</span> orðhlutum lærðir</span>
+      <span><b id="sBuild">–</b>besta í Smíða orð</span>
+      <span><b id="sDecode">–</b>besta í Ráða í orð</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="tabs" role="tablist" aria-label="Æfingar">
+    <button role="tab" id="t-bank" aria-controls="v-bank" aria-selected="true">Orðhlutar</button>
+    <button role="tab" id="t-cards" aria-controls="v-cards" aria-selected="false">Spjöld</button>
+    <button role="tab" id="t-build" aria-controls="v-build" aria-selected="false">Smíða orð</button>
+    <button role="tab" id="t-decode" aria-controls="v-decode" aria-selected="false">Ráða í orð</button>
+  </nav>
+
+  <section class="view" id="v-bank" role="tabpanel" aria-labelledby="t-bank">
+    <p class="intro">Hér eru allir orðhlutarnir. Smelltu á spjald til að sjá orð sem nota hlutann. Merkingin í horninu sýnir í hvaða hólfi spjaldið er í upprifjuninni.</p>
+    <div class="legend"><span><i class="k-forskeyti"></i>Forskeyti</span><span><i class="k-rót"></i>Rót</span><span><i class="k-viðskeyti"></i>Viðskeyti</span></div>
+    <div class="filters">
+      <input id="q" type="search" placeholder="Leita, t.d. hjarta eða -itis" aria-label="Leita að orðhluta">
+      <button class="chipbtn" data-kind="" aria-pressed="true">Allt</button>
+      <button class="chipbtn" data-kind="forskeyti" aria-pressed="false">Forskeyti</button>
+      <button class="chipbtn" data-kind="rót" aria-pressed="false">Rætur</button>
+      <button class="chipbtn" data-kind="viðskeyti" aria-pressed="false">Viðskeyti</button>
+    </div>
+    <div class="bank" id="bank"></div>
+  </section>
+
+  <section class="view" id="v-cards" role="tabpanel" aria-labelledby="t-cards" hidden>
+    <p class="intro">Upprifjun með hólfum. Spjald sem þú kannt færist í næsta hólf og kemur sjaldnar. Spjald sem þú kannt ekki fer aftur í hólf 1 og kemur fljótt aftur. Orðhluti telst lærður í hólfi 4 eða 5.</p>
+    <div class="deck">
+      <div>
+        <div class="card" id="fc"></div>
+        <div class="actions" id="fcActions"></div>
+        <label class="toggle"><input type="checkbox" id="rev"> Sýna merkinguna fyrst og rifja upp orðhlutann</label>
+      </div>
+      <aside class="boxes" id="boxes" aria-label="Staða í hólfum"></aside>
+    </div>
+  </section>
+
+  <section class="view" id="v-build" role="tabpanel" aria-labelledby="t-build" hidden>
+    <p class="intro">Þú færð íslenska merkingu. Smíðaðu læknisfræðiorðið úr orðhlutunum í réttri röð. Smelltu á hluta til að bæta honum við og á hluta í orðinu til að taka hann aftur.</p>
+    <div class="stage" id="build"></div>
+  </section>
+
+  <section class="view" id="v-decode" role="tabpanel" aria-labelledby="t-decode" hidden>
+    <p class="intro">Þú færð læknisfræðiorð. Taktu það í huganum í sundur og veldu rétta merkingu.</p>
+    <div class="stage" id="decode"></div>
+  </section>
+</main>
+
+<script src="ord.js?v=20261124"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const P=Object.fromEntries(PARTS.map(p=>[p.id,p]));
+const ROUND=10;
+
+/* ---------- Vistun (aðeins í þessum vafra) ---------- */
+const KEY='nasa-ordsmidjan-v1';
+let store={box:{},best:{}};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.box)store={box:s.box,best:s.best||{}};}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+const boxOf=id=>store.box[id]||1;
+
+/* ---------- Hjálparföll ---------- */
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function sample(a,n){return shuffle(a).slice(0,n);}
+function kindClass(k){return 'k-'+k;}
+function breakdown(w){
+  const d=el('div','breakdown');
+  w.seg.forEach((s,i)=>{const p=P[w.parts[i]];const c=el('div','seg '+kindClass(p.kind));c.append(el('b',null,s),el('span',null,p.mean),el('small',null,p.origin));d.append(c);});
+  return d;
+}
+function stats(){
+  $('sTotal').textContent=PARTS.length;
+  $('sKnown').textContent=PARTS.filter(p=>boxOf(p.id)>=4).length;
+  $('sBuild').textContent=store.best.build!=null?`${store.best.build}/${ROUND}`:'–';
+  $('sDecode').textContent=store.best.decode!=null?`${store.best.decode}/${ROUND}`:'–';
+}
+
+/* ---------- Flipar ---------- */
+const TABS=['bank','cards','build','decode'];
+function openTab(t){
+  TABS.forEach(x=>{$('t-'+x).setAttribute('aria-selected',String(x===t));$('v-'+x).hidden=x!==t;});
+  if(t==='bank')renderBank();
+  if(t==='cards')renderCard();
+  if(t==='build'&&!build.started)build.start();
+  if(t==='decode'&&!decode.started)decode.start();
+  try{history.replaceState(null,'','#'+t);}catch(e){}
+}
+TABS.forEach(t=>$('t-'+t).addEventListener('click',()=>openTab(t)));
+document.querySelector('.tabs').addEventListener('keydown',e=>{
+  if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;
+  const i=TABS.findIndex(t=>$('t-'+t).getAttribute('aria-selected')==='true');
+  const n=TABS[(i+(e.key==='ArrowRight'?1:TABS.length-1))%TABS.length];openTab(n);$('t-'+n).focus();
+});
+
+/* ---------- Orðhlutar ---------- */
+let kindFilter='';
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function renderBank(){
+  const q=norm($('q').value.trim().replace(/^-|-$/g,''));
+  const bank=$('bank');bank.replaceChildren();
+  PARTS.filter(p=>(!kindFilter||p.kind===kindFilter)&&(!q||norm(p.form+' '+p.mean+' '+p.origin).includes(q))).forEach(p=>{
+    const c=el('button','pc '+kindClass(p.kind));c.type='button';
+    c.append(el('span','box',`hólf ${boxOf(p.id)}`),el('div','f',p.form),el('div','m',p.mean),el('div','o',p.origin));
+    const ex=el('div','ex');
+    const ws=WORDS.filter(w=>w.parts.includes(p.id));
+    if(ws.length)ws.forEach(w=>{const r=el('div');r.append(el('code',null,w.w),el('span',null,w.mean));ex.append(r);});
+    else{const r=el('div');r.append(el('code',null,p.ex));ex.append(r);}
+    c.append(ex);
+    c.addEventListener('click',()=>c.classList.toggle('open'));
+    bank.append(c);
+  });
+  if(!bank.children.length)bank.append(el('p','intro','Ekkert fannst. Prófaðu annað leitarorð.'));
+}
+$('q').addEventListener('input',renderBank);
+document.querySelectorAll('.chipbtn').forEach(b=>b.addEventListener('click',()=>{
+  kindFilter=b.dataset.kind;document.querySelectorAll('.chipbtn').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderBank();
+}));
+
+/* ---------- Spjöld (Leitner) ---------- */
+let cur=null,last=null,flipped=false;
+function pickCard(){
+  // Lægri hólf koma oftar: vægi 16, 8, 4, 2, 1.
+  const pool=PARTS.filter(p=>p.id!==last);
+  const weights=pool.map(p=>2**(5-boxOf(p.id)));
+  let r=Math.random()*weights.reduce((a,b)=>a+b,0);
+  for(let i=0;i<pool.length;i++){r-=weights[i];if(r<=0)return pool[i];}
+  return pool[pool.length-1];
+}
+function renderBoxes(){
+  const b=$('boxes');b.replaceChildren(el('h3',null,'Hólfin'));
+  const counts=[1,2,3,4,5].map(n=>PARTS.filter(p=>boxOf(p.id)===n).length);
+  counts.forEach((c,i)=>{const r=el('div','boxrow');const bar=el('div','bar');const f=el('i');f.style.width=(100*c/PARTS.length)+'%';bar.append(f);r.append(el('span',null,`Hólf ${i+1}`),bar,el('span','n',String(c)));b.append(r);});
+  b.append(el('p',null,'Hólf 1: nýtt eða gleymt. Hólf 5: kann vel.'));
+  const reset=el('button','btn','Byrja upp á nýtt');reset.type='button';reset.style.marginTop='10px';reset.style.fontSize='13px';
+  let armed=false;
+  reset.addEventListener('click',()=>{if(!armed){armed=true;reset.textContent='Smelltu aftur til að staðfesta';return;}store.box={};save();stats();renderCard(true);});
+  b.append(reset);
+}
+function renderCard(next){
+  if(!cur||next){cur=pickCard();flipped=false;}
+  const rev=$('rev').checked;
+  const p=cur,c=$('fc');
+  c.className='card '+kindClass(p.kind);c.replaceChildren();
+  c.append(el('div','kind',`${p.kind} · hólf ${boxOf(p.id)}`));
+  c.append(el('div','front'+(rev?' text':''),rev?p.mean:p.form));
+  if(flipped){
+    const b=el('div','back');
+    if(rev){b.append(el('div','m',p.form));}else{b.append(el('div','m',p.mean));}
+    b.append(el('div','o',p.origin));
+    const w=WORDS.find(x=>x.parts.includes(p.id));
+    const e=el('div','e');e.append(document.createTextNode('Dæmi: '),el('code',null,w?w.w:p.ex));if(w)e.append(document.createTextNode(` = ${w.mean}`));b.append(e);
+    c.append(b);
+  }
+  const a=$('fcActions');a.replaceChildren();
+  if(!flipped){
+    const f=el('button','btn primary','Snúa spjaldinu');f.type='button';f.addEventListener('click',()=>{flipped=true;renderCard();});a.append(f);f.focus({preventScroll:true});
+  }else{
+    const no=el('button','btn','Kunni ekki');no.type='button';
+    const yes=el('button','btn primary','Kunni');yes.type='button';
+    no.addEventListener('click',()=>grade(false));yes.addEventListener('click',()=>grade(true));
+    a.append(no,yes);yes.focus({preventScroll:true});
+  }
+  renderBoxes();
+}
+function grade(ok){
+  store.box[cur.id]=ok?Math.min(5,boxOf(cur.id)+1):1;save();stats();
+  last=cur.id;renderCard(true);
+}
+$('rev').addEventListener('change',()=>{flipped=false;renderCard();});
+document.addEventListener('keydown',e=>{
+  if($('v-cards').hidden||e.target.matches('input,textarea'))return;
+  if(e.key===' '&&!flipped){e.preventDefault();flipped=true;renderCard();}
+  else if(flipped&&(e.key==='1'||e.key==='ArrowLeft'))grade(false);
+  else if(flipped&&(e.key==='2'||e.key==='ArrowRight'))grade(true);
+});
+
+/* ---------- Umferð (sameiginlegt fyrir Smíða orð og Ráða í orð) ---------- */
+function makeRound(id,host,renderQ){
+  const r={started:false,i:0,score:0,res:[],qs:[],answered:false};
+  r.start=()=>{r.started=true;r.i=0;r.score=0;r.res=[];r.qs=sample(WORDS,ROUND);r.show();};
+  r.head=()=>{
+    const h=el('div','progress');const pips=el('div','pips');
+    for(let k=0;k<ROUND;k++){const i=el('i');if(k<r.res.length)i.className=r.res[k]?'ok':'no';else if(k===r.i)i.className='cur';pips.append(i);}
+    h.append(el('span',null,`Orð ${r.i+1} af ${ROUND} · ${r.score} rétt`),pips);return h;
+  };
+  r.show=()=>{
+    const s=$(host);s.replaceChildren();
+    if(r.i>=ROUND){
+      const prev=store.best[id];if(prev==null||r.score>prev){store.best[id]=r.score;save();stats();}
+      const d=el('div','done');d.append(el('div','big',`${r.score}/${ROUND}`));
+      d.append(el('p',null,r.score===ROUND?'Fullkomið! Þú kannt orðhlutana.':r.score>=7?'Vel gert. Rifjaðu upp orðin sem þú misstir af og reyndu aftur.':'Góð byrjun. Kíktu á spjöldin og reyndu aftur.'));
+      if(prev!=null&&r.score>prev)d.append(el('p',null,'Nýtt met!'));
+      const again=el('button','btn primary','Ný umferð');again.type='button';again.addEventListener('click',r.start);
+      const a=el('div','actions');a.append(again);d.append(a);s.append(r.head(),d);again.focus({preventScroll:true});return;
+    }
+    r.answered=false;s.append(r.head());renderQ(r,s,r.qs[r.i]);
+  };
+  r.finish=(ok,s,w,extra)=>{
+    if(r.answered)return;r.answered=true;r.res.push(ok);if(ok)r.score++;
+    s.querySelector('.progress').replaceWith(r.head());
+    const f=el('div','feedback '+(ok?'ok':'no'));
+    f.append(el('h3',null,ok?'Rétt!':`Rétt svar: ${w.w} = ${w.mean}`));
+    if(extra)f.append(extra);
+    f.append(breakdown(w));
+    // Orðhlutar í réttu svari færast upp eða niður í upprifjuninni.
+    if(!ok)w.parts.forEach(id=>{store.box[id]=1;});save();stats();
+    const a=el('div','actions');const nx=el('button','btn primary',r.i+1>=ROUND?'Sjá niðurstöðu':'Næsta orð');nx.type='button';
+    nx.addEventListener('click',()=>{r.i++;r.show();});a.append(nx);f.append(a);s.append(f);nx.focus({preventScroll:true});
+  };
+  return r;
+}
+
+/* ---------- Smíða orð ---------- */
+const build=makeRound('build','build',(r,s,w)=>{
+  s.append(el('p','sub','Smíðaðu orðið sem merkir'));
+  s.append(el('div','prompt',w.mean));
+  s.append(el('p','sub',`${w.parts.length} orðhlutar`));
+  const chosen=[];
+  const slots=el('div','slots');slots.setAttribute('aria-label','Orðið þitt');
+  const bankEl=el('div','tilebank');
+  // Gildrur: fyrst orðhlutar sem auðvelt er að rugla saman, svo handahófskenndir af sömu gerð.
+  const correct=w.parts.map(id=>P[id]);
+  const means=new Set(correct.map(p=>p.mean));
+  const pool=new Set();
+  w.parts.forEach(id=>(CONFUSE[id]||[]).forEach(c=>pool.add(c)));
+  const kinds=new Set(correct.map(p=>p.kind));
+  shuffle(PARTS.filter(p=>kinds.has(p.kind))).forEach(p=>{if(pool.size<8)pool.add(p.id);});
+  const distract=[...pool].filter(id=>!w.parts.includes(id)&&!means.has(P[id].mean)).slice(0,Math.max(3,7-w.parts.length));
+  const tiles=shuffle([...w.parts.map((id,i)=>({id,key:'c'+i})),...distract.map((id,i)=>({id,key:'d'+i}))]);
+  const btns={};
+  function drawSlots(){
+    slots.replaceChildren();
+    if(!chosen.length)slots.append(el('span','ph','Veldu orðhluta hér fyrir neðan'));
+    chosen.forEach((t,i)=>{const p=P[t.id];const b=el('button','tl '+kindClass(p.kind),p.form);b.type='button';b.setAttribute('aria-label',`Fjarlægja ${p.form}`);
+      b.addEventListener('click',()=>{if(r.answered)return;chosen.splice(i,1);btns[t.key].disabled=false;drawSlots();});slots.append(b);});
+    check.disabled=!chosen.length;
+  }
+  tiles.forEach(t=>{const p=P[t.id];const b=el('button','tl '+kindClass(p.kind),p.form);b.type='button';
+    b.addEventListener('click',()=>{if(r.answered)return;chosen.push(t);b.disabled=true;drawSlots();});btns[t.key]=b;bankEl.append(b);});
+  const hint=el('p','hint');hint.hidden=true;hint.textContent='Vísbending: orðið byrjar á „'+w.w.slice(0,3)+'…“ og er '+w.w.length+' stafir.';
+  const check=el('button','btn primary','Athuga');check.type='button';
+  const hb=el('button','btn','Vísbending');hb.type='button';hb.addEventListener('click',()=>{hint.hidden=false;hb.disabled=true;});
+  const give=el('button','btn','Sýna svar');give.type='button';
+  const acts=el('div','actions');acts.append(check,hb,give);
+  check.addEventListener('click',()=>{
+    const ok=chosen.length===w.parts.length&&chosen.every((t,i)=>t.id===w.parts[i]);
+    let extra=null;
+    if(!ok){extra=el('p',null,'Þú smíðaðir: '+(chosen.map(t=>P[t.id].form).join(' + ')||'ekkert'));}
+    Object.values(btns).forEach(b=>b.disabled=true);acts.hidden=true;r.finish(ok,s,w,extra);
+  });
+  give.addEventListener('click',()=>{Object.values(btns).forEach(b=>b.disabled=true);acts.hidden=true;r.finish(false,s,w,null);});
+  s.append(slots,bankEl,hint,acts);drawSlots();
+});
+
+/* ---------- Ráða í orð ---------- */
+const decode=makeRound('decode','decode',(r,s,w)=>{
+  s.append(el('p','sub','Hvað merkir orðið'));
+  s.append(el('div','prompt word',w.w));
+  s.append(el('p','sub','Veldu rétta merkingu.'));
+  // Gildrur: helst orð sem deila orðhluta með rétta orðinu, svo þarf að lesa allt orðið.
+  const share=shuffle(WORDS.filter(x=>x!==w&&x.parts.some(id=>w.parts.includes(id))));
+  const rest=shuffle(WORDS.filter(x=>x!==w&&!share.includes(x)));
+  const wrong=[...share,...rest].slice(0,3);
+  const opts=shuffle([w,...wrong]);
+  const box=el('div','opts');
+  opts.forEach(o=>{const b=el('button','opt',o.mean);b.type='button';
+    b.addEventListener('click',()=>{
+      const ok=o===w;box.querySelectorAll('button').forEach(x=>x.disabled=true);
+      b.classList.add(ok?'right':'wrong');if(!ok)[...box.children][opts.indexOf(w)].classList.add('right');
+      r.finish(ok,s,w,null);
+    });box.append(b);});
+  s.append(box);
+});
+
+/* ---------- Ræsing ---------- */
+stats();
+const start=(location.hash||'').slice(1);
+openTab(TABS.includes(start)?start:'bank');
+</script>
+</body>
+</html>

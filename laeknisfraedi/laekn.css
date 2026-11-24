@@ -1,0 +1,61 @@
+/* Læknisfræðivefur NASA. Sameiginlegt útlit fyrir forsíðu og smiðjur.
+   Litir: slagæðarautt (súrefnisríkt blóð) og bláæðablátt (súrefnissnautt), á hlýjum grunni. */
+:root{
+  --bg:#faf5f3; --card:#ffffff; --ink:#2b1517; --muted:#6e5557; --line:#ead9d6; --soft:#f4e7e4;
+  --art:#b3122a; --art-ink:#ffffff; --art-soft:#fbe3e3; --art-deep:#6d0b1a;
+  --ven:#2d4a8a; --ven-soft:#e4eaf6;
+  --ok:#2f7a4f; --okbg:#e3f1e8; --bad:#b3122a; --badbg:#fbe3e3;
+  --f-display:Georgia,"Times New Roman",serif;
+  --f-body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1a1012; --card:#24171a; --ink:#f3e6e6; --muted:#c0a5a7; --line:#3d2a2d; --soft:#2e1e21;
+  --art:#e0485c; --art-ink:#1a1012; --art-soft:#3f1a20; --art-deep:#4a0d17;
+  --ven:#8ea8e6; --ven-soft:#1f2a44;
+  --ok:#7fcf9c; --okbg:#1c3527; --bad:#f08a96; --badbg:#3f1a20; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1a1012; --card:#24171a; --ink:#f3e6e6; --muted:#c0a5a7; --line:#3d2a2d; --soft:#2e1e21;
+  --art:#e0485c; --art-ink:#1a1012; --art-soft:#3f1a20; --art-deep:#4a0d17;
+  --ven:#8ea8e6; --ven-soft:#1f2a44;
+  --ok:#7fcf9c; --okbg:#1c3527; --bad:#f08a96; --badbg:#3f1a20; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body)}
+button,input,select,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--ven);outline-offset:2px}
+a{color:var(--art)}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Haus */
+.band{background:var(--art-deep);color:#fff;position:relative;overflow:hidden}
+.band .wrap{padding-block:28px 30px;position:relative;z-index:1}
+.band .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.band .crumb{font:600 13px var(--f-body);letter-spacing:.04em;color:#f6cfd4;text-decoration:none}
+.band .crumb:hover{color:#fff;text-decoration:underline}
+.eyebrow{font:600 12px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#f6cfd4;margin:0 0 10px}
+.band h1{font:600 clamp(30px,5vw,48px)/1.08 var(--f-display);margin:0 0 10px;text-wrap:balance}
+.band p.lead{margin:0;max-width:62ch;color:#f6dfe2}
+.ecg{position:absolute;left:0;right:0;bottom:0;width:100%;height:56px;opacity:.25;pointer-events:none}
+.ecg path{fill:none;stroke:#ff9aa8;stroke-width:2;vector-effect:non-scaling-stroke}
+
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--art)}
+.btn.primary{background:var(--art);color:var(--art-ink);border-color:var(--art)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;border-color:rgba(255,255,255,.4);color:#fff}
+.btn.ghost:hover{background:rgba(255,255,255,.1);border-color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Gluggi */
+.modal{position:fixed;inset:0;background:rgba(20,6,8,.55);display:grid;place-items:center;padding:16px;z-index:30}
+.modal .box{background:var(--card);color:var(--ink);border-radius:14px;max-width:440px;width:100%;padding:20px 22px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h2{margin:0;font:600 22px var(--f-display)}
+.modal p{margin:0;color:var(--muted);font-size:14px}
+.modal input{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--bg);width:100%;letter-spacing:.2em;font-family:var(--f-mono)}
+.modal .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.err{color:var(--bad);font-size:14px;min-height:1.2em;margin:0}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
