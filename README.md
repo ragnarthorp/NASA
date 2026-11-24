@@ -19,6 +19,7 @@ Vefurinn er hreinn HTML/CSS/JavaScript og þarf hvorki netþjón né nettengingu
 
 - Vinnan vistast sjálfkrafa í vafranum (`localStorage`).
 - **Sækja JSON** vistar alla námskrána í eina skrá. **Opna skrá** les hana aftur inn. Einnig má draga skrá inn á síðuna.
+- Þegar heil námskrá er opnuð er spurt hvort aðeins eigi að flytja þemun inn (núverandi stillingar haldast) eða skipta allri vinnunni út. Þannig má safna þemum úr mörgum eldri skrám í eina námskrá með réttum stillingum. Þemum með sama heiti og sömu áherslulínum og þemu sem eru þegar til er sleppt.
 - Þemaskrár og safnafrit úr eldri þemamyndavefnum (útgáfu 4) má flytja inn sem þemu. Flokkurinn „Mannvera, heilsa og sjálfsmynd“ verður þá „Lífið, heilsa og sjálfsmynd“.
 
 ## Fyrir kennara

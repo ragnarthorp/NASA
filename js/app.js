@@ -599,22 +599,32 @@ function saveJSON(){download(new Blob([JSON.stringify(D,null,2)],{type:'applicat
 async function openFiles(files){
   if(!files.length)return;
   try{
-    let added=0;
+    let added=0,skipped=0;
+    /* Þema telst það sama ef heiti og áherslulínur eru eins (auðkenni breytast við hvern innflutning) */
+    const sig=t=>JSON.stringify([String(t.title||'').trim().toLowerCase(),(t.entries||[]).map(e=>[mapCat(e?.category),String(e?.note||'').trim()])]);
+    const have=new Set(D.themes.map(sig));
+    const addThemes=(list,topProjects)=>{const idMap={};
+      list.forEach(t=>{const n=normTheme({...t,id:uid()}),s=sig(n);if(have.has(s)){skipped++;return;}
+        have.add(s);D.themes.push(n);ui.theme=n.id;added++;if(typeof t.id==='string')idMap[t.id]=n.id;
+        if(Array.isArray(t.projects))D.projects.push(...t.projects.slice(0,200).map(p=>({...normProject(p),theme:n.id})));});
+      if(Array.isArray(topProjects))D.projects.push(...topProjects.slice(0,200).filter(p=>idMap[p?.theme]).map(p=>({...normProject(p),theme:idMap[p.theme]})));
+      changed();};
     for(const f of files){
       if(f.size>20e6)throw Error('Skráin „'+f.name+'“ er of stór.');
       let o;try{o=JSON.parse(await f.text());}catch{throw Error('Skráin „'+f.name+'“ er ekki gild JSON-skrá.');}
       if(o?.format==='nasa-skolanamskra'&&o.info){
-        const next=normalize(o);
-        if(!confirm('Opna námskrána „'+(next.meta.title||f.name)+'“ og skipta út núverandi vinnu?'))continue;
-        D=next;ui.theme=null;ui.balYears=null;ui.final=null;changed();persist();toast('Námskrá opnuð: '+(D.meta.title||f.name));
+        const next=normalize(o),name=next.meta.title||f.name,nt=next.themes.length;
+        if(nt&&confirm('„'+name+'“ er heil námskrá með '+nt+(nt===1?' þema':' þemum')+'.\n\nÍ lagi: flytja aðeins þemun inn og halda núverandi stillingum (vægi, texta og námsmati). Þemum sem eru þegar til er sleppt.\n\nHætta við: fleiri valkostir.')){
+          addThemes(Array.isArray(o.themes)?o.themes:[],o.projects);continue;}
+        if(!confirm('Skipta ALLRI núverandi vinnu út fyrir námskrána „'+name+'“, stillingar hennar meðtaldar?'))continue;
+        D=next;ui.theme=null;ui.balYears=null;ui.final=null;changed();persist();toast('Námskrá opnuð: '+name);
       }else{
         const list=o?.format==='nasa-skolanamskra'?o.themes:o?.libraryVersion===1?o.themes:[o];
         if(!Array.isArray(list)||!list.length||!list.every(t=>t&&typeof t.title==='string'&&Array.isArray(t.entries)))throw Error('Skráin „'+f.name+'“ inniheldur hvorki námskrá né þemu.');
-        list.forEach(t=>{const n=normTheme({...t,id:uid()});D.themes.push(n);ui.theme=n.id;added++;
-          if(Array.isArray(t.projects))D.projects.push(...t.projects.slice(0,200).map(p=>({...normProject(p),theme:n.id})));});changed();
+        addThemes(list);
       }
     }
-    if(added)toast(added+(added===1?' þema flutt':' þemu flutt')+' inn í námskrána.');
+    if(added||skipped)toast((added?added+(added===1?' þema flutt':' þemu flutt')+' inn í námskrána.':'Engin ný þemu.')+(skipped?' '+skipped+(skipped===1?' þema var':' þemu voru')+' þegar til og var sleppt.':''));
     render();renderStepper();
   }catch(err){toast(err.message||'Ekki tókst að opna skrána.');}
 }
