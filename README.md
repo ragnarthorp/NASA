@@ -21,6 +21,10 @@ Vefurinn er hreinn HTML/CSS/JavaScript og þarf hvorki netþjón né nettengingu
 - **Sækja JSON** vistar alla námskrána í eina skrá. **Opna skrá** les hana aftur inn. Einnig má draga skrá inn á síðuna.
 - Þemaskrár og safnafrit úr eldri þemamyndavefnum (útgáfu 4) má flytja inn sem þemu. Flokkurinn „Mannvera, heilsa og sjálfsmynd“ verður þá „Lífið, heilsa og sjálfsmynd“.
 
+## Fyrir kennara
+
+Hnappurinn **Fyrir kennara** efst á síðunni opnar kennarasvæði með kóða. Þar eru hagnýtar leiðbeiningar um vefinn, fyrirmæli fyrir gervigreind (greina námsefni, búa til áherslulínur sem JSON, niðurgreind markmið, prófdrög, verkefnahugmyndir, aðlögun texta og yfirlestur) og reitur til að líma inn JSON-svar gervigreindar sem nýtt þema. Kóðinn er aðeins einföld hindrun; vefurinn er opinn og ekkert á kennarasvæðinu er leynilegt.
+
 ## Markdown
 
 Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt**`, `*skáletrað*`, `~~yfirstrikað~~`, `` `kóði` ``, `[tengill](https://…)`, fyrirsagnir (`#`, `##`, `###`), punktalista og tölusetta lista (undirlistar með inndrætti), tilvitnanir (`>`), lárétta línu (`---`) og kóðablokkir (```` ``` ````). Línuskil innan efnisgreinar haldast.

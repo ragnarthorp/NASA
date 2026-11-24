@@ -171,3 +171,7 @@ main:focus{outline:none}
 .markdown s{color:var(--muted)}
 .themedl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--soft);border-radius:12px;padding:10px 12px;margin-bottom:16px}.themedl span{font-size:13px;font-weight:650;margin-right:4px}
 .entryhead select.wsel{flex:0 0 auto;width:auto;min-width:64px}
+.tnav{display:flex;gap:6px 18px;flex-wrap:wrap;padding:14px 22px}.tnav a{color:var(--accent);font-weight:600;text-decoration:none;font-size:14px}.tnav a:hover{text-decoration:underline}
+.prompt{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:#fbfcfb}
+.prompt pre{white-space:pre-wrap;background:#eef3f0;border-radius:8px;padding:10px 12px;font-size:12px;max-height:360px;overflow:auto;margin:8px 0 0}
+.prompt summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13px}
