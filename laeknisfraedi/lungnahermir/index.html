@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d0b1a">
+<title>Lungnahermir · Læknisfræði</title>
+<link rel="stylesheet" href="../laekn.css?v=20261124">
+<style>
+.band .wrap{padding-block:22px 24px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:22px;padding-block:24px 10px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;min-width:0}
+.panel h2{font:600 18px var(--f-display);margin:0 0 12px}
+.lbl{font:600 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+
+/* Aðstæður */
+.scen{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.scen button{border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.scen button:hover{border-color:var(--art)}
+.scen button[aria-pressed="true"]{background:var(--art);color:var(--art-ink);border-color:var(--art)}
+
+/* Stjórntæki */
+.ctl{margin-bottom:16px}
+.ctl .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}
+.ctl label{font-weight:600}
+.ctl output{font:600 15px var(--f-mono);color:var(--art);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ctl small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+input[type=range]{width:100%;accent-color:var(--art)}
+.marks{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px}
+.marks button{border:0;background:none;padding:0;font-size:12px;color:var(--ven);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.seg2{display:flex;flex-wrap:wrap;gap:6px}
+.seg2 button{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:6px 10px;font-size:13px;font-weight:600;cursor:pointer}
+.seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.sw{display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer}
+.sw input{width:20px;height:20px;accent-color:var(--art)}
+
+/* Mælir */
+.monitor{background:#120b0c;color:#e9f6ea;border-radius:16px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;border:1px solid #000}
+.monitor .read{display:flex;gap:26px;flex-wrap:wrap}
+.monitor .v{display:flex;flex-direction:column}
+.monitor .v span{font:600 12px var(--f-mono);letter-spacing:.1em;color:#8fb59a}
+.monitor .v b{font:600 64px/1 var(--f-mono);font-variant-numeric:tabular-nums;color:#5ff08a}
+.monitor .v.hr b{color:#ff6b7f}
+.monitor .v b small{font-size:20px;margin-left:2px;color:inherit;opacity:.8}
+.monitor .status{grid-column:1/-1;border-radius:10px;padding:8px 12px;font-weight:600;font-size:14px}
+.st-ok{background:#163a22;color:#9ff0b6} .st-mild{background:#3a3315;color:#f5dc86} .st-mod{background:#4a2a12;color:#ffb877} .st-sev{background:#4d1219;color:#ff9aa8}
+.monitor .warn{grid-column:1/-1;font-size:13px;color:#ffd2a6;margin:0}
+.anim{display:flex;gap:16px;align-items:center}
+.lungs{width:110px;height:100px}
+.lungs .lobe{transform-origin:55px 30px;animation:breathe var(--bdur,5s) ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}45%{transform:scale(var(--amp,1.08))}}
+.heart{width:44px;height:44px;animation:beat var(--hdur,.85s) ease-in-out infinite;transform-origin:center}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.18)}30%{transform:scale(1)}}
+
+/* Gildi */
+.vals{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:14px}
+.val{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.val span{display:block;font-size:12px;color:var(--muted)}
+.val b{font:600 18px var(--f-mono);font-variant-numeric:tabular-nums}
+.val small{font-size:12px;color:var(--muted);margin-left:4px}
+.val.flag{border-color:var(--art);background:var(--art-soft)}
+.drop{display:inline-block;width:14px;height:14px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);vertical-align:-2px;margin-right:6px;border:1px solid rgba(0,0,0,.2)}
+
+/* Gröf */
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px;padding-block:12px}
+.chart svg{width:100%;height:auto;display:block}
+.chart p{font-size:13px;color:var(--muted);margin:8px 0 0}
+svg text{fill:var(--muted);font:12px var(--f-body)}
+svg .axis{stroke:var(--line)}
+svg .grid{stroke:var(--line);stroke-dasharray:2 3}
+svg .ghost{fill:var(--soft)}
+svg .bar{fill:var(--art)}
+svg .bar.ven{fill:var(--ven)}
+svg .lab{fill:var(--ink);font-weight:600}
+svg .num{fill:var(--ink);font:600 12px var(--f-mono)}
+svg .normal{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4}
+svg .curve{fill:none;stroke:var(--art);stroke-width:2.5}
+svg .pt{fill:var(--art);stroke:var(--card);stroke-width:2}
+svg .mtn{fill:var(--soft);stroke:var(--line)}
+svg .you{fill:var(--art)}
+svg .alt{stroke:var(--art);stroke-width:1.5;stroke-dasharray:4 3}
+
+/* Verkefni */
+.tasks{padding-block:10px 70px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+.tasks ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}
+.tasks li{max-width:65ch}
+.tasks dl{margin:0;display:flex;flex-direction:column;gap:10px}
+.tasks dt{font-weight:700}
+.tasks dd{margin:0;color:var(--muted);font-size:15px}
+.disc{font-size:13px;color:var(--muted);margin-top:14px}
+
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){.monitor .v b{font-size:48px}.monitor{grid-template-columns:minmax(0,1fr)}.anim{justify-content:flex-start}}
+@media (prefers-reduced-motion:reduce){.lungs .lobe,.heart{animation:none}}
+</style>
+</head>
+<body>
+<header class="band">
+  <svg class="ecg" viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 45 H200 l10 -6 10 6 H260 l6 6 10 -48 10 58 8 -16 H360 q14 -14 28 0 H700 l10 -6 10 6 H760 l6 6 10 -48 10 58 8 -16 H860 q14 -14 28 0 H1200"/></svg>
+  <div class="wrap">
+    <div class="top"><a class="crumb" href="../index.html">← Læknisfræði</a></div>
+    <p class="eyebrow">Hæð · öndun · súrefni</p>
+    <h1>Lungnahermir</h1>
+    <p class="lead">Farðu upp á Everest, andaðu hraðar, kveiktu í sígarettu eða fáðu lungnabólgu. Fylgstu með því hvað verður um súrefnið á leiðinni úr loftinu inn í blóðið.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="layout">
+    <section class="panel" aria-labelledby="hCtl">
+      <h2 id="hCtl">Aðstæður</h2>
+      <p class="lbl">Tilbúin dæmi</p>
+      <div class="scen" id="scen"></div>
+
+      <div class="ctl">
+        <div class="top"><label for="h">Hæð yfir sjávarmáli</label><output id="oh"></output></div>
+        <input type="range" id="h" min="0" max="8849" step="1">
+        <div class="marks" id="hmarks"></div>
+      </div>
+      <div class="ctl">
+        <div class="top"><label for="rr">Öndunartíðni</label><output id="orr"></output></div>
+        <input type="range" id="rr" min="6" max="40" step="1">
+        <small>Eðlilegt í hvíld: 12–16 andardrættir á mínútu.</small>
+      </div>
+      <div class="ctl">
+        <div class="top"><label for="vt">Dýpt andardráttar</label><output id="ovt"></output></div>
+        <input type="range" id="vt" min="0.25" max="1.2" step="0.05">
+        <small>Eðlilegt í hvíld: um 0,5 L. Um 0,15 L af hverjum andardrætti nær aldrei niður í lungnablöðrurnar (dautt rúm).</small>
+      </div>
+      <div class="ctl">
+        <div class="top"><label for="days">Dagar í þessari hæð</label><output id="odays"></output></div>
+        <input type="range" id="days" min="0" max="40" step="1">
+        <small>Aðlögun: nýrun mynda rauðkornavaka (EPO) og jafna sýrustig blóðsins.</small>
+      </div>
+      <div class="ctl">
+        <p class="lbl" id="lCond">Lungun</p>
+        <div class="seg2" id="cond" role="group" aria-labelledby="lCond"></div>
+      </div>
+      <div class="ctl">
+        <p class="lbl" id="lSmoke">Reykur</p>
+        <div class="seg2" id="smoke" role="group" aria-labelledby="lSmoke"></div>
+      </div>
+      <div class="ctl">
+        <label class="sw"><input type="checkbox" id="o2"> Súrefniskútur</label>
+        <small id="o2note">Gríma með viðbótarsúrefni, eins og flestir nota á efstu hlutum Everest.</small>
+      </div>
+    </section>
+
+    <section aria-label="Niðurstöður">
+      <div class="monitor" role="group" aria-label="Súrefnismettunarmælir">
+        <div class="read">
+          <div class="v"><span>SpO₂</span><b><span id="spo2" style="font:inherit;color:inherit;letter-spacing:0">97</span><small>%</small></b></div>
+          <div class="v hr"><span>PÚLS</span><b><span id="hr" style="font:inherit;color:inherit;letter-spacing:0">70</span><small>/mín</small></b></div>
+        </div>
+        <div class="anim" aria-hidden="true">
+          <svg class="lungs" viewBox="0 0 110 100">
+            <path d="M55 6v26M55 32c-6 4-10 8-14 12M55 32c6 4 10 8 14 12" stroke="#b9a5a7" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <g class="lobe" id="lobes">
+              <path id="lobeL" d="M44 30c-12 0-30 20-32 46-1 12 8 18 18 16 12-2 18-12 18-26V36c0-4-2-6-4-6z"/>
+              <path id="lobeR" d="M66 30c12 0 30 20 32 46 1 12-8 18-18 16-12-2-18-12-18-26V36c0-4 2-6 4-6z"/>
+            </g>
+          </svg>
+          <svg class="heart" viewBox="0 0 24 24"><path id="heartP" d="M12 21s-7.5-4.6-9.5-9.2C1 8.4 3 5 6.4 5c2 0 3.3 1.1 4.1 2.3h3C14.3 6.1 15.6 5 17.6 5 21 5 23 8.4 21.5 11.8 19.5 16.4 12 21 12 21z"/></svg>
+        </div>
+        <div class="status" id="status"></div>
+        <p class="warn" id="warn" hidden></p>
+      </div>
+
+      <div class="vals" id="vals"></div>
+    </section>
+  </div>
+
+  <div class="charts">
+    <section class="panel chart" aria-labelledby="hCas">
+      <h2 id="hCas">Súrefnisfossinn</h2>
+      <svg id="cascade" viewBox="0 0 520 230" role="img" aria-label="Hlutþrýstingur súrefnis á leiðinni úr lofti í blóð"></svg>
+      <p>Hlutþrýstingur súrefnis (PO₂) á hverju þrepi, í kPa. Gráu súlurnar sýna heilbrigðan mann við sjávarmál. Súrefnið flæðir alltaf frá hærri þrýstingi til lægri.</p>
+    </section>
+    <section class="panel chart" aria-labelledby="hCur">
+      <h2 id="hCur">Súrefnismettunarferillinn</h2>
+      <svg id="curve" viewBox="0 0 520 260" role="img" aria-label="Samband súrefnisþrýstings og mettunar blóðrauða"></svg>
+      <p id="curveNote"></p>
+    </section>
+    <section class="panel chart" aria-labelledby="hMtn">
+      <h2 id="hMtn">Hvar ertu?</h2>
+      <svg id="mtn" viewBox="0 0 520 230" role="img" aria-label="Hæð miðað við þekkta staði"></svg>
+      <p>Loftþrýstingurinn fellur um nær helming á fyrstu 5,5 km. Hlutfall súrefnis í loftinu er samt alltaf um 21%.</p>
+    </section>
+  </div>
+
+  <div class="tasks">
+    <section class="panel">
+      <h2>Verkefni</h2>
+      <ol>
+        <li>Byrjaðu í <b>Reykjavík</b> og farðu upp á <b>Hvannadalshnúk</b>. Hvað breytist mikið? Hvers vegna finna flestir lítið fyrir þessari hæð?</li>
+        <li>Finndu hæðina þar sem mettun <b>óaðlagaðs</b> manns með eðlilega öndun fer undir 90%. Berðu hana saman við farþegarými flugvélar.</li>
+        <li>Á <b>tindi Everest</b> án súrefnis: berðu saman 12 og 30 andardrætti á mínútu. Hvers vegna hjálpar hröð öndun? Skoðaðu koltvísýringinn (PaCO₂) og lungnablöðrurnar í súrefnisfossinum.</li>
+        <li>Stilltu á <b>21 dag</b> í grunnbúðum. Hvað gerist við blóðrauðann og sýrustigið? Tengdu við rauðkornavaka (EPO).</li>
+        <li>Veldu <b>kolsýringseitrun</b>. Hvers vegna sýnir mælirinn nánast eðlilega mettun þó blóðið flytji miklu minna súrefni? Hvaða lit fær blóðið?</li>
+        <li>Berðu saman <b>astmakast</b> og <b>lungnabólgu</b>. Hvort hjálpar meira að anda dýpra eða að fá súrefni?</li>
+        <li>Andaðu mjög hratt við sjávarmál. Hvað gerist við koltvísýringinn og sýrustigið? Hvaða einkenni fylgja oföndun?</li>
+      </ol>
+    </section>
+    <section class="panel">
+      <h2>Hugtök</h2>
+      <dl>
+        <dt>Hlutþrýstingur (lögmál Daltons)</dt><dd>Hver lofttegund á sinn hluta af loftþrýstingnum. Súrefni er 21% af loftinu, svo hlutþrýstingur þess er 21% af loftþrýstingnum.</dd>
+        <dt>Lungnablöðrur (alveoli)</dt><dd>Örsmáar loftbólur þar sem súrefni flæðir yfir í blóðið og koltvísýringur út. Þær eru um 300 milljónir.</dd>
+        <dt>Súrefnismettun (SpO₂)</dt><dd>Hve stór hluti blóðrauðans (hemóglóbíns) ber súrefni. Mæld með ljósi í gegnum fingur. Eðlilegt er 95–100%.</dd>
+        <dt>Hypoxia</dt><dd>Súrefnisskortur: <i>hypo-</i> (of lítið) + <i>oxia</i> (súrefni).</dd>
+        <dt>Bohr-hrif</dt><dd>Í basísku blóði bindur blóðrauðinn súrefni fastar og ferillinn hliðrast til vinstri. Það hjálpar fjallgöngumönnum að ná súrefni úr þunnu lofti.</dd>
+        <dt>Kolsýringur (CO)</dt><dd>Binst blóðrauða um 200 sinnum fastar en súrefni og ruglar mettunarmælinn.</dd>
+      </dl>
+      <p class="disc">Einfaldað líkan til kennslu, byggt á loftþrýstingsjöfnu sem miðast við mælingar á Everest, lungnablöðrujöfnunni og mettunarferli Severinghaus. Tölurnar eru nálganir og ekki ætlaðar til læknisfræðilegra nota.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const KPA=7.50062; // mmHg í einu kPa
+const fmt=(x,d=1)=>x.toFixed(d).replace('.',',');
+
+const CONDS={
+  heil:{name:'Heilbrigð', vd:0.15, aag:5},
+  astmi:{name:'Astmakast', vd:0.26, aag:38},
+  copd:{name:'Lungnateppa (COPD)', vd:0.28, aag:20},
+  bolga:{name:'Lungnabólga', vd:0.17, aag:50},
+};
+const SMOKES={
+  nei:{name:'Reykir ekki', co:0.005},
+  pakki:{name:'Reykir pakka á dag', co:0.07},
+  eitrun:{name:'Kolsýringseitrun (eldsvoði)', co:0.30},
+};
+const PLACES=[
+  {h:0,name:'Reykjavík'},{h:914,name:'Esja'},{h:2110,name:'Hvannadalshnúkur'},{h:2400,name:'Farþegarými flugvélar'},
+  {h:4806,name:'Mont Blanc'},{h:5364,name:'Grunnbúðir Everest'},{h:5895,name:'Kilimanjaro'},{h:8849,name:'Everest'},
+];
+const SCEN=[
+  {id:'rvk',  name:'Heima í Reykjavík',            s:{h:0,rr:12,vt:0.5,days:0,cond:'heil',smoke:'nei',o2:false}},
+  {id:'hvd',  name:'Á Hvannadalshnúk',             s:{h:2110,rr:13,vt:0.5,days:0,cond:'heil',smoke:'nei',o2:false}},
+  {id:'gb0',  name:'Grunnbúðir Everest, nýkomin',  s:{h:5364,rr:16,vt:0.6,days:0,cond:'heil',smoke:'nei',o2:false}},
+  {id:'gb21', name:'Grunnbúðir eftir 3 vikur',     s:{h:5364,rr:20,vt:0.7,days:21,cond:'heil',smoke:'nei',o2:false}},
+  {id:'top',  name:'Tindur Everest án súrefnis',   s:{h:8849,rr:30,vt:0.6,days:40,cond:'heil',smoke:'nei',o2:false}},
+  {id:'topo2',name:'Tindur Everest með súrefni',   s:{h:8849,rr:20,vt:0.6,days:40,cond:'heil',smoke:'nei',o2:true}},
+  {id:'reyk', name:'Reykingamaður',                s:{h:0,rr:14,vt:0.5,days:0,cond:'heil',smoke:'pakki',o2:false}},
+  {id:'co',   name:'Kolsýringseitrun',             s:{h:0,rr:18,vt:0.5,days:0,cond:'heil',smoke:'eitrun',o2:false}},
+  {id:'astmi',name:'Astmakast',                    s:{h:0,rr:26,vt:0.45,days:0,cond:'astmi',smoke:'nei',o2:false}},
+  {id:'bolga',name:'Lungnabólga',                  s:{h:0,rr:22,vt:0.4,days:0,cond:'bolga',smoke:'nei',o2:false}},
+];
+let S={...SCEN[0].s}, active='rvk';
+
+/* ---------- Líkanið ---------- */
+// Loftþrýstingur (mmHg) eftir hæð. Jafna Wests, löguð að mælingum á Everest (um 253 mmHg á tindinum).
+const PB=h=>{const k=h/1000;return Math.exp(6.63268-0.1112*k-0.00149*k*k);};
+// Mettunarferill Severinghaus (P í mmHg).
+const sev=p=>p<=0?0:1/(23400/(p*p*p+150*p)+1);
+function model(s){
+  const c=CONDS[s.cond], sm=SMOKES[s.smoke];
+  const pb=PB(s.h), fio2=s.o2?0.35:0.21;
+  const pio2=fio2*(pb-47);                       // innöndunarloft, mettað vatnsgufu (47 mmHg)
+  const ve=s.rr*s.vt;                            // lungnaloftun
+  const va=Math.max(0.3,s.rr*Math.max(0.02,s.vt-c.vd)); // loftun lungnablaðra
+  const paco2=Math.min(110,Math.max(8,0.863*200/va));    // VCO2 200 ml/mín
+  const f=1-Math.exp(-s.days/3);                 // nýrun jafna sýrustig á nokkrum dögum
+  const hco3=Math.min(40,Math.max(8,24-(40-paco2)*(0.2+0.25*f)));
+  const ph=6.1+Math.log10(hco3/(0.03*paco2));
+  const pao2A=Math.max(0,pio2-paco2/0.8);        // lungnablöðrujafnan
+  const pao2=Math.max(4,pao2A-c.aag*Math.min(1,Math.max(0.3,pao2A/100)));
+  const pv=pao2*Math.pow(10,0.48*(ph-7.4));      // Bohr-hrif
+  const sa=sev(pv);
+  const hb=150+30*(1-Math.exp(-s.days/15))*Math.min(1,Math.max(0,(s.h-1500)/3500)); // g/L
+  const cohb=sm.co;
+  const saTrue=sa*(1-cohb);
+  const spo2=Math.min(1,saTrue+cohb*0.95);       // mælirinn les kolsýringsblóðrauða sem súrefnisbundinn
+  const cao2=1.34*hb*saTrue+0.03*pao2;           // ml O2 í lítra blóðs
+  const hr=Math.round(Math.min(180,Math.max(55,68+1.2*Math.max(0,96-saTrue*100)+(s.cond!=='heil'?12:0))));
+  // Jafngild hæð án súrefnis þegar súrefniskútur er notaður.
+  let eqH=null;
+  if(s.o2){const pbEq=pio2/0.21+47;const a=0.00149,b=0.1112,cc=Math.log(pbEq)-6.63268;const disc=b*b-4*a*cc;eqH=disc<0?0:Math.max(0,(-b+Math.sqrt(disc))/(2*a)*1000);}
+  return {pb,fio2,pio2,ve,va,paco2,hco3,ph,pao2A,pao2,sa,hb,cohb,saTrue,spo2,cao2,hr,eqH,pAir:fio2*pb};
+}
+const BASE=model({h:0,rr:12,vt:0.5,days:0,cond:'heil',smoke:'nei',o2:false});
+
+/* ---------- Stjórntæki ---------- */
+function btn(txt,on){const b=document.createElement('button');b.type='button';b.textContent=txt;b.addEventListener('click',on);return b;}
+SCEN.forEach(sc=>{const b=btn(sc.name,()=>{S={...sc.s};active=sc.id;sync();});b.dataset.id=sc.id;$('scen').append(b);});
+PLACES.forEach(p=>$('hmarks').append(btn(`${p.name} ${p.h.toLocaleString('is-IS')} m`,()=>{S.h=p.h;active=null;sync();})));
+Object.entries(CONDS).forEach(([k,c])=>{const b=btn(c.name,()=>{S.cond=k;active=null;sync();});b.dataset.k=k;$('cond').append(b);});
+Object.entries(SMOKES).forEach(([k,c])=>{const b=btn(c.name,()=>{S.smoke=k;active=null;sync();});b.dataset.k=k;$('smoke').append(b);});
+['h','rr','vt','days'].forEach(id=>$(id).addEventListener('input',()=>{S[id]=parseFloat($(id).value);active=null;render();markScen();}));
+$('o2').addEventListener('change',()=>{S.o2=$('o2').checked;active=null;render();markScen();});
+function markScen(){$('scen').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.id===active)));}
+function sync(){
+  $('h').value=S.h;$('rr').value=S.rr;$('vt').value=S.vt;$('days').value=S.days;$('o2').checked=S.o2;
+  markScen();render();
+}
+
+/* ---------- Birting ---------- */
+const NS='http://www.w3.org/2000/svg';
+function svgEl(tag,attrs,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;return e;}
+function mix(a,b,t){const pa=a.match(/\w\w/g).map(x=>parseInt(x,16)),pb=b.match(/\w\w/g).map(x=>parseInt(x,16));return '#'+pa.map((v,i)=>Math.round(v+(pb[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+function bloodColor(m){
+  if(m.cohb>0.15)return '#e8334f';                         // kolsýringsblóð er kirsuberjarautt
+  const t=Math.min(1,Math.max(0,(0.97-m.saTrue)/0.4));     // 97% → slagæðarautt, 57% → blárauðfjólublátt
+  return mix('c4162f','4a2f7a',t);
+}
+
+function render(){
+  const m=model(S);
+  $('oh').textContent=`${Math.round(S.h).toLocaleString('is-IS')} m`;
+  $('orr').textContent=`${S.rr} /mín`;
+  $('ovt').textContent=`${fmt(S.vt,2)} L`;
+  $('odays').textContent=S.days===0?'nýkomin':`${S.days} ${S.days===1?'dagur':'dagar'}`;
+  $('cond').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.k===S.cond)));
+  $('smoke').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.k===S.smoke)));
+  $('o2note').textContent=m.eqH!=null?`Með súrefniskút jafngildir innöndunarloftið því að vera í um ${(Math.round(m.eqH/100)*100).toLocaleString('is-IS')} m hæð án súrefnis.`:'Gríma með viðbótarsúrefni, eins og flestir nota á efstu hlutum Everest.';
+
+  // Mælir
+  const sp=Math.round(m.spo2*100), real=Math.round(m.saTrue*100);
+  $('spo2').textContent=sp;$('hr').textContent=m.hr;
+  let cls,txt;
+  if(real>=95){cls='st-ok';txt='Eðlileg súrefnismettun.';}
+  else if(real>=90){cls='st-mild';txt='Aðeins lág mettun. Flestir finna lítið fyrir þessu.';}
+  else if(real>=80){cls='st-mod';txt='Súrefnisskortur (hypoxia). Mæði, höfuðverkur og þreyta. Hætta á háfjallaveiki ef fólk fer of hratt upp.';}
+  else if(real>=65){cls='st-sev';txt='Alvarlegur súrefnisskortur. Skert dómgreind og hætta á lungna- eða heilabjúg. Við sjávarmál væri þetta neyðarástand.';}
+  else{cls='st-sev';txt='Lífshættulegur súrefnisskortur. Vel aðlagaðir fjallgöngumenn hafa þó mælst svona lágir á tindi Everest.';}
+  $('status').className='status '+cls;$('status').textContent=txt;
+  const warns=[];
+  if(sp-real>=4)warns.push(`Mælirinn blekkist: raunveruleg súrefnismettun blóðrauðans er aðeins ${real}%. Kolsýringur binst ${Math.round(m.cohb*100)}% blóðrauðans og mælirinn les hann sem súrefni.`);
+  if(m.paco2<25&&S.h<2500)warns.push('Oföndun: of lítill koltvísýringur gerir blóðið basískt. Svimi og náladofi í fingrum.');
+  if(m.paco2>50)warns.push('Vanöndun: koltvísýringur safnast upp og blóðið súrnar.');
+  $('warn').hidden=!warns.length;$('warn').textContent=warns.join(' ');
+
+  // Hreyfimyndir
+  const col=bloodColor(m);
+  ['lobeL','lobeR'].forEach(id=>$(id).setAttribute('fill',col));
+  $('heartP').setAttribute('fill',col);
+  $('lobes').style.setProperty('--bdur',(60/S.rr).toFixed(2)+'s');
+  $('lobes').style.setProperty('--amp',(1+Math.min(0.22,S.vt*0.15)).toFixed(3));
+  document.querySelector('.heart').style.setProperty('--hdur',(60/m.hr).toFixed(2)+'s');
+
+  // Gildi
+  const V=[
+    ['Loftþrýstingur',`${fmt(m.pb/KPA)} kPa`,`${Math.round(m.pb)} mmHg`],
+    ['Súrefni í lungnablöðrum (PAO₂)',`${fmt(m.pao2A/KPA)} kPa`,`${Math.round(m.pao2A)} mmHg`],
+    ['Súrefni í slagæðablóði (PaO₂)',`${fmt(m.pao2/KPA)} kPa`,`${Math.round(m.pao2)} mmHg`,m.pao2<60],
+    ['Koltvísýringur (PaCO₂)',`${fmt(m.paco2/KPA)} kPa`,`${Math.round(m.paco2)} mmHg`,m.paco2<30||m.paco2>50],
+    ['Sýrustig blóðs (pH)',fmt(m.ph,2),m.ph>7.45?'basískt':m.ph<7.35?'súrt':'eðlilegt',m.ph>7.45||m.ph<7.35],
+    ['Blóðrauði (Hb)',`${Math.round(m.hb)} g/L`,m.hb>155?'aukinn':'',false],
+    ['Lungnaloftun',`${fmt(m.ve)} L/mín`,`blöðrur ${fmt(m.va)} L/mín`],
+    ['Súrefni í blóði',`${Math.round(m.cao2)} ml/L`,`${Math.round(100*m.cao2/BASE.cao2)}% af eðlilegu`,m.cao2<0.8*BASE.cao2],
+  ];
+  const vals=$('vals');vals.replaceChildren();
+  V.forEach(([k,v,sub,flag])=>{const d=document.createElement('div');d.className='val'+(flag?' flag':'');const s=document.createElement('span');s.textContent=k;const b=document.createElement('b');b.textContent=v;const sm=document.createElement('small');sm.textContent=sub||'';d.append(s,b,sm);vals.append(d);});
+  const d=document.createElement('div');d.className='val';const s=document.createElement('span');s.textContent='Litur blóðsins';const b=document.createElement('b');const dr=document.createElement('i');dr.className='drop';dr.style.background=col;b.append(dr,document.createTextNode(m.cohb>0.15?'kirsuberjarautt':m.saTrue>0.9?'skærrautt':m.saTrue>0.75?'dökkrautt':'blárautt'));d.append(s,b);vals.append(d);
+
+  drawCascade(m);drawCurve(m);drawMtn();
+}
+
+function drawCascade(m){
+  const g=$('cascade');g.replaceChildren();
+  const rows=[['Loft',m.pAir,BASE.pAir],['Innöndunarloft',m.pio2,BASE.pio2],['Lungnablöðrur',m.pao2A,BASE.pao2A],['Slagæðablóð',m.pao2,BASE.pao2]];
+  const x0=130,w=330,max=36; // kPa
+  for(let k=0;k<=max;k+=6){const x=x0+w*k/max;g.append(svgEl('line',{x1:x,x2:x,y1:10,y2:200,class:'grid'}),svgEl('text',{x,y:218,'text-anchor':'middle'},k));}
+  g.append(svgEl('text',{x:x0+w,y:218,'text-anchor':'start',dx:8},'kPa'));
+  rows.forEach(([lab,v,base],i)=>{
+    const y=18+i*46;
+    g.append(svgEl('text',{x:x0-10,y:y+18,'text-anchor':'end',class:'lab'},lab));
+    g.append(svgEl('rect',{x:x0,y,width:w*Math.min(1,base/KPA/max),height:28,rx:4,class:'ghost'}));
+    g.append(svgEl('rect',{x:x0,y:y+6,width:Math.max(1,w*Math.min(1,v/KPA/max)),height:16,rx:3,class:'bar'+(i===3&&m.saTrue<0.8?' ven':'')}));
+    g.append(svgEl('text',{x:x0+Math.max(1,w*Math.min(1,v/KPA/max))+6,y:y+19,class:'num'},fmt(v/KPA)));
+  });
+}
+
+function drawCurve(m){
+  const g=$('curve');g.replaceChildren();
+  const X=p=>60+430*Math.min(1,p/105),Y=s=>220-200*s;
+  for(let k=0;k<=14;k+=2){const x=X(k*KPA);g.append(svgEl('line',{x1:x,x2:x,y1:20,y2:220,class:'grid'}),svgEl('text',{x,y:238,'text-anchor':'middle'},k));}
+  for(let s=0;s<=100;s+=25){const y=Y(s/100);g.append(svgEl('line',{x1:60,x2:490,y1:y,y2:y,class:'grid'}),svgEl('text',{x:52,y:y+4,'text-anchor':'end'},s+'%'));}
+  g.append(svgEl('text',{x:490,y:254,'text-anchor':'end'},'PO₂ í kPa'));
+  const path=f=>{let d='';for(let p=1;p<=105;p+=1){d+=(d?'L':'M')+X(p).toFixed(1)+' '+Y(f(p)).toFixed(1);}return d;};
+  const shift=Math.pow(10,0.48*(m.ph-7.4));
+  g.append(svgEl('path',{d:path(sev),class:'normal'}));
+  g.append(svgEl('path',{d:path(p=>sev(p*shift)),class:'curve'}));
+  const px=X(m.pao2),py=Y(m.sa);
+  g.append(svgEl('line',{x1:px,x2:px,y1:py,y2:220,class:'alt'}));
+  g.append(svgEl('circle',{cx:px,cy:py,r:7,class:'pt'}));
+  const t=svgEl('text',{x:px+10,y:py+(py<60?22:-10),class:'num'},`${fmt(m.pao2/KPA)} kPa → ${Math.round(m.sa*100)}%`);g.append(t);
+  $('curveNote').textContent=(m.ph>7.45?'Blóðið er basískt og ferillinn hliðrast til vinstri (Bohr-hrif): blóðrauðinn grípur súrefni betur en venjulega. ':m.ph<7.35?'Blóðið er súrt og ferillinn hliðrast til hægri: blóðrauðinn sleppir súrefni auðveldar. ':'')+'Brotna línan er eðlilegur ferill. Ferillinn er flatur efst, svo mettunin fellur lítið fyrr en súrefnisþrýstingurinn fer niður fyrir um 8 kPa.';
+}
+
+function drawMtn(){
+  const g=$('mtn');g.replaceChildren();
+  const Y=h=>200-180*h/9000;
+  for(let h=0;h<=9000;h+=1500){const y=Y(h);g.append(svgEl('line',{x1:40,x2:510,y1:y,y2:y,class:'grid'}),svgEl('text',{x:34,y:y+4,'text-anchor':'end'},(h/1000).toLocaleString('is-IS')+' km'));}
+  g.append(svgEl('path',{d:`M40 200 L120 ${Y(914)} L160 ${Y(500)} L230 ${Y(2110)} L270 ${Y(1500)} L330 ${Y(4806)} L370 ${Y(4000)} L430 ${Y(8849)} L470 ${Y(6500)} L510 ${Y(5000)} L510 200 Z`,class:'mtn'}));
+  [['Esja',120,914],['Hvannadalshn.',230,2110],['Mont Blanc',330,4806],['Everest',430,8849]].forEach(([n,x,h])=>g.append(svgEl('text',{x,y:Y(h)-6,'text-anchor':'middle'},n)));
+  const y=Y(S.h);
+  g.append(svgEl('line',{x1:40,x2:510,y1:y,y2:y,class:'alt'}));
+  g.append(svgEl('circle',{cx:70,cy:y,r:7,class:'you'}));
+  g.append(svgEl('text',{x:82,y:S.h>7000?y+20:y-8,class:'num'},`Þú: ${Math.round(S.h).toLocaleString('is-IS')} m · ${Math.round(100*PB(S.h)/PB(0))}% af loftþrýstingi við sjávarmál`));
+}
+
+sync();
+</script>
+</body>
+</html>

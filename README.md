@@ -55,5 +55,6 @@ Textareitir styðja markdown og það birtist eins á vefnum og í PDF: `**feitt
 `laeknisfraedi/index.html` er forsíða sex vikna þemalotu um læknisfræði (rautt útlit). Þar eru flísar fyrir verkfæri lotunnar og hnappur fyrir kennara sem opnar, með sama kóða og kennarasvæði námskrárvefsins, hlekk á hugmyndaskjal og kennaramat lotunnar.
 
 - **Orðsmiðjan** (`laeknisfraedi/ordsmidjan/`): 68 grískir og latneskir orðhlutar og 52 læknisfræðiorð (gögnin eru í `ord.js`). Fjórar æfingar: orðabanki með leit, upprifjunarspjöld með fimm hólfum, *Smíða orð* (íslensk merking → orðhlutar í réttri röð) og *Ráða í orð* (orð → merking). Framvinda og bestu umferðir vistast í vafranum (`localStorage`).
-- Í vinnslu: Líffærakort, Ferð blóðdropans, Hjartalínurit, Lungnahermir, Glósustofa og Prófvél.
+- **Lungnahermir** (`laeknisfraedi/lungnahermir/`): nemandi stillir hæð (0–8849 m), öndunartíðni, dýpt andardráttar, daga í aðlögun, lungnasjúkdóm, reyk og súrefniskút og sér súrefnismettun og púls eins og á mæli, súrefnisfossinn (PO₂ frá lofti í slagæðablóð), súrefnismettunarferilinn með Bohr-hliðrun og hæð miðað við þekkta staði. Tilbúin dæmi (Reykjavík, Hvannadalshnúkur, grunnbúðir og tindur Everest, reykingamaður, kolsýringseitrun, astmakast, lungnabólga) og verkefni fylgja. Líkanið er einfaldað: loftþrýstingsjafna Wests, lungnablöðrujafnan og mettunarferill Severinghaus.
+- Í vinnslu: Líffærakort, Ferð blóðdropans, Hjartalínurit, Glósustofa og Prófvél.
 - `laeknisfraedi/laekn.css` er sameiginlegt útlit allra síðna lotunnar.
