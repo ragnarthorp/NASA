@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d0b1a">
+<title>Líffærakort · Læknisfræði</title>
+<link rel="stylesheet" href="../laekn.css?v=20261124">
+<style>
+.band .wrap{padding-block:22px 24px}
+.layout{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:24px;padding-block:22px 70px;align-items:start}
+.mapcol{position:sticky;top:12px}
+.map{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;position:relative}
+.map svg{display:block;width:100%;height:auto;max-height:calc(100vh - 120px)}
+.sexsw{display:flex;gap:6px;justify-content:center;margin-top:8px;font-size:13px;color:var(--muted);align-items:center;flex-wrap:wrap}
+.sexsw button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:4px 10px;font-size:13px;font-weight:600;cursor:pointer}
+.sexsw button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.hint{font-size:13px;color:var(--muted);text-align:center;margin:6px 0 0}
+
+/* Kortið */
+.body-s{fill:var(--soft);stroke:var(--line);stroke-width:2}
+.org{cursor:pointer;transition:opacity .25s}
+.org .f{stroke:rgba(0,0,0,.18);stroke-width:1}
+.org .deco{fill:none;stroke:rgba(0,0,0,.28);stroke-width:1.2;pointer-events:none}
+.org .hit{fill:none;stroke:transparent;stroke-linecap:round}
+.org .ln{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.org.sel .f{stroke:var(--ink);stroke-width:2.2}
+.org.sel .ln{filter:drop-shadow(0 0 2px var(--ink))}
+.org:hover .f{stroke:var(--ink);stroke-width:1.6}
+.org.dim{opacity:.07}
+.org.off{display:none}
+.org.neutral .f{fill:var(--muted)!important;opacity:.45}
+.org.neutral .ln{stroke:var(--muted)!important;opacity:.5}
+.org.good .f{fill:var(--ok)!important;opacity:1}
+.org.bad .f{fill:var(--bad)!important;opacity:1}
+.org.target .f{fill:var(--art)!important;opacity:1}
+.org.target .ln{stroke:var(--art)!important;opacity:1}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-130%)}
+
+/* Spjöldin */
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none;margin-bottom:16px}
+.tabs button{border:0;background:none;padding:10px 12px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button:hover{color:var(--ink)}
+.tabs button[aria-selected="true"]{color:var(--art);border-bottom-color:var(--art)}
+.intro{color:var(--muted);margin:0 0 14px;max-width:70ch}
+.sysgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.sysbtn{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left;min-width:0}
+.sysbtn:hover{border-color:var(--c)}
+.sysbtn[aria-pressed="true"]{border-color:var(--c);box-shadow:inset 4px 0 0 var(--c)}
+.sysbtn i{flex:none;width:14px;height:14px;border-radius:4px;background:var(--c)}
+.sysbtn b{display:block;font-size:15px}
+.sysbtn small{color:var(--muted);font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--c,var(--art));border-radius:14px;padding:18px 20px;margin-top:16px}
+.card h2{margin:0;font:600 26px/1.15 var(--f-display)}
+.card .lat{color:var(--muted);font-style:italic;margin:2px 0 12px}
+.card h3{font:600 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+.card p{margin:0;max-width:68ch}
+.card ul{margin:0;padding-left:20px}
+.back{border:0;background:none;color:var(--ven);font-weight:600;cursor:pointer;padding:0;margin-bottom:8px;font-size:14px}
+.olist{display:flex;flex-wrap:wrap;gap:6px}
+.olist button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:14px;text-align:left}
+.olist button:hover{border-color:var(--c,var(--art))}
+.olist button span{color:var(--muted);font-style:italic;font-size:12px;margin-left:4px}
+.spec{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;background:var(--bg);border-radius:10px;padding:10px 12px}
+.spec b{font-size:17px}
+.spec span{color:var(--muted);font-style:italic}
+.parts{display:flex;flex-wrap:wrap;gap:6px}
+.parts a{display:inline-flex;gap:6px;align-items:baseline;border:1px solid var(--line);border-radius:8px;padding:4px 9px;text-decoration:none;color:var(--ink);background:var(--bg)}
+.parts a b{font-family:var(--f-mono);color:var(--art)}
+.parts a span{font-size:13px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:13px;font-weight:600;cursor:pointer;background:var(--card)}
+.chip i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+
+/* Æfingar */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.pips{display:flex;gap:4px}
+.pips i{width:16px;height:6px;border-radius:3px;background:var(--soft)}
+.pips i.ok{background:var(--ok)} .pips i.no{background:var(--bad)} .pips i.cur{background:var(--ven)}
+.ask{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.ask .q{font:600 clamp(22px,3.5vw,30px)/1.2 var(--f-display);margin:0 0 4px}
+.ask .sub{color:var(--muted);margin:0}
+.case{font-size:18px;line-height:1.5;margin:0}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:14px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:600}
+.opt:hover:not(:disabled){border-color:var(--art)}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.opt.wrong{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+.feedback{margin-top:14px;border-radius:12px;padding:12px 14px}
+.feedback.ok{background:var(--okbg)} .feedback.no{background:var(--badbg)}
+.feedback h3{margin:0 0 6px;font-size:16px}
+.feedback p{margin:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.done .big{font:600 48px var(--f-display);color:var(--art)}
+
+@media (max-width:860px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .mapcol{position:static}
+  .map svg{max-height:62vh}
+}
+@media (prefers-reduced-motion:reduce){.org{transition:none}}
+</style>
+</head>
+<body>
+<header class="band">
+  <svg class="ecg" viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 45 H200 l10 -6 10 6 H260 l6 6 10 -48 10 58 8 -16 H360 q14 -14 28 0 H700 l10 -6 10 6 H760 l6 6 10 -48 10 58 8 -16 H860 q14 -14 28 0 H1200"/></svg>
+  <div class="wrap">
+    <div class="top"><a class="crumb" href="../index.html">← Læknisfræði</a></div>
+    <p class="eyebrow">Anatomia · líffærafræði</p>
+    <h1>Líffærakort</h1>
+    <p class="lead">Ellefu líffærakerfi og læknarnir sem sinna þeim. Smelltu á kerfi eða líffæri til að kynnast því, og prófaðu svo sjálf þig.</p>
+  </div>
+</header>
+
+<main class="wrap layout">
+  <div class="mapcol">
+    <div class="map" id="mapbox">
+      <svg id="map" viewBox="80 8 140 0" role="img" aria-label="Skýringarmynd af mannslíkamanum með líffærum"></svg>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+    <div class="sexsw" role="group" aria-label="Æxlunarfæri">
+      <span>Æxlunarfæri:</span>
+      <button type="button" data-sex="f" aria-pressed="true">Kona</button>
+      <button type="button" data-sex="m" aria-pressed="false">Karl</button>
+    </div>
+    <p class="hint">Myndin er einfölduð skýringarmynd, horft framan á líkamann. Hægri hlið manneskjunnar er vinstra megin á myndinni.</p>
+  </div>
+
+  <div>
+    <nav class="tabs" role="tablist" aria-label="Hlutar">
+      <button role="tab" id="t-kanna" aria-selected="true">Kanna</button>
+      <button role="tab" id="t-hvar" aria-selected="false">Hvar er …?</button>
+      <button role="tab" id="t-kerfi" aria-selected="false">Hvaða kerfi?</button>
+      <button role="tab" id="t-laeknir" aria-selected="false">Til hvaða læknis?</button>
+    </nav>
+    <section id="panel" aria-live="polite"></section>
+  </div>
+</main>
+
+<script src="../ordsmidjan/ord.js?v=20261124"></script>
+<script src="liffaeri.js?v=20261124"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+const SYS=Object.fromEntries(SYSTEMS.map(s=>[s.id,s]));
+const ORG=Object.fromEntries(ORGANS.map(o=>[o.id,o]));
+const PART=typeof PARTS!=='undefined'?Object.fromEntries(PARTS.map(p=>[p.id,p])):{};
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function sv(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)if(attrs[k]!=null)e.setAttribute(k,attrs[k]);return e;}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const organsOf=sid=>ORGANS.filter(o=>o.sys.includes(sid)&&(!o.sex||o.sex===sex));
+
+let sex='f';
+try{const s=localStorage.getItem('nasa-liffaerakort-kyn');if(s==='m'||s==='f')sex=s;}catch(e){}
+
+/* ---------- Teikna kortið ---------- */
+const map=$('map');
+map.setAttribute('viewBox','40 6 220 626');
+const gBody=sv('g',{});
+[BODY.torso,BODY.neck].forEach(s=>gBody.append(sv('path',{d:s.d,class:'body-s'})));
+gBody.append(sv('ellipse',{cx:BODY.head.e[0],cy:BODY.head.e[1],rx:BODY.head.e[2],ry:BODY.head.e[3],class:'body-s'}));
+map.append(gBody);
+const G={};
+ORGANS.forEach(o=>{
+  const col=SYS[o.sys[0]].col;
+  const g=sv('g',{class:'org','data-id':o.id});
+  o.shapes.forEach(s=>{
+    if(s.skin){
+      [BODY.torso.d].forEach(d=>{g.append(sv('path',{d,class:'ln',stroke:col,'stroke-width':5}));g.append(sv('path',{d,class:'hit','stroke-width':12}));});
+      g.append(sv('ellipse',{cx:150,cy:58,rx:34,ry:44,class:'ln',stroke:col,'stroke-width':5}));
+      g.append(sv('ellipse',{cx:150,cy:58,rx:34,ry:44,class:'hit','stroke-width':12}));
+      return;
+    }
+    if(s.deco){g.append(sv('path',{d:s.d,class:'deco'}));return;}
+    if(s.w){
+      g.append(sv('path',{d:s.d,class:'ln',stroke:s.col||col,'stroke-width':s.w}));
+      g.append(sv('path',{d:s.d,class:'hit','stroke-width':Math.max(10,s.w+6)}));
+      return;
+    }
+    const node=s.e?sv('ellipse',{cx:s.e[0],cy:s.e[1],rx:s.e[2],ry:s.e[3],transform:s.t}):sv('path',{d:s.d,transform:s.t});
+    node.setAttribute('class','f');node.setAttribute('fill',col);g.append(node);
+  });
+  const t=sv('title',{});t.textContent=o.name;g.prepend(t);
+  map.append(g);G[o.id]=g;
+});
+
+/* Svif-merki með nafni líffæris */
+const tip=$('tip');
+map.addEventListener('pointermove',e=>{
+  const g=e.target.closest('.org');
+  if(!g||g.classList.contains('dim')||mode!=='kanna'){tip.hidden=true;return;}
+  const r=$('mapbox').getBoundingClientRect();
+  tip.textContent=ORG[g.dataset.id].name;tip.style.left=(e.clientX-r.left)+'px';tip.style.top=(e.clientY-r.top)+'px';tip.hidden=false;
+});
+map.addEventListener('pointerleave',()=>{tip.hidden=true;});
+map.addEventListener('click',e=>{const g=e.target.closest('.org');if(!g||g.classList.contains('off'))return;onMapClick(g.dataset.id);});
+
+/* Sýnileiki líffæra: state = {focus: kerfi eða null, sel: líffæri, only: listi, neutral: bool, marks:{id:'good'|'bad'|'target'}} */
+function paint(st){
+  ORGANS.forEach(o=>{
+    const g=G[o.id];let cls='org';
+    const hiddenSex=o.sex&&o.sex!==sex;
+    if(hiddenSex)cls+=' off';
+    else if(st.only&&!st.only.includes(o.id))cls+=' off';
+    else if(st.focus){if(!o.sys.includes(st.focus))cls+=' dim';}
+    else if(!st.only&&['stod','vodvar','hud'].includes(o.sys[0]))cls+=' dim';
+    if(st.neutral)cls+=' neutral';
+    if(st.sel===o.id)cls+=' sel';
+    if(st.marks&&st.marks[o.id])cls+=' '+st.marks[o.id];
+    g.setAttribute('class',cls);
+  });
+}
+
+/* Kyn */
+document.querySelectorAll('.sexsw button').forEach(b=>b.addEventListener('click',()=>{
+  sex=b.dataset.sex;try{localStorage.setItem('nasa-liffaerakort-kyn',sex);}catch(e){}
+  document.querySelectorAll('.sexsw button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  if(mode==='kanna')renderKanna();else paint(lastPaint);
+}));
+document.querySelectorAll('.sexsw button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.sex===sex)));
+
+/* ---------- Kanna ---------- */
+let mode='kanna', focus=null, sel=null, lastPaint={};
+function p(st){lastPaint=st;paint(st);}
+function onMapClick(id){
+  if(mode==='kanna'){sel=id;if(!focus||!ORG[id].sys.includes(focus))focus=ORG[id].sys[0];renderKanna();}
+  else if(mode==='hvar')hvar.click(id);
+}
+function sysButton(s,pressed,onclick){
+  const b=el('button','sysbtn');b.type='button';b.style.setProperty('--c',s.col);b.setAttribute('aria-pressed',String(!!pressed));
+  const i=el('i');const t=el('div');t.append(el('b',null,s.name),el('small',null,`${organsOf(s.id).length} líffæri · ${s.spec.toLowerCase()}`));
+  b.append(i,t);b.addEventListener('click',onclick);return b;
+}
+function sysChip(sid){const s=SYS[sid];const c=el('button','chip');c.type='button';c.style.setProperty('--c',s.col);c.append(el('i'),document.createTextNode(s.name));c.addEventListener('click',()=>{focus=sid;sel=null;renderKanna();});return c;}
+function renderKanna(){
+  const pan=$('panel');pan.replaceChildren();
+  p({focus,sel});
+  if(!focus){
+    pan.append(el('p','intro','Veldu líffærakerfi til að sjá líffærin þess lýsa upp, eða smelltu beint á líffæri á myndinni. Bein, vöðvar og húð eru dauf þar til þú velur þau kerfi.'));
+    const grid=el('div','sysgrid');SYSTEMS.forEach(s=>grid.append(sysButton(s,false,()=>{focus=s.id;sel=null;renderKanna();})));pan.append(grid);
+    return;
+  }
+  const s=SYS[focus];
+  const grid=el('div','sysgrid');SYSTEMS.forEach(x=>grid.append(sysButton(x,x.id===focus,()=>{focus=x.id===focus?null:x.id;sel=null;renderKanna();})));pan.append(grid);
+  const card=el('article','card');card.style.setProperty('--c',s.col);
+  if(sel){
+    const o=ORG[sel];
+    const bk=el('button','back',`← ${s.name}`);bk.type='button';bk.addEventListener('click',()=>{sel=null;renderKanna();});card.append(bk);
+    card.append(el('h2',null,o.name),el('p','lat',o.lat));
+    card.append(el('p',null,o.desc));
+    card.append(el('h3',null,o.sys.length>1?'Tilheyrir kerfunum':'Kerfi'));const ch=el('div','chips');o.sys.forEach(x=>ch.append(sysChip(x)));card.append(ch);
+    if(o.link){const a=el('a','btn primary',o.link[1]+' →');a.href=o.link[0];a.style.marginTop='16px';card.append(a);}
+    const others=organsOf(focus).filter(x=>x.id!==sel);
+    if(others.length){card.append(el('h3',null,`Fleiri líffæri í ${s.name.toLowerCase()}`));card.append(organList(others));}
+  }else{
+    card.append(el('h2',null,s.name),el('p','lat',s.latin));
+    card.append(el('h3',null,'Hlutverk'),el('p',null,s.role));
+    card.append(el('h3',null,'Líffæri'),organList(organsOf(focus)));
+    card.append(el('h3',null,'Sérgrein'));const sp=el('div','spec');sp.append(el('b',null,s.spec),el('span',null,s.specLat),el('small',null,`Læknirinn: ${s.doctor}`));card.append(sp);
+    card.append(el('h3',null,'Dæmi um sjúkdóma'));const ul=el('ul');s.disease.forEach(d=>ul.append(el('li',null,d)));card.append(ul);
+    card.append(el('h3',null,'Vinnur með'));const ch=el('div','chips');s.works.forEach(x=>ch.append(sysChip(x)));card.append(ch);
+    const parts=s.parts.filter(id=>PART[id]);
+    if(parts.length){card.append(el('h3',null,'Orðhlutar úr Orðsmiðjunni'));const pr=el('div','parts');parts.forEach(id=>{const a=el('a');a.href='../ordsmidjan/index.html#bank';a.append(el('b',null,PART[id].form),el('span',null,PART[id].mean));pr.append(a);});card.append(pr);}
+    if(focus==='aexlun')card.append(el('p','hint',`Sýnd eru æxlunarfæri ${sex==='f'?'konu':'karls'}. Skiptu undir myndinni.`));
+  }
+  pan.append(card);
+}
+function organList(list){
+  const d=el('div','olist');
+  list.forEach(o=>{const b=el('button');b.type='button';b.append(document.createTextNode(o.name),el('span',null,o.lat));b.addEventListener('click',()=>{sel=o.id;renderKanna();});d.append(b);});
+  return d;
+}
+
+/* ---------- Sameiginlegt fyrir æfingar ---------- */
+const N=10, KEY='nasa-liffaerakort-v1';
+let best={};try{best=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){}
+function round(id,make,render){
+  const r={id,i:0,score:0,res:[],qs:[],answered:false};
+  r.start=()=>{r.i=0;r.score=0;r.res=[];r.qs=make();r.show();};
+  r.head=()=>{const h=el('div','qhead');const pips=el('div','pips');for(let k=0;k<N;k++){const i=el('i');if(k<r.res.length)i.className=r.res[k]?'ok':'no';else if(k===r.i)i.className='cur';pips.append(i);}
+    const b=best[id];h.append(el('span',null,`${Math.min(r.i+1,N)} af ${N} · ${r.score} rétt${b!=null?` · besta ${b}/${N}`:''}`),pips);return h;};
+  r.show=()=>{
+    const pan=$('panel');pan.replaceChildren();r.answered=false;
+    if(r.i>=N){
+      if(best[id]==null||r.score>best[id]){best[id]=r.score;try{localStorage.setItem(KEY,JSON.stringify(best));}catch(e){}}
+      const d=el('div','ask done');d.append(el('div','big',`${r.score}/${N}`),el('p',null,r.score>=9?'Frábært!':r.score>=6?'Vel gert. Skoðaðu líffærin sem vöfðust fyrir þér í „Kanna“.':'Góð byrjun. Farðu í „Kanna“ og reyndu svo aftur.'));
+      const a=el('div','actions');const b=el('button','btn primary','Ný umferð');b.type='button';b.addEventListener('click',r.start);a.append(b);d.append(a);pan.append(r.head(),d);p({neutral:false});b.focus({preventScroll:true});return;
+    }
+    pan.append(r.head());render(r,pan,r.qs[r.i]);
+  };
+  r.finish=(ok,pan,title,text)=>{
+    if(r.answered)return;r.answered=true;r.res.push(ok);if(ok)r.score++;
+    pan.firstChild.replaceWith(r.head());
+    const f=el('div','feedback '+(ok?'ok':'no'));f.append(el('h3',null,title));if(text)f.append(el('p',null,text));
+    const a=el('div','actions');const nx=el('button','btn primary',r.i+1>=N?'Sjá niðurstöðu':'Næsta');nx.type='button';nx.addEventListener('click',()=>{r.i++;r.show();});a.append(nx);f.append(a);
+    pan.append(f);nx.focus({preventScroll:true});
+  };
+  return r;
+}
+
+/* Hvar er …? */
+const hvar=round('hvar',()=>shuffle(WHERE_POOL).slice(0,N),(r,pan,id)=>{
+  const o=ORG[id];
+  const ask=el('div','ask');ask.append(el('p','sub','Smelltu á'),el('p','q',`${o.name}`),el('p','sub',o.lat));pan.append(ask);
+  p({only:WHERE_POOL,neutral:true});hvar.cur=id;
+});
+hvar.click=id=>{
+  if(hvar.answered||!hvar.cur)return;
+  const ok=id===hvar.cur,o=ORG[hvar.cur];
+  const marks={[hvar.cur]:'good'};if(!ok)marks[id]='bad';
+  p({only:WHERE_POOL,neutral:true,marks});
+  hvar.finish(ok,$('panel'),ok?`Rétt, þetta er ${o.name.toLowerCase()}.`:`Þetta var ${ORG[id].name.toLowerCase()}. ${o.name} er merkt með grænu.`,o.desc);
+};
+
+/* Hvaða kerfi? */
+const kerfi=round('kerfi',()=>shuffle(ORGANS.filter(o=>!['hud'].includes(o.id))).slice(0,N).map(o=>o.id),(r,pan,id)=>{
+  const o=ORG[id];if(o.sex&&o.sex!==sex){sex=o.sex;document.querySelectorAll('.sexsw button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.sex===sex)));}
+  p({marks:{[id]:'target'},neutral:true});
+  const ask=el('div','ask');ask.append(el('p','sub','Líffærið sem er merkt með rauðu er'),el('p','q',o.name),el('p','sub',`${o.lat}. Í hvaða kerfi er það?`));pan.append(ask);
+  const wrong=shuffle(SYSTEMS.filter(s=>!o.sys.includes(s.id))).slice(0,3);
+  const opts=el('div','opts');
+  shuffle([SYS[o.sys[0]],...wrong]).forEach(s=>{const b=el('button','opt',s.name);b.type='button';b.addEventListener('click',()=>{
+    const ok=o.sys.includes(s.id);opts.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.textContent===SYS[o.sys[0]].name)x.classList.add('right');});if(!ok)b.classList.add('wrong');
+    const extra=o.sys.length>1?` ${o.name} tilheyrir líka ${o.sys.slice(1).map(x=>SYS[x].name.toLowerCase()).join(' og ')}.`:'';
+    r.finish(ok,pan,ok?`Rétt: ${SYS[o.sys[0]].name}.`:`${o.name} tilheyrir ${SYS[o.sys[0]].name.toLowerCase()}.`,o.desc+extra);
+  });opts.append(b);});
+  pan.append(opts);
+});
+
+/* Til hvaða læknis? */
+const laeknir=round('laeknir',()=>shuffle(CASES).slice(0,N),(r,pan,c)=>{
+  p({neutral:true,only:[]});
+  const ask=el('div','ask');ask.append(el('p','sub','Sjúkrasaga'),el('p','case',c.text),el('p','sub','Til hvaða sérgreinar ætti að vísa sjúklingnum?'));pan.append(ask);
+  const wrong=shuffle(SYSTEMS.filter(s=>s.id!==c.sys)).slice(0,3);
+  const opts=el('div','opts');
+  shuffle([SYS[c.sys],...wrong]).forEach(s=>{const b=el('button','opt');b.type='button';b.append(document.createTextNode(s.spec));
+    b.addEventListener('click',()=>{
+      const ok=s.id===c.sys,o=ORG[c.organ];opts.querySelectorAll('button').forEach(x=>x.disabled=true);
+      [...opts.children].forEach(x=>{if(x.textContent===SYS[c.sys].spec)x.classList.add('right');});if(!ok)b.classList.add('wrong');
+      if(o.sex&&o.sex!==sex){sex=o.sex;document.querySelectorAll('.sexsw button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.sex===sex)));}
+      p({focus:c.sys,marks:{[c.organ]:'target'}});
+      r.finish(ok,pan,ok?`Rétt: ${SYS[c.sys].spec} (${SYS[c.sys].specLat}).`:`Rétt svar: ${SYS[c.sys].spec} (${SYS[c.sys].specLat}).`,`${c.why} Líffærið, ${o.name.toLowerCase()}, er merkt á myndinni.`);
+    });opts.append(b);});
+  pan.append(opts);
+});
+
+/* ---------- Flipar ---------- */
+const TABS={kanna:()=>renderKanna(),hvar:()=>hvar.qs.length&&hvar.i<N?hvar.show():hvar.start(),kerfi:()=>kerfi.qs.length&&kerfi.i<N?kerfi.show():kerfi.start(),laeknir:()=>laeknir.qs.length&&laeknir.i<N?laeknir.show():laeknir.start()};
+function openTab(t){
+  mode=t;tip.hidden=true;
+  Object.keys(TABS).forEach(x=>$('t-'+x).setAttribute('aria-selected',String(x===t)));
+  TABS[t]();
+  try{history.replaceState(null,'','#'+t);}catch(e){}
+}
+Object.keys(TABS).forEach(t=>$('t-'+t).addEventListener('click',()=>openTab(t)));
+const h=(location.hash||'').slice(1);openTab(TABS[h]?h:'kanna');
+</script>
+</body>
+</html>
